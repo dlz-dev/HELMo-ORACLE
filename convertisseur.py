@@ -16,4 +16,4 @@ def transformer_csv(nom_fichier):
     print(f"Fichier {nom_fichier}.json généré avec succès !")
 
 # pour tester sur le fichier test -> exécuter transformer_csv('test')
-# transformer_csv('test')
+transformer_csv('test')
