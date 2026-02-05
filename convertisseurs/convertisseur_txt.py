@@ -1,6 +1,9 @@
 import os
 from langchain_openai import ChatOpenAI
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.document_loaders import TextLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import Chroma
 
 OPENWEBUI_URL = "https://chat.ai-labs.helmo.be"
 API_KEY = "sk-a6a2056cf5b44080b8df36e6126914e1"
@@ -14,16 +17,9 @@ llm = ChatOpenAI(
     temperature=0
 )
 
-# --- 2. Configuration des Embeddings (Le Traducteur) ---
-
-# On utilise un "petit" modèle performant qui tourne en local (gratuit)
+# Création modèle embeddings (petit modèle local)
 print("Chargement du modèle d'embedding...")
 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-
-# --- 3. Création de la Base Vectorielle (La Mémoire) ---
-from langchain_community.document_loaders import TextLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
 
 # Créons un fichier texte exemple pour le test
 with open("test_knowledge.txt", "w", encoding="utf-8") as f:
