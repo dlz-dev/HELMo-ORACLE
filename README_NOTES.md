@@ -4,7 +4,4 @@
 # 2.
     convertisseur.py : Contient les fonctions logiques pour transformer CSV, Excel, ou TXT en JSON
 # 3. 
-    /data/
-        /uploads/ : Dossier où arrivent les fichiers déposés
-        /output/ : Dossier où sont stockés les JSON générés avant l'envoi en DB
-
+    le dossier data contient les dossier d'entrer et processed les fichiers qui sont traités en json
