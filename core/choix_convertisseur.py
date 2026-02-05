@@ -1,4 +1,4 @@
-from convertisseurs import convertisseur_txt, convertisseur_csv
+from convertisseurs import convertisseur_txt, convertisseur_csv, convertisseur_md
 import os
 
 
@@ -9,6 +9,8 @@ def traiter_fichier(chemin_fichier):
         donnees = convertisseur_csv.transformer_csv(chemin_fichier)
     elif extension == '.txt':
         donnees = convertisseur_txt.transformer_txt(chemin_fichier)
+    elif extension == '.md':
+        donnees = convertisseur_md.transformer_md(chemin_fichier)
     else:
         raise ValueError("Format non supporté")
 
