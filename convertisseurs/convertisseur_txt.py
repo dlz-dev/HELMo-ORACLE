@@ -17,44 +17,26 @@ llm = ChatOpenAI(
     temperature=0
 )
 
-# Création modèle embeddings (petit modèle local)
-print("Chargement du modèle d'embedding...")
-embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-# Créons un fichier texte exemple pour le test
-with open("test_knowledge.txt", "w", encoding="utf-8") as f:
-    f.write("Le projet Apollo 11 a permis aux humains de marcher sur la Lune en 1969. Neil Armstrong était le commandant.")
+def transformer_txt(chemin_fichier):
+    # Création modèle embeddings (petit modèle local)
+    print("Chargement du modèle d'embedding...")
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-# Chargement
-loader = TextLoader("./test_knowledge.txt", encoding="utf-8")
-docs = loader.load()
+    # Chargement
+    loader = TextLoader(f"{chemin_fichier}", encoding="utf-8")
+    docs = loader.load()
 
-# Découpage (Chunking)
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-splits = text_splitter.split_documents(docs)
+    # Découpage (Chunking)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    splits = text_splitter.split_documents(docs)
 
-# Stockage dans ChromaDB (Base locale)
-print("Création de la base vectorielle...")
-vectorstore = Chroma.from_documents(
-    documents=splits,
-    embedding=embeddings,
-    persist_directory="./chroma_db"
-)
+    # Stockage dans ChromaDB (Base locale)
+    print("Création de la base vectorielle...")
+    vectorstore = Chroma.from_documents(
+        documents=splits,
+        embedding=embeddings,
+        persist_directory="./chroma_db"
+    )
 
-# --- 4. Interroger la base (RAG) ---
-from langchain.chains import RetrievalQA
 
-print("Initialisation de la chaîne de RAG...")
-qa_chain = RetrievalQA.from_chain_type(
-    llm=llm,
-    chain_type="stuff",
-    retriever=vectorstore.as_retriever(search_kwargs={"k": 2})
-)
-
-# --- 5. Test ---
-query = "Qui était le commandant de la mission Apollo 11 ?"
-print(f"\nQuestion : {query}")
-response = qa_chain.invoke(query)
-
-print("\nRéponse de l'IA :")
-print(response["result"])
