@@ -5,8 +5,3 @@
     convertisseur.py : Contient les fonctions logiques pour transformer CSV, Excel, ou TXT en JSON
 # 3. 
     le dossier data contient les dossier d'entrer et processed les fichiers qui sont traités en json
-
-
-# 1. PHASE DE PRETRAITEMENT DE LA QUESTION UTILISATEUR 
-
-### Installer la bibliothèque 'pip install sentence-transformers'
