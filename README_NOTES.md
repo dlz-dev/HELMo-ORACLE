@@ -6,7 +6,7 @@ Ce projet vise à concevoir un **Oracle intelligent** capable de répondre aux q
 
 ## Organisation du Projet
 Le projet suit une structure modulaire pour garantir la clarté et la maintenance :
-* **`data/`** : Stockage des sources brutes (CSV, JSON, TXT, MD) et de la base de données SQLite.
+* **`data/`** : Stockage des sources brutes (CSV, JSON, TXT, MD) et de la base de données Postgres.
 * **`convertisseurs/`** : Scripts d'automatisation pour uniformiser les données hétérogènes.
 * **`core/`** : Logique métier incluant le prétraitement et le moteur de vectorisation.
 * **`main.py`** : Script de test et chef d'orchestre du projet.
