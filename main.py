@@ -2,30 +2,37 @@ from core.preprocess import QuestionProcessor
 
 ####################### TEST de la phase de prétraitement
 
-def test_oracle():
-    # 1. initialisation de ton processeur
+def test_simple():
     processor = QuestionProcessor()
 
-    # 2. liste de questions de test
-    questions_test = [
-        "OU est L'éPéE de FER ?",
-        "COMMENT BATTRE le Dragon de FEU DE Liège ?"
-    ]
+    # Deux connaissances très différentes
+    connaissance_1 = "Le soleil brille et il fait tres chaud dehors."
+    connaissance_2 = "La pizza au fromage est délicieuse et croustillante."
 
-    # 3. traitement
-    print(f"----- Début de la phase de prétraitement ------")
+    # On les vectorise
+    vec_c1 = processor.vectoriser(processor.clean_text(connaissance_1))
+    vec_c2 = processor.vectoriser(processor.clean_text(connaissance_2))
 
-    for question in questions_test:
-        print(f"Question brute : {question}")
+    # Question sans ambiguïté
+    question_joueur = "Est-ce qu'il y a du soleil ?"
+    print(f"\n--- TEST SIMPLE ---")
+    print(f"Question : {question_joueur}")
 
-        # appel de la fonction
-        clean_q = processor.clean_text(question)
+    vec_q = processor.vectoriser(processor.clean_text(question_joueur))
 
-        print(f"Question propre : {clean_q}")
+    # Comparaison
+    score_meteo = processor.comparer(vec_q, vec_c1)
+    score_pizza = processor.comparer(vec_q, vec_c2)
+
+    print(f"Score Météo : {score_meteo:.4f}")
+    print(f"Score Pizza : {score_pizza:.4f}")
+
+    if score_meteo > score_pizza:
+        print("Résultat : L'Oracle a bien reconnu le sujet Météo !")
 
 
 #######################
 
 
 if __name__ == '__main__':
-    test_oracle()
+    test_simple()
