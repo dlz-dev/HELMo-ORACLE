@@ -20,7 +20,6 @@ llm = ChatOpenAI(
 
 def transformer_txt(chemin_fichier):
     # Création modèle embeddings (petit modèle local)
-    print("Chargement du modèle d'embedding...")
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
     # Chargement
@@ -31,12 +30,5 @@ def transformer_txt(chemin_fichier):
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     splits = text_splitter.split_documents(docs)
 
-    # Stockage dans ChromaDB (Base locale)
-    print("Création de la base vectorielle...")
-    vectorstore = Chroma.from_documents(
-        documents=splits,
-        embedding=embeddings,
-        persist_directory="./chroma_db"
-    )
 
 
