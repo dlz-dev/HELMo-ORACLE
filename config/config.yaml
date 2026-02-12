@@ -1,0 +1,7 @@
+# config.yaml
+database:
+  dbname: "vector_app_db"
+  user: "admin"
+  password: "supersecret"
+  host: "localhost"
+  port: 5432

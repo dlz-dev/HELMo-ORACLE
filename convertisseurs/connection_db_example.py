@@ -1,14 +1,15 @@
+import yaml
 import psycopg
 from pgvector.psycopg import register_vector
 
+# Charger la configuration
+with open("../config/config.yaml", "r") as f:
+    config = yaml.safe_load(f)
+
+db_params = config['database']
+
 # Connexion à la base Docker
-conn = psycopg.connect(
-    dbname="vector_app_db",
-    user="admin",
-    password="supersecret",
-    host="localhost",
-    port="5432"
-)
+conn = psycopg.connect(**db_params)
 
 # Configuration pour gérer les vecteurs automatiquement
 register_vector(conn)
