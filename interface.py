@@ -21,7 +21,7 @@ question = st.text_input("Ta question :", placeholder="Que dit le document sur..
 
 if st.button("Interroger l'Oracle"):
     if question:
-        with st.spinner(text="L'Oracle réfléchit..."):
+        with st.spinner("L'Oracle réfléchit..."):
             # 1. On transforme la question en vecteur
             vecteur_question = oracle.embeddings_model.embed_query(question)
 
