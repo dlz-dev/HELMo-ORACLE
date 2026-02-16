@@ -5,8 +5,7 @@ CREATE SCHEMA IF NOT EXISTS projet_prog;
 CREATE TABLE IF NOT EXISTS documents (
     id bigserial PRIMARY KEY,
     content text,                    -- Le texte brut (pour le donner à l'IA)
-    embedding vector(384)            -- Le vecteur mathématique
+    embedding public.vector(384)            -- Le vecteur mathématique
 );
 
-CREATE INDEX ON documents USING hnsw (embedding vector_cosine_ops); -- Indexation pour de meilleures performances
-
+CREATE INDEX ON projet_prog.documents USING hnsw (embedding public.vector_cosine_ops); -- Indexation pour de meilleures performances
