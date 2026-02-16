@@ -5,8 +5,9 @@ from langgraph.prebuilt import create_react_agent
 from tools_oracle import rechercher_dans_base_connaissances
 
 # CONFIG
-# On définit la racine du projet (un niveau au dessus de 'core')
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# On définit la racine du projet là où se trouve interface.py
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# On pointe vers le dossier config qui est juste à côté
 CONFIG_PATH = os.path.join(BASE_DIR, "config", "config.yaml")
 
 if not os.path.exists(CONFIG_PATH):
@@ -21,7 +22,7 @@ with open(CONFIG_PATH, "r") as f:
 llm = ChatGroq(
     model=config["api"]["model"],
     temperature=config["api"]["temperature"],
-    api_key=config["api"]["api_key"]
+    api_key=config["api"]["cle_api"]
 )
 
 # 2. On déclare l'outil de recherche Supabase
