@@ -1,17 +1,30 @@
 import psycopg
 from pgvector.psycopg import register_vector
 from langchain_huggingface import HuggingFaceEmbeddings
+import os
+import yaml
+
+# On définit la racine du projet (un niveau au dessus de 'core')
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CONFIG_PATH = os.path.join(BASE_DIR, "config", "config.yaml")
+
+if not os.path.exists(CONFIG_PATH):
+    raise FileNotFoundError(f"Alerte : Le fichier config.yaml est introuvable à cet endroit : {CONFIG_PATH}")
+
+with open(CONFIG_PATH, "r") as f:
+    config = yaml.safe_load(f)
 
 
 class GestionnaireVecteurs:
     def __init__(self):
         # Configuration de la connexion
         self.conn = psycopg.connect(
-            dbname="vector_app_db",
-            user="admin",
-            password="supersecret",
-            host="localhost",
-            port="5432"
+            host=config['database']['host'],
+            dbname=config['database']['dbname'],
+            user=config['database']['user'],
+            password=config['database']['password'],
+            port=config['database']['port'],
+            sslmode='require'  # <-- C'est ça qui permet de parler à Supabase
         )
         register_vector(self.conn)
 
@@ -25,7 +38,7 @@ class GestionnaireVecteurs:
 
         with self.conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO documents (content, embedding) VALUES (%s, %s)",
+                "INSERT INTO documents (content, vecteur) VALUES (%s, %s)",
                 (texte, vecteur)
             )
         self.conn.commit()
@@ -36,7 +49,7 @@ class GestionnaireVecteurs:
             # distance euclidienne
             # :: vector pour préciser que c'est un vecteur sinon il galère le boss
             cur.execute(
-                "SELECT content, embedding <-> %s::vector as distance FROM documents ORDER BY distance LIMIT %s",
+                "SELECT content, vecteur <-> %s::vector as distance FROM documents ORDER BY distance LIMIT %s",
                 (vecteur_question, k)
             )
             return cur.fetchall()

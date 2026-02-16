@@ -1,7 +1,7 @@
 # config.yaml
 database:
-  dbname: "vector_app_db"
-  user: "admin"
-  password: "supersecret"
-  host: "localhost"
+  dbname: "postgres"
+  user: "postgres"
+  password: "carving-footnote-dividend-geriatric"
+  host: "db.itkvotbgocuzitxxiwtx.supabase.co"
   port: 5432
