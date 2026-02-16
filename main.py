@@ -5,7 +5,7 @@ from langgraph.prebuilt import create_react_agent
 from tools_oracle import rechercher_dans_base_connaissances
 
 # CONFIG
-# On définit la racine du projet là où se trouve interface.py
+# On définit la racine du projet là où se trouve main.py
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # On pointe vers le dossier config qui est juste à côté
 CONFIG_PATH = os.path.join(BASE_DIR, "config", "config.yaml")
