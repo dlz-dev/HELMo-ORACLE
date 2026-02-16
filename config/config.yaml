@@ -1,7 +1,7 @@
 # config.yaml
 database:
-  dbname: "postgres"
-  user: "postgres"
-  password: "carving-footnote-dividend-geriatric"
-  host: "db.itkvotbgocuzitxxiwtx.supabase.co"
-  port: 5432
+  dbname: "nom_database"
+  user: "nom_user"
+  password: "mot_de_passe"
+  host: "host_database"
+  port: 0000
