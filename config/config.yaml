@@ -1,12 +1,12 @@
 # config.yaml
 database:
-  dbname: "nom_database"
-  user: "nom_utilisateur"
-  password: "mot_de_passe"
-  host: "host_database"
-  port: 0000
+  dbname: "postgres"
+  user: "postgres"
+  password: "carving-footnote-dividend-geriatric"
+  host: "db.itkvotbgocuzitxxiwtx.supabase.co"
+  port: 5432
 
 api:
-  model: "nom_model"
+  model: "llama-3.3-70b-versatile"
   temperature: 0
-  cle_api: "cle_api"
+  cle_api: "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"
