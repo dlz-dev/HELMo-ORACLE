@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE SCHEMA IF NOT EXISTS projet_prog;
 
-CREATE TABLE documents (
+CREATE TABLE IF NOT EXISTS documents (
     id bigserial PRIMARY KEY,
     content text,                    -- Le texte brut (pour le donner à l'IA)
     embedding vector(384)            -- Le vecteur mathématique
