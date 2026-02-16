@@ -17,10 +17,10 @@ PROMPT_PATH = os.path.join(BASE_DIR, "config", "prompt.txt")
 if not os.path.exists(CONFIG_PATH):
     raise FileNotFoundError(f"Alerte : Le fichier config.yaml est introuvable à cet endroit : {CONFIG_PATH}")
 
-with open(CONFIG_PATH, "r") as f:
+with open(CONFIG_PATH, "r", encoding='utf-8') as f:
     config = yaml.safe_load(f)
 
-with open(PROMPT_PATH, "r") as f:
+with open(PROMPT_PATH, "r", encoding='utf-8') as f:
     system_prompt = f.read()
 
 # 1. Configuration du cerveau (Groq)
