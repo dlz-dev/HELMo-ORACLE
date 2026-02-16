@@ -28,7 +28,7 @@ with open(PROMPT_PATH, "r", encoding='utf-8') as f:
 llm = ChatGroq(
     model=config["api"]["model"],
     temperature=config["api"]["temperature"],
-    api_key=config["api"]["cle_api"]
+    api_key=config["api"]["api_key"]
 )
 
 # 2. On déclare l'outil de recherche Supabase
