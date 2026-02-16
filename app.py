@@ -1,8 +1,11 @@
+import os
+
 import streamlit as st
-import yaml, os
+import yaml
 from langchain_groq import ChatGroq
 from langgraph.prebuilt import create_react_agent
-from tools_oracle import rechercher_dans_base_connaissances
+
+from tools_oracle import search_knowledge_base
 
 # CHEMIN CONFIG
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -15,7 +18,7 @@ PROMPT_PATH = os.path.join(BASE_DIR, "config", "prompt.txt")
 # ======================================
 
 if not os.path.exists(CONFIG_PATH):
-    raise FileNotFoundError(f"Alerte : Le fichier config.yaml est introuvable à cet endroit : {CONFIG_PATH}")
+    raise FileNotFoundError(f"Alert: config.yaml not found at: {CONFIG_PATH}")
 
 with open(CONFIG_PATH, "r", encoding='utf-8') as f:
     config = yaml.safe_load(f)
@@ -23,21 +26,20 @@ with open(CONFIG_PATH, "r", encoding='utf-8') as f:
 with open(PROMPT_PATH, "r", encoding='utf-8') as f:
     system_prompt = f.read()
 
-# 1. Configuration du cerveau (Groq)
-# On utilise Llama 3.3 70B qui est excellent pour le français
+# 1. Initialization of the LLM with Groq
 llm = ChatGroq(
     model=config["api"]["model"],
     temperature=config["api"]["temperature"],
     api_key=config["api"]["cle_api"]
 )
 
-# 2. On déclare l'outil de recherche Supabase
-tools = [rechercher_dans_base_connaissances]
+# 2. Tools
+tools = [search_knowledge_base]
 
-# 3. Ton Prompt Système (Le caractère de l'Oracle)
+# 3. Sys Prompt
 SYSTEM_PROMPT = system_prompt
 
-# 4. Création de l'agent (Comme dans tes labos)
+# 4. Create Agent
 agent = create_react_agent(llm, tools, prompt=SYSTEM_PROMPT)
 
 # --- INTERFACE STREAMLIT ---

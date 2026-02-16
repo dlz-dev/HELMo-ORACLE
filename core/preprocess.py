@@ -1,31 +1,44 @@
 import string
+from typing import List
+
 import unicodedata
 from langchain_huggingface import HuggingFaceEmbeddings
 
 
 class QuestionProcessor:
+    """
+    Handles text cleaning and transformation of user queries into vector embeddings.
+    """
+
     def __init__(self):
-        # On charge le modèle une seule fois à l'init
         print(f"Chargement de l'Oracle...")
-        self.embeddings_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+        self.embeddings_model = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 
-    def clean_text(self, text):
-        """Regroupe les étapes 2.1 à 2.6"""
+    def preprocess_text(self, text: str) -> str:
+        """
+        Cleans the input text by lowercasing, removing accents, and stripping punctuation.
 
-        # étape 2.2
+        Args:
+            text (str): The raw user query.
+
+        Returns:
+            str: The cleaned and normalized text.
+        """
         text = text.lower()
-
-        # Nettoyage des accents (utile en français)
         text = "".join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
-
-        # 2.6 retirer la ponctuation
         text = text.translate(str.maketrans('', '', string.punctuation))
-
-        # 2.3 Tokenisation + 2.4 + 2.5 (simplifié pour débuter)
-        # on découpe mot par mot et on peut filtrer les mots de moins de 3 lettres
         return text.strip()
 
-    def vectoriser(self, text):
-        """étape 2.7 : transformer le texte en chiffres pour l'IA"""
-        # On transforme la phrase en une liste de 384 nombres
+    def vectorize_text(self, text: str) -> List[float]:
+        """
+        Transforms a text string into a numerical vector (embedding).
+
+        Args:
+            text (str): The preprocessed text.
+
+        Returns:
+            List[float]: A list of 384 numbers representing the text's semantics.
+        """
+        # The embed_query method returns a list of floats compatible with pgvector
         return self.embeddings_model.embed_query(text)
