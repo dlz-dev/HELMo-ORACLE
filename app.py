@@ -30,7 +30,7 @@ with open(PROMPT_PATH, "r", encoding='utf-8') as f:
 llm = ChatGroq(
     model=config["api"]["model"],
     temperature=config["api"]["temperature"],
-    api_key=config["api"]["cle_api"]
+    api_key=config["api"]["api_key"]
 )
 
 # 2. Tools
@@ -71,3 +71,5 @@ if prompt := st.chat_input("Que disent les anciennes écritures ?"):
             st.session_state.messages.append({"role": "assistant", "content": reponse})
         except Exception as e:
             st.error(f"L'Oracle est troublé : {e}")
+
+# streamlit run app.py

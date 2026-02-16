@@ -5,8 +5,9 @@ from core.vector_manager import VectorManager
 @tool
 def search_knowledge_base(query: str) -> str:
     """
-    Searches for information in the Oracle's archives.
-    Use this for any questions regarding legends, quests, or the survival guide.
+    Searches the Oracle's complete database for any information.
+    Use this for any inquiry regarding the game world, including its lore,
+    entities, items, locations, mechanics, or specific categories.
     """
     gv = VectorManager()
     vecteur_query = gv.embeddings_model.embed_query(query)
