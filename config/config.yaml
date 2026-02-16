@@ -7,6 +7,6 @@ database:
   port: 0000
 
 api:
-  model: "nom_model",
+  model: "nom_model"
   temperature: 0
   cle_api: "api_key"
