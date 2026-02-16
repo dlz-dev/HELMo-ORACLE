@@ -1,14 +1,27 @@
 import streamlit as st
+import yaml, os
 from langchain_groq import ChatGroq
 from langgraph.prebuilt import create_react_agent
 from tools_oracle import rechercher_dans_base_connaissances
 
+# CONFIG
+# On définit la racine du projet (un niveau au dessus de 'core')
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CONFIG_PATH = os.path.join(BASE_DIR, "config", "config.yaml")
+
+if not os.path.exists(CONFIG_PATH):
+    raise FileNotFoundError(f"Alerte : Le fichier config.yaml est introuvable à cet endroit : {CONFIG_PATH}")
+
+with open(CONFIG_PATH, "r") as f:
+    config = yaml.safe_load(f)
+
+
 # 1. Configuration du cerveau (Groq)
 # On utilise Llama 3.3 70B qui est excellent pour le français
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    temperature=0,
-    api_key="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"
+    model=config["api"]["model"],
+    temperature=config["api"]["temperature"],
+    api_key=config["api"]["api_key"]
 )
 
 # 2. On déclare l'outil de recherche Supabase

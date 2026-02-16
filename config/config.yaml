@@ -5,3 +5,8 @@ database:
   password: "mot_de_passe"
   host: "host_database"
   port: 0000
+
+api:
+  model: "nom_model",
+  temperature: 0
+  cle_api: "api_key"
