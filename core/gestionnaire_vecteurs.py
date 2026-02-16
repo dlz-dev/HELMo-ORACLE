@@ -1,8 +1,9 @@
 import psycopg
-from pgvector.psycopg import register_vector
-from langchain_huggingface import HuggingFaceEmbeddings
 import os
 import yaml
+from pgvector.psycopg import register_vector
+from langchain_huggingface import HuggingFaceEmbeddings
+
 
 # On définit la racine du projet (un niveau au dessus de 'core')
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

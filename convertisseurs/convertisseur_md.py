@@ -1,4 +1,3 @@
-import json
 
 def transformer_md(chemin_fichier):
     with open(chemin_fichier, 'r', encoding='utf-8') as f:
@@ -28,11 +27,11 @@ def transformer_md(chemin_fichier):
 # Test
 if __name__ == "__main__":
     # 1. On transforme le MD en données Python
-    resultat = transformer_md("../test.md")
+    donnees = transformer_md("../test.md")
 
     # 2. On écrit ces données dans un nouveau fichier .json
     import json
     with open("test.json", "w", encoding="utf-8") as f:
-        json.dump(resultat, f, indent=4, ensure_ascii=False)
+        json.dump(donnees, f, indent=4, ensure_ascii=False)
 
     print("Fichier test_projet.json créé avec succès !")

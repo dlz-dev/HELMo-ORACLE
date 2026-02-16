@@ -1,7 +1,4 @@
 import csv
-import json
-
-# première idée pour transformer un CSV en JSON
 
 def transformer_csv(chemin_complet):
     # 1. lire le csv simplement

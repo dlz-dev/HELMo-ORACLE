@@ -1,5 +1,4 @@
 import os
-import json
 from convertisseurs import convertisseur_csv, convertisseur_md, convertisseur_txt
 from core.gestionnaire_vecteurs import GestionnaireVecteurs
 

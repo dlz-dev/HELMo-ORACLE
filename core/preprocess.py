@@ -1,4 +1,3 @@
-# liste des imports
 import string
 import unicodedata
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -6,7 +5,6 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 class QuestionProcessor:
     def __init__(self):
-        # Charger les modèles plus tard
         # On charge le modèle une seule fois à l'init
         print(f"Chargement de l'Oracle...")
         self.embeddings_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
