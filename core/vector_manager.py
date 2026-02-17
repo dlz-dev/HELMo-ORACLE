@@ -5,6 +5,7 @@ import psycopg
 import yaml
 from langchain_huggingface import HuggingFaceEmbeddings
 from pgvector.psycopg import register_vector
+import streamlit as st
 
 # Directory structure
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
