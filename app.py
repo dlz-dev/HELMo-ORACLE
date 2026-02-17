@@ -17,11 +17,19 @@ PROMPT_PATH = os.path.join(BASE_DIR, "config", "prompt.txt")
 
 # ======================================
 
-if not os.path.exists(CONFIG_PATH):
-    raise FileNotFoundError(f"Alert: config.yaml not found at: {CONFIG_PATH}")
-
-with open(CONFIG_PATH, "r", encoding='utf-8') as f:
-    config = yaml.safe_load(f)
+# Gestion hybride Config (Local) / Secrets (Cloud)
+if os.path.exists(CONFIG_PATH):
+    with open(CONFIG_PATH, "r", encoding='utf-8') as f:
+        config = yaml.safe_load(f)
+else:
+    # Si le fichier n'existe pas, on récupère les données dans st.secrets
+    config = {
+        "api": {
+            "model": st.secrets["api"]["model"],
+            "temperature": st.secrets["api"]["temperature"],
+            "api_key": st.secrets["api"]["api_key"]
+        }
+    }
 
 with open(PROMPT_PATH, "r", encoding='utf-8') as f:
     system_prompt = f.read()
