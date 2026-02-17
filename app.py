@@ -31,8 +31,14 @@ else:
         }
     }
 
-with open(PROMPT_PATH, "r", encoding='utf-8') as f:
-    system_prompt = f.read()
+# --- CHARGEMENT DU PROMPT ---
+if os.path.exists(PROMPT_PATH):
+    # En local, on lit le fichier
+    with open(PROMPT_PATH, "r", encoding='utf-8') as f:
+        SYSTEM_PROMPT = f.read()
+else:
+    # Sur Streamlit Cloud, on prend le secret
+    SYSTEM_PROMPT = st.secrets["prompts"]["system_prompt"]
 
 # 1. Initialization of the LLM with Groq
 llm = ChatGroq(
@@ -43,9 +49,6 @@ llm = ChatGroq(
 
 # 2. Tools
 tools = [search_knowledge_base]
-
-# 3. Sys Prompt
-SYSTEM_PROMPT = system_prompt
 
 # 4. Create Agent
 agent = create_react_agent(llm, tools, prompt=SYSTEM_PROMPT)
