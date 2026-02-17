@@ -10,11 +10,13 @@ from pgvector.psycopg import register_vector
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_PATH = os.path.join(BASE_DIR, "config", "config.yaml")
 
-if not os.path.exists(CONFIG_PATH):
-    raise FileNotFoundError(f"config.yaml not found at this place : {CONFIG_PATH}")
-
-with open(CONFIG_PATH, "r", encoding='utf-8') as f:
-    config = yaml.safe_load(f)
+if os.path.exists(CONFIG_PATH):
+    # LOCAL : On lit le fichier YAML
+    with open(CONFIG_PATH, "r", encoding='utf-8') as f:
+        config = yaml.safe_load(f)
+else:
+    # CLOUD : On utilise les Secrets Streamlit
+    config = st.secrets
 
 
 class VectorManager:
@@ -24,20 +26,25 @@ class VectorManager:
     """
 
     def __init__(self):
-        # Configuration de la connexion
-        self.conn = psycopg.connect(
-            host=config['database']['host'],
-            dbname=config['database']['dbname'],
-            user=config['database']['user'],
-            password=config['database']['password'],
-            port=config['database']['port'],
-            sslmode='require'
-        )
-        register_vector(self.conn)
+        # On vérifie si on utilise la nouvelle connection_string ou l'ancien format
+        if 'connection_string' in config['database']:
+            self.conn = psycopg.connect(
+                config['database']['connection_string'],
+                autocommit=True
+            )
+        else:
+            # Ton ancien code (au cas où tu es en local)
+            self.conn = psycopg.connect(
+                host=config['database']['host'],
+                dbname=config['database']['dbname'],
+                user=config['database']['user'],
+                password=config['database']['password'],
+                port=int(config['database']['port']),
+                sslmode='require'
+            )
 
-        # Le modèle d'IA pour transformer le texte en vecteurs
-        self.embeddings_model = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+        register_vector(self.conn)
+        self.embeddings_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
     def add_document(self, text: str) -> None:
         """
