@@ -67,15 +67,21 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
 
 # Zone de saisie
+# ---- UPDATE TIM -> mise en place d'une mémoire, au lieu d'envoyer juste le prompt on envoie tout le contenu de la conv
 if prompt := st.chat_input("Que disent les anciennes écritures ?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+
+    # création d'une liste
+    # transfo de l'historique de streamlit
+    history = []
+    for msg in st.session_state.messages:
+        role = "user" if msg["role"] == "user" else "assistant"
+        history.append((role, msg["content"]))
 
     with st.chat_message("assistant"):
         try:
-            # L'agent décide seul s'il doit appeler Supabase
-            result = agent.invoke({"messages": [("user", prompt)]})
+            # on envoie tout l'historique pas juste le dernier truc
+            result = agent.invoke({"messages": history})
             reponse = result["messages"][-1].content
 
             st.markdown(reponse)
