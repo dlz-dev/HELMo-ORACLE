@@ -7,6 +7,7 @@ from converters.convert_csv import load_csv_data
 from converters.convert_markdown import parse_markdown
 from converters.convert_text import process_text_file
 
+
 class TestLoadCsvData(unittest.TestCase):
 
     def test_load_csv_nominal(self):

@@ -5,6 +5,7 @@ from core.ingestion import seed_database
 from core.preprocess import QuestionProcessor
 from core.vector_manager import VectorManager
 
+
 class TestSeedDatabase(unittest.TestCase):
 
     @patch("core.ingestion.os.listdir")
@@ -13,12 +14,12 @@ class TestSeedDatabase(unittest.TestCase):
     @patch("core.ingestion.convert_markdown.parse_markdown")
     @patch("core.ingestion.convert_csv.load_csv_data")
     def test_csv_file_processing(
-        self,
-        mock_load_csv,
-        mock_parse_md,
-        mock_process_text,
-        mock_vector_manager,
-        mock_listdir
+            self,
+            mock_load_csv,
+            mock_parse_md,
+            mock_process_text,
+            mock_vector_manager,
+            mock_listdir
     ):
         # Setup
         mock_listdir.return_value = ["test.csv"]
@@ -50,12 +51,12 @@ class TestSeedDatabase(unittest.TestCase):
     @patch("core.ingestion.convert_markdown.parse_markdown")
     @patch("core.ingestion.convert_csv.load_csv_data")
     def test_markdown_file_processing(
-        self,
-        mock_load_csv,
-        mock_parse_md,
-        mock_process_text,
-        mock_vector_manager,
-        mock_listdir
+            self,
+            mock_load_csv,
+            mock_parse_md,
+            mock_process_text,
+            mock_vector_manager,
+            mock_listdir
     ):
         mock_listdir.return_value = ["doc.md"]
 
@@ -79,12 +80,12 @@ class TestSeedDatabase(unittest.TestCase):
     @patch("core.ingestion.convert_markdown.parse_markdown")
     @patch("core.ingestion.convert_csv.load_csv_data")
     def test_text_file_processing(
-        self,
-        mock_load_csv,
-        mock_parse_md,
-        mock_process_text,
-        mock_vector_manager,
-        mock_listdir
+            self,
+            mock_load_csv,
+            mock_parse_md,
+            mock_process_text,
+            mock_vector_manager,
+            mock_listdir
     ):
         mock_listdir.return_value = ["file.txt"]
 
@@ -128,6 +129,7 @@ class TestSeedDatabase(unittest.TestCase):
         seed_database()
 
         mock_db_instance.add_document.assert_not_called()
+
 
 class TestQuestionProcessor(unittest.TestCase):
 
@@ -182,6 +184,7 @@ class TestQuestionProcessor(unittest.TestCase):
 
         self.assertIsInstance(result, list)
         self.assertTrue(all(isinstance(x, float) for x in result))
+
 
 class TestVectorManager(unittest.TestCase):
 
