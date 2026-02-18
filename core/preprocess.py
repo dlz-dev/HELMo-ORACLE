@@ -1,7 +1,7 @@
 import string
-from typing import List
-
 import unicodedata
+
+from typing import List
 from langchain_huggingface import HuggingFaceEmbeddings
 
 
