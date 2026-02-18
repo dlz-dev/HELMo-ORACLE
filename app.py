@@ -68,24 +68,36 @@ for msg in st.session_state.messages:
 
 # Zone de saisie
 # ---- UPDATE TIM -> mise en place d'une mémoire, au lieu d'envoyer juste le prompt on envoie tout le contenu de la conv
-if prompt := st.chat_input("Que disent les anciennes écritures ?"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # création d'une liste
-    # transfo de l'historique de streamlit
+if prompt := st.chat_input("Que disent les anciennes écritures ?"):
+    # 1. On ajoute et on affiche immédiatement le message utilisateur
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # 2. On prépare l'historique pour l'agent
     history = []
     for msg in st.session_state.messages:
         role = "user" if msg["role"] == "user" else "assistant"
         history.append((role, msg["content"]))
 
+    # 3. On génère la réponse de l'assistant
     with st.chat_message("assistant"):
         try:
-            # on envoie tout l'historique pas juste le dernier truc
-            result = agent.invoke({"messages": history})
-            reponse = result["messages"][-1].content
+            # On utilise un spinner pour faire patienter l'utilisateur
+            with st.spinner("L'Oracle consulte les astres..."):
+                result = agent.invoke({"messages": history})
+                reponse = result["messages"][-1].content
 
+            # AFFICHAGE IMMÉDIAT
             st.markdown(reponse)
+
+            # SAUVEGARDE DANS L'HISTORIQUE
             st.session_state.messages.append({"role": "assistant", "content": reponse})
+
+            # Indispensable pour forcer Streamlit à garder l'état propre
+            # st.rerun()  # Optionnel selon ta version de Streamlit
+
         except Exception as e:
             st.error(f"L'Oracle est troublé : {e}")
 
