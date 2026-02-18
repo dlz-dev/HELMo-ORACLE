@@ -5,7 +5,7 @@ import yaml
 from langchain_groq import ChatGroq
 from langgraph.prebuilt import create_react_agent
 
-from tools_oracle import search_knowledge_base
+from core.tools_oracle import search_knowledge_base
 
 # CHEMIN CONFIG
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
