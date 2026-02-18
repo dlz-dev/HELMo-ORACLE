@@ -1,8 +1,7 @@
 import os
-from typing import List, Tuple
-
 import psycopg
 import yaml
+from typing import List, Tuple
 from langchain_huggingface import HuggingFaceEmbeddings
 from pgvector.psycopg import register_vector
 import streamlit as st
