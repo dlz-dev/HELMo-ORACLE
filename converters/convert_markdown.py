@@ -1,41 +1,38 @@
-from typing import List, Dict
+import os
+from typing import List
+
+from langchain_core.documents import Document
+from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 
 
-def parse_markdown(file_path: str) -> List[Dict[str, any]]:
+def parse_markdown(file_path: str) -> List[Document]:
     """
-    Reads a Markdown file and extracts basic structure (headings, lists, paragraphs).
-
-    Args:
-        file_path (str): The path to the .md file to be parsed.
-
-    Returns:
-        List[Dict[str, any]]: A list of dictionaries containing line numbers, 
-                              content types, and the clean text.
+    Lit un fichier Markdown, extrait la hiérarchie des titres (Phase 1)
+    et découpe le contenu en chunks de taille raisonnable.
     """
     with open(file_path, 'r', encoding='utf-8') as f:
-        # splitlines() removes the trailing \n automatically
-        lines = f.read().splitlines()
+        md_text = f.read()
 
-    parsed_data = []
+    # 1. On définit quels titres on veut suivre
+    headers_to_split_on = [
+        ("#", "Header 1"),
+        ("##", "Header 2"),
+        ("###", "Header 3"),
+    ]
 
-    for i, text in enumerate(lines):
-        clean_text = text.strip()
+    # 2. On découpe d'abord par structure (Les titres deviennent des métadonnées)
+    markdown_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
+    md_header_splits = markdown_splitter.split_text(md_text)
 
-        # Skip empty lines to keep the data relevant for RAG indexing
-        if not clean_text:
-            continue
+    # 3. On redécoupe par taille pour éviter les chunks trop énormes (Ta préoccupation !)
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500,
+        chunk_overlap=50
+    )
+    splits = text_splitter.split_documents(md_header_splits)
 
-        # Simple logic to determine the content type
-        content_type = "paragraph"
-        if clean_text.startswith("#"):
-            content_type = "heading"
-        elif clean_text.startswith(("- ", "* ", "1. ")):
-            content_type = "list_item"
+    nom_fichier = os.path.basename(file_path)
+    for split in splits:
+        split.metadata["source"] = nom_fichier
 
-        parsed_data.append({
-            "line_number": i + 1,
-            "type": content_type,
-            "content": clean_text
-        })
-
-    return parsed_data
+    return splits

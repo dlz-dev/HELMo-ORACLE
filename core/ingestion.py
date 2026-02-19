@@ -1,24 +1,14 @@
 import os
 
-from converters import convert_csv, convert_markdown, convert_text
+from converters import convert_csv, convert_markdown, convert_text, convert_json  # Ajoute convert_json
 from core.vector_manager import VectorManager
 
 
 def seed_database() -> None:
-    """
-    Scans the data directory, processes files based on their extension,
-    and inserts the resulting chunks into the vector database.
-    """
-    # Define paths
     current_dir = os.path.dirname(os.path.abspath(__file__))
     input_folder = os.path.join(current_dir, "..", "data", "files")
 
-    print(f"Source folder detected: {os.path.abspath(input_folder)}")
-
-    # Initialize the vector manager (connecting to Docker/Database)
-    # We assume GestionnaireVecteurs is now VectorManager
     db_manager = VectorManager()
-    print("Database connection successful. Starting ingestion...")
 
     for file_name in os.listdir(input_folder):
         file_path = os.path.join(input_folder, file_name)
@@ -26,33 +16,42 @@ def seed_database() -> None:
 
         chunks_to_insert = []
 
-        # Process based on file format
+        # Par défaut, la source est le nom du fichier
+        base_metadata = {"source": file_name}
+
         if extension == '.csv':
-            print(f"Processing CSV: {file_name}")
             data = convert_csv.load_csv_data(file_path)
             for row in data:
-                # Convert dict row to a single descriptive string
                 row_string = " ".join([f"{key}: {value}" for key, value in row.items()])
-                chunks_to_insert.append(row_string)
+                chunks_to_insert.append((row_string, base_metadata))
 
         elif extension == '.md':
-            print(f"Processing Markdown: {file_name}")
-            data = convert_markdown.parse_markdown(file_path)
-            for item in data:
-                chunks_to_insert.append(item['content'])
+            documents = convert_markdown.parse_markdown(file_path)
+            for doc in documents:
+                # doc.metadata contient déjà la source ET les titres grâce à la phase 1 !
+                chunks_to_insert.append((doc.page_content, doc.metadata))
 
         elif extension == '.txt':
-            print(f"Processing Text: {file_name}")
             documents = convert_text.process_text_file(file_path)
             for doc in documents:
-                chunks_to_insert.append(doc.page_content)
+                chunks_to_insert.append((doc.page_content, base_metadata))
 
-        # Insertion into the Vector Database
+        elif extension == '.json':  # Nouveau bloc JSON
+            print(f"Processing JSON: {file_name}")
+            data_chunks = convert_json.parse_json(file_path)
+            for chunk in data_chunks:
+                chunks_to_insert.append((chunk, base_metadata))
+
+        # Insertion dans la base de données
         if chunks_to_insert:
-            print(f"Inserting {len(chunks_to_insert)} chunks into the database...")
-            for chunk in chunks_to_insert:
-                db_manager.add_document(chunk)
+            print(f"Inserting {len(chunks_to_insert)} chunks from {file_name}...")
+            for text_chunk, metadata_chunk in chunks_to_insert:
+                db_manager.add_document(text_chunk, metadata=metadata_chunk)
             print(f"Finished processing: {file_name}")
 
-    if __name__ == "__main__":
-        seed_database()
+
+if __name__ == "__main__":
+    seed_database()
+
+# TRUNCATE TABLE documents RESTART IDENTITY;
+# ALTER TABLE documents ADD COLUMN metadata JSONB DEFAULT '{}'::jsonb;

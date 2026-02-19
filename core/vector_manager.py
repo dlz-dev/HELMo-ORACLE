@@ -1,10 +1,12 @@
+import json
 import os
-import psycopg
-import yaml
 from typing import List, Tuple
+
+import psycopg
+import streamlit as st
+import yaml
 from langchain_huggingface import HuggingFaceEmbeddings
 from pgvector.psycopg import register_vector
-import streamlit as st
 
 # Directory structure
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -44,41 +46,32 @@ class VectorManager:
             )
 
         register_vector(self.conn)
-        self.embeddings_model = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+        self.embeddings_model = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 
-    def add_document(self, text: str) -> None:
+    def add_document(self, text: str, metadata: dict = None) -> None:
         """
-        Generates an embedding for the text and saves it to the database.
+        Génère un embedding et sauvegarde le texte AVEC ses métadonnées.
+        """
+        if metadata is None:
+            metadata = {}
 
-        Args:
-            text (str): The text content to be vectorized and stored.
-        """
-        # Vector generation (size 384 for this specific model)
         vector = self.embeddings_model.embed_query(text)
 
         with self.conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO documents (content, vecteur) VALUES (%s, %s)",
-                (text, vector)
+                "INSERT INTO documents (content, vecteur, metadata) VALUES (%s, %s, %s)",
+                (text, vector, json.dumps(metadata))
             )
         self.conn.commit()
 
-    def search_similar(self, query_vector: List[float], k: int = 3) -> List[Tuple[str, float]]:
+    def search_similar(self, query_vector: List[float], k: int = 3) -> List[Tuple[str, float, dict]]:
         """
-        Performs a semantic search to find the closest text passages.
-
-        Args:
-            query_vector (List[float]): The vector representation of the user's question.
-            k (int): Number of similar results to return.
-
-        Returns:
-            List[Tuple[str, float]]: List of tuples containing (content, distance).
+        Recherche sémantique qui retourne aussi les métadonnées.
         """
         with self.conn.cursor() as cur:
-            # Using the Euclidean distance operator (<->) provided by pgvector
-            # '::vector' cast ensures the database interprets the list as a vector
             cur.execute(
-                "SELECT content, vecteur <-> %s::vector as distance FROM documents ORDER BY distance LIMIT %s",
+                "SELECT content, vecteur <-> %s::vector as distance, metadata FROM documents ORDER BY distance LIMIT %s",
                 (query_vector, k)
             )
             return cur.fetchall()
