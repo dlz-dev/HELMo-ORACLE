@@ -44,7 +44,7 @@ class VectorManager:
             )
 
         register_vector(self.conn)
-        self.embeddings_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+        self.embeddings_model = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 
     def add_document(self, text: str) -> None:
         """
