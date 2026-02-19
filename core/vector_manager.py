@@ -13,11 +13,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_PATH = os.path.join(BASE_DIR, "config", "config.yaml")
 
 if os.path.exists(CONFIG_PATH):
-    # LOCAL : On lit le fichier YAML
+    # LOCAL: Read the YAML file
     with open(CONFIG_PATH, "r", encoding='utf-8') as f:
         config = yaml.safe_load(f)
 else:
-    # CLOUD : On utilise les Secrets Streamlit
+    # CLOUD: Use Streamlit Secrets
     config = st.secrets
 
 
@@ -28,14 +28,12 @@ class VectorManager:
     """
 
     def __init__(self):
-        # On vérifie si on utilise la nouvelle connection_string ou l'ancien format
         if 'connection_string' in config['database']:
             self.conn = psycopg.connect(
                 config['database']['connection_string'],
                 autocommit=True
             )
         else:
-            # Ton ancien code (au cas où tu es en local)
             self.conn = psycopg.connect(
                 host=config['database']['host'],
                 dbname=config['database']['dbname'],
@@ -51,7 +49,7 @@ class VectorManager:
 
     def add_document(self, text: str, metadata: dict = None) -> None:
         """
-        Génère un embedding et sauvegarde le texte AVEC ses métadonnées.
+        Generates an embedding and saves the text WITH its metadata.
         """
         if metadata is None:
             metadata = {}
@@ -67,7 +65,7 @@ class VectorManager:
 
     def search_similar(self, query_vector: List[float], k: int = 3) -> List[Tuple[str, float, dict]]:
         """
-        Recherche sémantique qui retourne aussi les métadonnées.
+        Semantic search that also returns metadata.
         """
         with self.conn.cursor() as cur:
             cur.execute(

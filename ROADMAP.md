@@ -1,6 +1,6 @@
 # 🗺️ Roadmap : Du Prototype Oracle au Moteur RAG Entreprise
 
-## Phase 1 : Ingestion "Context-Aware" (Markdown & Documents)
+~~## Phase 1 : Ingestion "Context-Aware" (Markdown & Documents)~~
 
 **Le Problème :** Actuellement, le convertisseur Markdown découpe le fichier ligne par ligne ou par bloc isolés. Si l'Oracle trouve une réponse dans une liste à puces, il perd le titre qui expliquait de quoi parlait cette liste.
 

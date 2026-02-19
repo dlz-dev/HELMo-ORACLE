@@ -18,12 +18,6 @@ class QuestionProcessor:
     def preprocess_text(self, text: str) -> str:
         """
         Cleans the input text by lowercasing, removing accents, and stripping punctuation.
-
-        Args:
-            text (str): The raw user query.
-
-        Returns:
-            str: The cleaned and normalized text.
         """
         text = text.lower()
         text = "".join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
@@ -33,12 +27,6 @@ class QuestionProcessor:
     def vectorize_text(self, text: str) -> List[float]:
         """
         Transforms a text string into a numerical vector (embedding).
-
-        Args:
-            text (str): The preprocessed text.
-
-        Returns:
-            List[float]: A list of 384 numbers representing the text's semantics.
         """
         # The embed_query method returns a list of floats compatible with pgvector
         return self.embeddings_model.embed_query(text)

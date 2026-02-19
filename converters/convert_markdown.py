@@ -7,24 +7,24 @@ from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharac
 
 def parse_markdown(file_path: str) -> List[Document]:
     """
-    Lit un fichier Markdown, extrait la hiérarchie des titres (Phase 1)
-    et découpe le contenu en chunks de taille raisonnable.
+    Reads a Markdown file, extracts the heading hierarchy (Phase 1),
+    and splits the content into chunks of reasonable size.
     """
     with open(file_path, 'r', encoding='utf-8') as f:
         md_text = f.read()
 
-    # 1. On définit quels titres on veut suivre
+    # Define which headings to track
     headers_to_split_on = [
         ("#", "Header 1"),
         ("##", "Header 2"),
         ("###", "Header 3"),
     ]
 
-    # 2. On découpe d'abord par structure (Les titres deviennent des métadonnées)
+    # Split first by structure (Headings become metadata)
     markdown_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
     md_header_splits = markdown_splitter.split_text(md_text)
 
-    # 3. On redécoupe par taille pour éviter les chunks trop énormes (Ta préoccupation !)
+    # Split again by size to avoid excessively large chunks (Your concern!)
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
         chunk_overlap=50

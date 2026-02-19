@@ -11,15 +11,13 @@ def search_knowledge_base(query: str) -> str:
     gv = VectorManager()
     vecteur_query = gv.embeddings_model.embed_query(query)
 
-    # resultats contient maintenant (content, distance, metadata)
     resultats = gv.search_similar(vecteur_query, k=3)
 
-    # On formate le contexte pour que le LLM sache d'où vient l'information
     contexte_lignes = []
     for res in resultats:
         contenu = res[0]
         metadata = res[2]
-        source = metadata.get('source', 'Archive inconnue')
-        contexte_lignes.append(f"[Source: {source}]\nExtrait : {contenu}")
+        source = metadata.get('source', 'Unknown archive')
+        contexte_lignes.append(f"[Source: {source}]\nExcerpt: {contenu}")
 
     return "\n\n".join(contexte_lignes)

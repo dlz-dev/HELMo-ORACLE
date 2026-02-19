@@ -1,10 +1,13 @@
 import os
 
-from converters import convert_csv, convert_markdown, convert_text, convert_json  # Ajoute convert_json
+from converters import convert_csv, convert_markdown, convert_text, convert_json  # Adds convert_json
 from core.vector_manager import VectorManager
 
 
 def seed_database() -> None:
+    """
+    Browse the source files, cut them into fragments and insert them into the vector database with their metadata.
+    """
     current_dir = os.path.dirname(os.path.abspath(__file__))
     input_folder = os.path.join(current_dir, "..", "data", "files")
 
@@ -16,7 +19,6 @@ def seed_database() -> None:
 
         chunks_to_insert = []
 
-        # Par défaut, la source est le nom du fichier
         base_metadata = {"source": file_name}
 
         if extension == '.csv':
@@ -28,7 +30,6 @@ def seed_database() -> None:
         elif extension == '.md':
             documents = convert_markdown.parse_markdown(file_path)
             for doc in documents:
-                # doc.metadata contient déjà la source ET les titres grâce à la phase 1 !
                 chunks_to_insert.append((doc.page_content, doc.metadata))
 
         elif extension == '.txt':
@@ -36,13 +37,13 @@ def seed_database() -> None:
             for doc in documents:
                 chunks_to_insert.append((doc.page_content, base_metadata))
 
-        elif extension == '.json':  # Nouveau bloc JSON
+        elif extension == '.json':
             print(f"Processing JSON: {file_name}")
             data_chunks = convert_json.parse_json(file_path)
             for chunk in data_chunks:
                 chunks_to_insert.append((chunk, base_metadata))
 
-        # Insertion dans la base de données
+        # Insertion into the database
         if chunks_to_insert:
             print(f"Inserting {len(chunks_to_insert)} chunks from {file_name}...")
             for text_chunk, metadata_chunk in chunks_to_insert:
@@ -54,4 +55,3 @@ if __name__ == "__main__":
     seed_database()
 
 # TRUNCATE TABLE documents RESTART IDENTITY;
-# ALTER TABLE documents ADD COLUMN metadata JSONB DEFAULT '{}'::jsonb;

@@ -8,15 +8,6 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 def process_text_file(file_path: str, chunk_size: int = 500, chunk_overlap: int = 50) -> List[Document]:
     """
     Loads a text file and splits it into smaller chunks for vector indexing.
-
-    Args:
-        file_path (str): The path to the .txt file.
-        chunk_size (int): The maximum number of characters per chunk.
-        chunk_overlap (int): The number of characters to overlap between chunks
-                             to maintain context.
-
-    Returns:
-        List[Document]: A list of LangChain Document objects ready for embedding.
     """
     # Loading the document
     # TextLoader is robust for UTF-8 encoded text files
