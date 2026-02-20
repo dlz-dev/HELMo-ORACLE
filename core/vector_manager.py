@@ -50,12 +50,30 @@ class VectorManager:
     def add_document(self, text: str, metadata: dict = None) -> None:
         """
         Generates an embedding and saves the text WITH its metadata.
+        Uses Contextual Embedding to enrich the vector before saving.
         """
         if metadata is None:
             metadata = {}
 
-        vector = self.embeddings_model.embed_query(text)
+        # 1. Prepare the contextualized text for the embedding model
+        text_to_embed = text
 
+        # If it's a long text file with a global context
+        if "global_context" in metadata:
+            text_to_embed = f"Global Context: {metadata['global_context']}\n\nContent: {text}"
+
+        # If it's a Markdown file (headers from Phase 1)
+        elif "Header 1" in metadata:
+            text_to_embed = f"Chapter: {metadata['Header 1']}\n\nContent: {text}"
+
+        # If it's a JSON file (categories and items)
+        elif "category" in metadata and "item_name" in metadata:
+            text_to_embed = f"Category: {metadata['category']} | Item: {metadata['item_name']}\n\nContent: {text}"
+
+        # 2. Vectorize the RICH text (context + content)
+        vector = self.embeddings_model.embed_query(text_to_embed)
+
+        # 3. Save the ORIGINAL text in the database (so the Oracle reads the clean version)
         with self.conn.cursor() as cur:
             cur.execute(
                 "INSERT INTO documents (content, vecteur, metadata) VALUES (%s, %s, %s)",
