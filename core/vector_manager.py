@@ -21,6 +21,19 @@ else:
     # CLOUD: Use Streamlit Secrets
     config = st.secrets
 
+@st.cache_resource
+def get_embeddings_model():
+    model = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+        model_kwargs={'device': 'cpu'}
+    )
+    # Force le chargement des poids pour éviter l'erreur Meta Tensor
+    try:
+        model.embed_query("test")
+    except:
+        pass
+    return model
+
 
 class VectorManager:
     """
@@ -61,8 +74,7 @@ class VectorManager:
             )
 
         register_vector(self.conn)
-        self.embeddings_model = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+        self.embeddings_model = get_embeddings_model()
 
     def add_document(self, text: str, metadata: dict = None) -> None:
         """

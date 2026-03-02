@@ -10,7 +10,7 @@ def search_knowledge_base(query: str) -> str:
     gv = VectorManager()
     vecteur_query = gv.embeddings_model.embed_query(query)
 
-    resultats = gv.search_similar(vecteur_query, k=3)
+    resultats = gv.search_similar(vecteur_query, k=8)
 
     contexte_lignes = []
     for res in resultats:
