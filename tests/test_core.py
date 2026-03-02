@@ -1,10 +1,10 @@
+import json
 import unittest
 from unittest.mock import patch, MagicMock
 from langchain_core.documents import Document
 from core.ingestion import seed_database
 from core.preprocess import QuestionProcessor
 from core.vector_manager import VectorManager
-
 
 class TestSeedDatabase(unittest.TestCase):
 
@@ -38,9 +38,10 @@ class TestSeedDatabase(unittest.TestCase):
         # Assert
         self.assertEqual(mock_db_instance.add_document.call_count, 2)
 
+        # Les CSV sont maintenant convertis en chaînes JSON et incluent une metadata "source"
         expected_calls = [
-            unittest.mock.call("name: Alice age: 30"),
-            unittest.mock.call("name: Bob age: 25"),
+            unittest.mock.call('{"name": "Alice", "age": 30}', metadata={"source": "test.csv"}),
+            unittest.mock.call('{"name": "Bob", "age": 25}', metadata={"source": "test.csv"}),
         ]
 
         mock_db_instance.add_document.assert_has_calls(expected_calls, any_order=False)
@@ -60,9 +61,10 @@ class TestSeedDatabase(unittest.TestCase):
     ):
         mock_listdir.return_value = ["doc.md"]
 
+        # Le convertisseur Markdown renvoie désormais des objets Document, avec des métadonnées
         mock_parse_md.return_value = [
-            {"content": "Section 1"},
-            {"content": "Section 2"},
+            Document(page_content="Section 1", metadata={"Header 1": "Intro"}),
+            Document(page_content="Section 2", metadata={"Header 1": "Body"}),
         ]
 
         mock_db_instance = MagicMock()
@@ -71,8 +73,8 @@ class TestSeedDatabase(unittest.TestCase):
         seed_database()
 
         self.assertEqual(mock_db_instance.add_document.call_count, 2)
-        mock_db_instance.add_document.assert_any_call("Section 1")
-        mock_db_instance.add_document.assert_any_call("Section 2")
+        mock_db_instance.add_document.assert_any_call("Section 1", metadata={"Header 1": "Intro"})
+        mock_db_instance.add_document.assert_any_call("Section 2", metadata={"Header 1": "Body"})
 
     @patch("core.ingestion.os.listdir")
     @patch("core.ingestion.VectorManager")
@@ -90,8 +92,8 @@ class TestSeedDatabase(unittest.TestCase):
         mock_listdir.return_value = ["file.txt"]
 
         mock_process_text.return_value = [
-            Document(page_content="Chunk 1"),
-            Document(page_content="Chunk 2"),
+            Document(page_content="Chunk 1", metadata={}),
+            Document(page_content="Chunk 2", metadata={}),
         ]
 
         mock_db_instance = MagicMock()
@@ -100,8 +102,9 @@ class TestSeedDatabase(unittest.TestCase):
         seed_database()
 
         self.assertEqual(mock_db_instance.add_document.call_count, 2)
-        mock_db_instance.add_document.assert_any_call("Chunk 1")
-        mock_db_instance.add_document.assert_any_call("Chunk 2")
+        # L'ingestion des TXT ajoute la "source" dans base_metadata
+        mock_db_instance.add_document.assert_any_call("Chunk 1", metadata={"source": "file.txt"})
+        mock_db_instance.add_document.assert_any_call("Chunk 2", metadata={"source": "file.txt"})
 
     @patch("core.ingestion.os.listdir")
     @patch("core.ingestion.VectorManager")
@@ -227,7 +230,8 @@ class TestVectorManager(unittest.TestCase):
         args, kwargs = self.mock_cursor.execute.call_args
 
         self.assertIn("INSERT INTO documents", args[0])
-        self.assertEqual(args[1], ("hello world", fake_vector))
+        # Le script s'attend maintenant à ce que les métadonnées (même vides) soient dumpées en JSON "{}"
+        self.assertEqual(args[1], ("hello world", fake_vector, "{}"))
 
         # Vérifie commit
         self.mock_conn.commit.assert_called_once()

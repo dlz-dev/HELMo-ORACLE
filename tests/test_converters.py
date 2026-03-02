@@ -1,11 +1,19 @@
 import unittest
 import tempfile
 import os
+import json
+from converters.convert_json import parse_json
 from langchain_core.documents import Document
-from unittest.mock import patch, mock_open
 from converters.convert_csv import load_csv_data
 from converters.convert_markdown import parse_markdown
 from converters.convert_text import process_text_file
+
+
+def create_temp_file(content: str, suffix: str) -> str:
+    """Helper global pour créer un vrai fichier temporaire et renvoyer son chemin."""
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, encoding="utf-8", suffix=suffix) as tmp:
+        tmp.write(content)
+        return tmp.name
 
 
 class TestLoadCsvData(unittest.TestCase):
@@ -13,143 +21,165 @@ class TestLoadCsvData(unittest.TestCase):
     def test_load_csv_nominal(self):
         """Test le cas normal : un fichier CSV valide."""
         csv_content = "name,age\nAlice,30\nBob,25"
+        tmp_path = create_temp_file(csv_content, ".csv")
 
-        # On simule l'ouverture du fichier avec le contenu ci-dessus
-        with patch("builtins.open", mock_open(read_data=csv_content)):
-            result = load_csv_data("dummy_path.csv")
-
-        expected = [
-            {"name": "Alice", "age": "30"},
-            {"name": "Bob", "age": "25"}
-        ]
-        self.assertEqual(result, expected)
+        try:
+            result = load_csv_data(tmp_path)
+            expected = [
+                {"name": "Alice", "age": "30"},
+                {"name": "Bob", "age": "25"}
+            ]
+            self.assertEqual(result, expected)
+        finally:
+            os.remove(tmp_path)
 
     def test_load_csv_empty(self):
         """Test avec un fichier vide."""
-        with patch("builtins.open", mock_open(read_data="")):
-            result = load_csv_data("empty.csv")
+        tmp_path = create_temp_file("", ".csv")
 
-        self.assertEqual(result, [])
+        try:
+            result = load_csv_data(tmp_path)
+            self.assertEqual(result, [])
+        finally:
+            os.remove(tmp_path)
 
     def test_file_not_found(self):
         """Test si le fichier n'existe pas (doit lever FileNotFoundError)."""
-        # On fait en sorte que open lève une erreur
-        with patch("builtins.open", side_effect=FileNotFoundError):
-            with self.assertRaises(FileNotFoundError):
-                load_csv_data("non_existent.csv")
+        with self.assertRaises(FileNotFoundError):
+            load_csv_data("chemin_totalement_invente_qui_n_existe_pas.csv")
 
     def test_load_csv_headers_only(self):
         """Test un fichier qui n'a que des en-têtes mais pas de données."""
         csv_content = "col1,col2"
-        with patch("builtins.open", mock_open(read_data=csv_content)):
-            result = load_csv_data("headers_only.csv")
+        tmp_path = create_temp_file(csv_content, ".csv")
 
-        self.assertEqual(result, [])
+        try:
+            result = load_csv_data(tmp_path)
+            self.assertEqual(result, [])
+        finally:
+            os.remove(tmp_path)
 
 
 class TestParseMarkdown(unittest.TestCase):
 
     def test_nominal_parsing(self):
-        """Test un scénario standard avec différents types."""
+        """Test un scénario standard avec extraction des en-têtes dans les métadonnées."""
+        # Le MarkdownHeaderTextSplitter va retirer le "# Header" du texte
+        # et le placer dans les metadata sous la clé "Header 1".
         md_content = "# Header\n\nParagraph text.\n- List item"
+        tmp_path = create_temp_file(md_content, ".md")
 
-        with patch("builtins.open", mock_open(read_data=md_content)):
-            result = parse_markdown("dummy.md")
+        try:
+            result = parse_markdown(tmp_path)
 
-        self.assertEqual(len(result), 3)
+            # Avec Langchain, ce texte entier est regroupé sous un seul Document
+            self.assertEqual(len(result), 1)
 
-        # Test Header
-        self.assertEqual(result[0]['type'], 'heading')
-        self.assertEqual(result[0]['line_number'], 1)
+            # Vérification du type
+            self.assertIsInstance(result[0], Document)
 
-        # Test Paragraph (Notez que la ligne vide est sautée, donc ligne 3)
-        self.assertEqual(result[1]['type'], 'paragraph')
-        self.assertEqual(result[1]['line_number'], 3)
+            # Vérification du contenu (le titre a été extrait)
+            self.assertEqual(result[0].page_content, "Paragraph text.\n- List item")
 
-        # Test List
-        self.assertEqual(result[2]['type'], 'list_item')
+            # Vérification des métadonnées (Titre + Source)
+            self.assertEqual(result[0].metadata["Header 1"], "Header")
+            self.assertEqual(result[0].metadata["source"], os.path.basename(tmp_path))
 
-    def test_strip_behavior(self):
-        """Vérifie que les espaces inutiles sont retirés."""
-        md_content = "   # Indented Header   "
+        finally:
+            os.remove(tmp_path)
 
-        with patch("builtins.open", mock_open(read_data=md_content)):
-            result = parse_markdown("dummy.md")
+    def test_multiple_headers_logic(self):
+        """Vérifie que le découpage sépare bien les sections selon les en-têtes (H1, H2)."""
+        md_content = "# Title 1\n\nContent for title 1.\n\n## Title 2\n\nContent for title 2."
+        tmp_path = create_temp_file(md_content, ".md")
 
-        self.assertEqual(result[0]['content'], "# Indented Header")
-        self.assertEqual(result[0]['type'], 'heading')
+        try:
+            result = parse_markdown(tmp_path)
 
-    def test_empty_lines_logic(self):
-        """Vérifie que les lignes vides ou avec espaces seuls sont ignorées."""
-        md_content = "Line 1\n\n   \nLine 4"
+            # On attend 2 documents car il y a deux sections distinctes
+            self.assertEqual(len(result), 2)
 
-        with patch("builtins.open", mock_open(read_data=md_content)):
-            result = parse_markdown("dummy.md")
+            # Vérification du premier chunk
+            self.assertEqual(result[0].page_content, "Content for title 1.")
+            self.assertEqual(result[0].metadata["Header 1"], "Title 1")
 
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0]['line_number'], 1)
-        self.assertEqual(result[1]['line_number'], 4)
+            # Vérification du second chunk (qui hérite du H1 et possède son propre H2)
+            self.assertEqual(result[1].page_content, "Content for title 2.")
+            self.assertEqual(result[1].metadata["Header 1"], "Title 1")
+            self.assertEqual(result[1].metadata["Header 2"], "Title 2")
 
-    class TestProcessTextFile(unittest.TestCase):
+        finally:
+            os.remove(tmp_path)
 
-        def setUp(self):
-            """
-            Create a temporary text file for testing.
-            """
-            self.test_content = (
-                "This is a test document.\n\n"
-                "It contains multiple paragraphs.\n\n"
-                "We want to split it into chunks for vector indexing."
-            )
+    def test_chunking_size_logic(self):
+        """Vérifie que le RecursiveCharacterTextSplitter coupe les gros blocs (chunk_size=500)."""
+        # Création d'un très long texte de 600 caractères
+        long_text = "A" * 600
+        md_content = f"# Big Header\n\n{long_text}"
+        tmp_path = create_temp_file(md_content, ".md")
 
-            self.temp_file = tempfile.NamedTemporaryFile(
-                mode="w",
-                delete=False,
-                encoding="utf-8",
-                suffix=".txt"
-            )
-            self.temp_file.write(self.test_content)
-            self.temp_file.close()
+        try:
+            result = parse_markdown(tmp_path)
 
-        def tearDown(self):
-            """
-            Remove temporary file after tests.
-            """
-            os.remove(self.temp_file.name)
+            # Le texte dépassant les 500 caractères, il doit être découpé en plusieurs morceaux
+            self.assertGreater(len(result), 1)
 
-        def test_returns_list_of_documents(self):
-            chunks = process_text_file(self.temp_file.name)
+            # Chaque morceau doit conserver les métadonnées de l'en-tête
+            for chunk in result:
+                self.assertEqual(chunk.metadata["Header 1"], "Big Header")
+                self.assertLessEqual(len(chunk.page_content), 500)
 
-            self.assertIsInstance(chunks, list)
-            self.assertTrue(all(isinstance(chunk, Document) for chunk in chunks))
+        finally:
+            os.remove(tmp_path)
 
-        def test_chunking_occurs(self):
-            chunks = process_text_file(
-                self.temp_file.name,
-                chunk_size=30,
-                chunk_overlap=0
-            )
+class TestProcessTextFile(unittest.TestCase):
 
-            # Should produce more than one chunk
-            self.assertGreater(len(chunks), 1)
+    def setUp(self):
+        """Crée un fichier texte temporaire pour la suite de tests."""
+        self.test_content = (
+            "This is a test document.\n\n"
+            "It contains multiple paragraphs.\n\n"
+            "We want to split it into chunks for vector indexing."
+        )
+        self.tmp_path = create_temp_file(self.test_content, ".txt")
 
-        def test_chunk_size_respected(self):
-            chunk_size = 40
-            chunks = process_text_file(
-                self.temp_file.name,
-                chunk_size=chunk_size,
-                chunk_overlap=0
-            )
+    def tearDown(self):
+        """Nettoie le fichier temporaire après les tests."""
+        if os.path.exists(self.tmp_path):
+            os.remove(self.tmp_path)
 
-            for chunk in chunks:
-                self.assertLessEqual(len(chunk.page_content), chunk_size)
+    def test_returns_list_of_documents(self):
+        chunks = process_text_file(self.tmp_path)
+        self.assertIsInstance(chunks, list)
+        self.assertTrue(all(isinstance(chunk, Document) for chunk in chunks))
 
-        def test_chunk_overlap(self):
-            chunk_size = 50
+    def test_chunking_occurs(self):
+        chunks = process_text_file(
+            self.tmp_path,
+            chunk_size=30,
+            chunk_overlap=0
+        )
+        self.assertGreater(len(chunks), 1)
+
+    def test_chunk_size_respected(self):
+        chunk_size = 40
+        chunks = process_text_file(
+            self.tmp_path,
+            chunk_size=chunk_size,
+            chunk_overlap=0
+        )
+        for chunk in chunks:
+            self.assertLessEqual(len(chunk.page_content), chunk_size)
+
+    def test_chunk_overlap(self):
+        long_string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        tmp_path = create_temp_file(long_string, ".txt")
+
+        try:
+            chunk_size = 30
             chunk_overlap = 10
-
             chunks = process_text_file(
-                self.temp_file.name,
+                tmp_path,
                 chunk_size=chunk_size,
                 chunk_overlap=chunk_overlap
             )
@@ -157,20 +187,115 @@ class TestParseMarkdown(unittest.TestCase):
             if len(chunks) > 1:
                 first_chunk = chunks[0].page_content
                 second_chunk = chunks[1].page_content
-
-                # Vérifie que la fin du premier chunk correspond
-                # au début du second chunk (overlap)
                 self.assertEqual(
                     first_chunk[-chunk_overlap:],
                     second_chunk[:chunk_overlap]
                 )
+        finally:
+            os.remove(tmp_path)
 
-        def test_metadata_contains_source(self):
-            chunks = process_text_file(self.temp_file.name)
+    def test_metadata_contains_source(self):
+        chunks = process_text_file(self.tmp_path)
+        for chunk in chunks:
+            self.assertIn("source", chunk.metadata)
+            self.assertEqual(chunk.metadata["source"], self.tmp_path)
 
-            for chunk in chunks:
-                self.assertIn("source", chunk.metadata)
-                self.assertEqual(chunk.metadata["source"], self.temp_file.name)
+
+class TestParseJson(unittest.TestCase):
+
+    def test_dict_with_list_of_objects(self):
+        """Teste un dictionnaire contenant une liste d'objets et l'extraction de 'id', 'name' ou 'nom'."""
+        json_data = {
+            "utilisateurs": [
+                {"id": 101, "role": "admin"},
+                {"name": "Alice", "age": 30},
+                {"nom": "Bob", "job": "dev"},
+                {"age": 25}  # Pas d'identifiant
+            ]
+        }
+        tmp_path = create_temp_file(json.dumps(json_data), ".json")
+
+        try:
+            result = parse_json(tmp_path)
+
+            # On s'attend à 4 chunks (1 par utilisateur dans la liste)
+            self.assertEqual(len(result), 4)
+
+            # Vérification du premier élément (clé 'id' extraite en 'item_name')
+            self.assertEqual(result[0][0], '{"id": 101, "role": "admin"}')
+            self.assertEqual(result[0][1], {"category": "utilisateurs", "item_name": "101"})
+
+            # Vérification du deuxième (clé 'name' extraite)
+            self.assertEqual(result[1][1], {"category": "utilisateurs", "item_name": "Alice"})
+
+            # Vérification du troisième (clé 'nom' extraite)
+            self.assertEqual(result[2][1], {"category": "utilisateurs", "item_name": "Bob"})
+
+            # Vérification du quatrième (sans identifiant, il a juste la catégorie)
+            self.assertEqual(result[3][1], {"category": "utilisateurs"})
+
+        finally:
+            os.remove(tmp_path)
+
+    def test_dict_with_single_object_and_raw_value(self):
+        """Teste un dictionnaire avec un sous-dictionnaire et une valeur brute."""
+        json_data = {
+            "config": {"theme": "dark", "lang": "fr"},
+            "version": 2.0
+        }
+        tmp_path = create_temp_file(json.dumps(json_data), ".json")
+
+        try:
+            result = parse_json(tmp_path)
+            self.assertEqual(len(result), 2)
+
+            # Vérification de l'objet unique
+            self.assertEqual(result[0][0], '{"theme": "dark", "lang": "fr"}')
+            self.assertEqual(result[0][1], {"category": "config"})
+
+            # Vérification de la valeur brute (castée en string)
+            self.assertEqual(result[1][0], "2.0")
+            self.assertEqual(result[1][1], {"category": "version"})
+
+        finally:
+            os.remove(tmp_path)
+
+    def test_direct_list(self):
+        """Teste le scénario où le JSON est directement une liste au niveau racine (sans parent_key)."""
+        json_data = [
+            {"id": "A1", "value": 10},
+            {"value": 20}
+        ]
+        tmp_path = create_temp_file(json.dumps(json_data), ".json")
+
+        try:
+            result = parse_json(tmp_path)
+            self.assertEqual(len(result), 2)
+
+            # Les items ont un item_name mais pas de category
+            self.assertEqual(result[0][0], '{"id": "A1", "value": 10}')
+            self.assertEqual(result[0][1], {"item_name": "A1"})
+
+            self.assertEqual(result[1][0], '{"value": 20}')
+            self.assertEqual(result[1][1], {})
+
+        finally:
+            os.remove(tmp_path)
+
+    def test_primitive_root(self):
+        """Teste le cas extrême où le JSON est juste une valeur primitive (ex: juste une chaîne de caractères)."""
+        json_data = "Just a simple string"
+        tmp_path = create_temp_file(json.dumps(json_data), ".json")
+
+        try:
+            result = parse_json(tmp_path)
+            self.assertEqual(len(result), 1)
+
+            self.assertEqual(result[0][0], "Just a simple string")
+            self.assertEqual(result[0][1], {})  # Métadonnées vides
+
+        finally:
+            os.remove(tmp_path)
 
 
 if __name__ == '__main__':
