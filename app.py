@@ -15,11 +15,15 @@ if os.path.exists(CONFIG_PATH):
     with open(CONFIG_PATH, "r", encoding='utf-8') as f:
         config = yaml.safe_load(f)
 else:
+    # CLOUD : On utilise la syntaxe "attribut" . accessible sur Streamlit Cloud
     config = {
         "api": {
-            "model": st.secrets["api"]["model"],
-            "temperature": st.secrets["api"]["temperature"],
-            "api_key": st.secrets["api"]["api_key"]
+            "model": st.secrets.api.model,
+            "temperature": st.secrets.api.temperature,
+            "api_key": st.secrets.api.api_key
+        },
+        "database": {
+            "connection_string": st.secrets.database.connection_string
         }
     }
 
@@ -27,7 +31,8 @@ if os.path.exists(PROMPT_PATH):
     with open(PROMPT_PATH, "r", encoding='utf-8') as f:
         SYSTEM_PROMPT = f.read()
 else:
-    SYSTEM_PROMPT = st.secrets["prompts"]["system_prompt"]
+    # Récupération du prompt dans la section [prompts]
+    SYSTEM_PROMPT = st.secrets.prompts.system_prompt
 
 llm = ChatGroq(
     model=config["api"]["model"],
