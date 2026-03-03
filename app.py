@@ -29,15 +29,23 @@ if os.path.exists(PROMPT_PATH):
 else:
     SYSTEM_PROMPT = st.secrets["prompts"]["system_prompt"]
 
-llm = ChatGroq(
-    model=config["api"]["model"],
-    temperature=config["api"]["temperature"],
-    api_key=config["api"]["api_key"]
-)
+# fix model call (creating a function to call the model only once)
 
-tools = [search_knowledge_base]
+@st.cache_resource
+def load_agent():
+    print("🔮 Oracle initialized - Agent created once")
 
-agent = create_react_agent(llm, tools, prompt=SYSTEM_PROMPT)
+    llm = ChatGroq(
+        model=config["api"]["model"],
+        temperature=config["api"]["temperature"],
+        api_key=config["api"]["api_key"]
+    )
+
+    tools = [search_knowledge_base]
+
+    return create_react_agent(llm, tools, prompt=SYSTEM_PROMPT)
+
+agent = load_agent()
 
 st.set_page_config(page_title="HELMo's Oracle", page_icon="🔮")
 st.title("🔮 The Sacred Oracle")
