@@ -1,5 +1,5 @@
 """
-LLM Error Handler — providers/error_handler.py
+LLM Error Handler
 
 Intercepts raw API exceptions from all providers and converts them into
 structured, user-friendly OracleError objects.

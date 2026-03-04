@@ -1,6 +1,4 @@
 """
-core/memory_manager.py
-
 Implements a SummaryBuffer memory strategy compatible with LangGraph's
 create_react_agent — without using LangChain's ConversationSummaryBufferMemory
 (which is designed for classic chains, not agents).

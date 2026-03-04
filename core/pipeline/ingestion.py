@@ -1,6 +1,4 @@
 """
-core/ingestion.py
-
 Pipeline d'ingestion des fichiers lore dans la base vectorielle.
 
 Étapes pour chaque fichier :
