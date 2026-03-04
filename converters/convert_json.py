@@ -1,15 +1,25 @@
 import json
 from typing import List, Tuple
 
-
 def parse_json(file_path: str) -> List[Tuple[str, dict]]:
     """
     Reads a JSON file and splits it into logical objects.
     Extracts parent keys as metadata.
     Returns a list of tuples (chunk_text, metadata_dictionary).
     """
-    with open(file_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+    try:
+        # Ajout de errors='strict'
+        with open(file_path, 'r', encoding='utf-8', errors='strict') as f:
+            data = json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"Fichier JSON invalide ignoré ({file_path}) : {e}")
+        return []
+    except UnicodeDecodeError as e:
+        print(f"Erreur d'encodage (non UTF-8 valide) pour {file_path} : {e}")
+        return []
+    except Exception as e:
+        print(f"Erreur inattendue lors de la lecture de {file_path} : {e}")
+        return []
 
     chunks_with_metadata = []
 

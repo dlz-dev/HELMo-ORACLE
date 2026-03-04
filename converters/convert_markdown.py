@@ -10,7 +10,7 @@ def parse_markdown(file_path: str) -> List[Document]:
     Reads a Markdown file, extracts the heading hierarchy (Phase 1),
     and splits the content into chunks of reasonable size.
     """
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, 'r', encoding='utf-8', errors='strict') as f:
         md_text = f.read()
 
     # Define which headings to track
