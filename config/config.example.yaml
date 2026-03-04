@@ -20,15 +20,28 @@ llm:
 
   groq:
     api_key: "your_groq_api_key"
+    # Optional: override the default model list shown in sidebar
+    # models:
+    #   - "llama-3.3-70b-versatile"
+    #   - "mixtral-8x7b-32768"
 
   openai:
     api_key: "your_openai_api_key"
+    # models:
+    #   - "gpt-4o"
+    #   - "gpt-4o-mini"
 
   anthropic:
     api_key: "your_anthropic_api_key"
+    # models:
+    #   - "claude-sonnet-4-5"
+    #   - "claude-haiku-4-5"
 
   gemini:
     api_key: "your_google_api_key"
+    # models:
+    #   - "gemini-2.0-flash"
+    #   - "gemini-1.5-pro"
 
   ollama:
     base_url: "http://localhost:11434"
