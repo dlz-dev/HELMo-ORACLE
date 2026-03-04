@@ -1,13 +1,37 @@
-# config.yaml
+# config.example.yaml  ← copy this to config.yaml and fill in your values
+# ─────────────────────────────────────────────────────────────────
+# Database (Supabase / PostgreSQL)
+# ─────────────────────────────────────────────────────────────────
 database:
-  connection_string: "db_connexion"
   dbname: "database_name"
   user: "user_name"
   password: "password"
   host: "host_database"
-  port: 0000
+  port: 6543
+  connection_string: "postgresql://user:password@host:port/dbname"
 
-api:
-  model: "model_name"
+# ─────────────────────────────────────────────────────────────────
+# LLM Configuration
+# ─────────────────────────────────────────────────────────────────
+llm:
+  default_provider: "groq"       # groq | openai | anthropic | gemini | ollama
+  default_model: "llama-3.3-70b-versatile"
   temperature: 0
-  api_key: "api_key"
+
+  groq:
+    api_key: "your_groq_api_key"
+
+  openai:
+    api_key: "your_openai_api_key"
+
+  anthropic:
+    api_key: "your_anthropic_api_key"
+
+  gemini:
+    api_key: "your_google_api_key"
+
+  ollama:
+    base_url: "http://localhost:11434"
+    models:
+      - "llama3.1"
+      - "mistral"
