@@ -252,6 +252,39 @@ class VectorManager:
         ]
 
     # ─────────────────────────────────────────────────────────────
+    # DATABASE EXPLORER
+    # ─────────────────────────────────────────────────────────────
+
+    def list_sources(self) -> list[dict]:
+        """
+        Returns one entry per unique source file in the database.
+        Each entry: { source, chunk_count, global_context, ingested_at }
+        Groups by source filename — not by individual chunk.
+        """
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute("""
+                            SELECT metadata ->>'source' AS source, COUNT (*) AS chunk_count, MAX (metadata->>'global_context') AS global_context, MAX (ingested_at) AS ingested_at
+                            FROM documents
+                            WHERE metadata->>'source' IS NOT NULL
+                            GROUP BY metadata->>'source'
+                            ORDER BY MAX (ingested_at) DESC NULLS LAST
+                            """)
+                rows = cur.fetchall()
+                return [
+                    {
+                        "source": r[0],
+                        "chunk_count": r[1],
+                        "global_context": r[2] or "Aucun contexte global disponible.",
+                        "ingested_at": r[3].strftime("%Y-%m-%d %H:%M UTC") if r[3] else "—",
+                    }
+                    for r in rows
+                ]
+        except Exception as e:
+            print(f"⚠️  list_sources failed: {e}")
+            return []
+
+    # ─────────────────────────────────────────────────────────────
     # LEGACY
     # ─────────────────────────────────────────────────────────────
 
