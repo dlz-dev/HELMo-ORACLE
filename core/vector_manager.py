@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime, timezone
 from typing import List, Tuple
 
 import psycopg
@@ -25,6 +26,22 @@ class VectorManager:
     """
     Handles connections to the PostgreSQL/Supabase database and manages
     vector operations using pgvector.
+
+    Table schema expected:
+        CREATE TABLE documents (
+            id          BIGSERIAL PRIMARY KEY,
+            content     TEXT,
+            vecteur     VECTOR(384),
+            metadata    JSONB,
+            ingested_at TIMESTAMPTZ DEFAULT now()
+        );
+
+    To add the column to an existing table (run once in Supabase SQL editor):
+        ALTER TABLE documents
+            ADD COLUMN IF NOT EXISTS ingested_at TIMESTAMPTZ DEFAULT now();
+
+        -- Optional: backfill existing rows with a placeholder date
+        UPDATE documents SET ingested_at = now() WHERE ingested_at IS NULL;
     """
 
     def __init__(self):
@@ -49,8 +66,12 @@ class VectorManager:
 
     def add_document(self, text: str, metadata: dict = None) -> None:
         """
-        Generates an embedding and saves the text WITH its metadata.
-        Uses Contextual Embedding to enrich the vector before saving.
+        Generates an embedding and saves the text WITH its metadata and ingestion timestamp.
+
+        The ingested_at column records the exact UTC moment the chunk was inserted.
+        All chunks from the same ingestion run share the same timestamp (set once
+        per add_document call), allowing you to group or filter by ingestion batch
+        using: WHERE ingested_at::date = '2025-06-01'
         """
         if metadata is None:
             metadata = {}
@@ -73,11 +94,14 @@ class VectorManager:
         # 2. Vectorize the RICH text (context + content)
         vector = self.embeddings_model.embed_query(text_to_embed)
 
-        # 3. Save the ORIGINAL text in the database (so the Oracle reads the clean version)
+        # 3. Capture ingestion timestamp (UTC)
+        ingested_at = datetime.now(timezone.utc)
+
+        # 4. Save the ORIGINAL text + timestamp in the database
         with self.conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO documents (content, vecteur, metadata) VALUES (%s, %s, %s)",
-                (text, vector, json.dumps(metadata))
+                "INSERT INTO documents (content, vecteur, metadata, ingested_at) VALUES (%s, %s, %s, %s)",
+                (text, vector, json.dumps(metadata), ingested_at)
             )
         self.conn.commit()
 
