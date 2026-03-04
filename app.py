@@ -1,4 +1,5 @@
 import os
+import re
 
 import streamlit as st
 import yaml
@@ -9,6 +10,48 @@ from core.session_manager import SessionManager, _is_cloud
 from core.memory_manager import MemoryManager
 from providers import get_llm, get_available_models, PROVIDER_LABELS
 from providers.error_handler import handle_llm_error, OracleError
+
+# ─────────────────────────────────────────────────────────────────
+# Response formatter — fixes LLM plain text → proper Markdown
+# ─────────────────────────────────────────────────────────────────
+def _format_response(text: str) -> str:
+    """
+    Converts LLM plain-text output to proper Markdown for Streamlit rendering.
+
+    Fixes:
+    - Bullet points: • or · at line start  →  proper "- " markdown list items
+    - Section headers: short lines ending with ":"  →  **bold header**
+    - Cleans up excessive blank lines (max 1 consecutive blank line)
+    """
+    lines = text.split("\n")
+    formatted = []
+
+    for line in lines:
+        stripped = line.strip()
+
+        # Convert bullet characters to markdown list items
+        if stripped.startswith("•") or stripped.startswith("·"):
+            line = "- " + stripped[1:].strip()
+
+        # Section headers: short line ending with ":" → bold
+        elif (
+            stripped.endswith(":")
+            and len(stripped) < 60
+            and not stripped.startswith("-")
+            and not stripped.startswith("*")
+            and not stripped.startswith("[")   # avoid mangling [Source: ...]
+        ):
+            line = f"\n**{stripped}**"
+
+        else:
+            line = stripped if stripped else ""
+
+        formatted.append(line)
+
+    # Remove excessive blank lines (max 1 consecutive)
+    result = "\n".join(formatted)
+    result = re.sub(r"\n{3,}", "\n\n", result)
+    return result.strip()
 
 # ─────────────────────────────────────────────────────────────────
 # Config & Prompt loading
@@ -177,22 +220,30 @@ session = st.session_state.current_session
 # Agent factory
 # ─────────────────────────────────────────────────────────────────
 @st.cache_resource(hash_funcs={dict: lambda d: str(sorted(d.items()))})
-def load_agent(provider_key: str, model: str, temp: float, _config: dict, system_prompt: str):
-    print(f"🔮 Oracle initialized — provider={provider_key}, model={model}, temp={temp}")
-    llm = get_llm(
+def load_llm(provider_key: str, model: str, temp: float, _config: dict):
+    """
+    The LLM is cached by (provider, model, temperature) — expensive to create.
+    The agent is NOT cached because its system prompt changes with memory summaries.
+    Separating the two avoids stale agents serving wrong context.
+    """
+    print(f"🔮 LLM initialized — provider={provider_key}, model={model}, temp={temp}")
+    return get_llm(
         provider_key=provider_key,
         model=model,
         config={**_config, "llm": {**_config.get("llm", {}), "temperature": temp}},
     )
-    tools = [search_knowledge_base]
-    return llm, create_react_agent(llm, tools, prompt=system_prompt)
 
 
 try:
-    # Build the enriched system prompt with memory summary injected
+    # LLM is cached (costly) — agent is rebuilt fresh each run (cheap, avoids stale cache)
+    llm = load_llm(selected_provider, selected_model, temperature, config)
+
+    # Build enriched prompt with current memory summary injected
     enriched_prompt, _ = mm.build_agent_input(session, BASE_SYSTEM_PROMPT)
 
-    llm, agent = load_agent(selected_provider, selected_model, temperature, config, enriched_prompt)
+    # Always fresh — no cache — system prompt reflects current session memory
+    agent = create_react_agent(llm, [search_knowledge_base], prompt=enriched_prompt)
+
     st.caption(f"Connected to **{selected_provider_label}** · `{selected_model}`")
 
     # Show memory status in caption if a summary exists
@@ -246,6 +297,8 @@ if prompt := st.chat_input("What do the ancient scriptures say?"):
             with st.spinner("The Oracle is consulting the stars..."):
                 result = agent.invoke({"messages": history})
                 response = result["messages"][-1].content
+
+            response = _format_response(result["messages"][-1].content)
 
             st.markdown(response)
 
