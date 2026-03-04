@@ -19,7 +19,7 @@ def is_valid_lore_file(file_path: str, llm: ChatGroq) -> bool:
     """
     try:
         # On lit seulement les 1500 premiers caractères
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, 'r', encoding='utf-8', errors='strict') as f:
             sample_text = f.read(1500)
     except Exception as e:
         print(f"⚠️ Erreur de lecture pour la validation : {e}")
