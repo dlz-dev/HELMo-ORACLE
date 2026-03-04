@@ -5,6 +5,8 @@ import yaml
 from langgraph.prebuilt import create_react_agent
 
 from core.tools_oracle import search_knowledge_base
+from core.session_manager import SessionManager, _is_cloud
+from core.memory_manager import MemoryManager
 from providers import get_llm, get_available_models, PROVIDER_LABELS
 from providers.error_handler import handle_llm_error, OracleError
 
@@ -23,9 +25,9 @@ else:
 
 if os.path.exists(PROMPT_PATH):
     with open(PROMPT_PATH, "r", encoding="utf-8") as f:
-        SYSTEM_PROMPT = f.read()
+        BASE_SYSTEM_PROMPT = f.read()
 else:
-    SYSTEM_PROMPT = st.secrets["prompts"]["system_prompt"]
+    BASE_SYSTEM_PROMPT = st.secrets["prompts"]["system_prompt"]
 
 # ─────────────────────────────────────────────────────────────────
 # Page setup
@@ -34,23 +36,30 @@ st.set_page_config(page_title="HELMo's Oracle", page_icon="🔮")
 st.title("🔮 The Sacred Oracle")
 
 # ─────────────────────────────────────────────────────────────────
+# Singletons
+# ─────────────────────────────────────────────────────────────────
+@st.cache_resource
+def get_session_manager() -> SessionManager:
+    return SessionManager()
+
+@st.cache_resource
+def get_memory_manager() -> MemoryManager:
+    max_tokens = config.get("memory", {}).get("max_recent_tokens", 2000)
+    min_recent = config.get("memory", {}).get("min_recent_messages", 4)
+    return MemoryManager(max_recent_tokens=max_tokens, min_recent_messages=min_recent)
+
+sm = get_session_manager()
+mm = get_memory_manager()
+
+# ─────────────────────────────────────────────────────────────────
 # Error display helper
 # ─────────────────────────────────────────────────────────────────
 def display_error(err: OracleError) -> None:
-    """
-    Renders a structured, user-friendly error card in the Streamlit chat.
-    Three layers of information:
-      1. A clear title & plain-English explanation  → for everyone
-      2. An actionable suggestion                   → for everyone
-      3. A collapsible technical detail             → for developers
-    """
     st.error(
         f"**{err.icon} {err.title}**\n\n"
         f"{err.message}\n\n"
         f"💡 **What to do:** {err.suggestion}"
     )
-
-    # Collapsible technical details — visible but not intrusive
     with st.expander("🔧 Technical details (for developers)"):
         st.code(
             f"Error type : {err.error_type.value}\n"
@@ -60,13 +69,23 @@ def display_error(err: OracleError) -> None:
             language="text",
         )
 
-
 # ─────────────────────────────────────────────────────────────────
-# Sidebar — LLM provider selector
+# Sidebar
 # ─────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.header("⚙️ Oracle Configuration")
 
+    # ── Logged-in user (cloud only) ───────────────────────────────
+    if _is_cloud():
+        try:
+            user = st.experimental_user
+            if user and user.email:
+                st.caption(f"👤 Connected as **{user.name or user.email}**")
+        except Exception:
+            pass
+        st.divider()
+
+    # ── LLM Provider & Model ──────────────────────────────────────
     provider_options = list(PROVIDER_LABELS.keys())
     provider_display = list(PROVIDER_LABELS.values())
 
@@ -89,58 +108,100 @@ with st.sidebar:
         available_models.index(default_model)
         if default_model in available_models else 0
     )
-
-    selected_model = st.selectbox(
-        "🧩 Model",
-        options=available_models,
-        index=default_model_idx,
-    )
+    selected_model = st.selectbox("🧩 Model", options=available_models, index=default_model_idx)
 
     temperature = st.slider(
         "🌡️ Temperature",
-        min_value=0.0,
-        max_value=1.0,
+        min_value=0.0, max_value=1.0,
         value=float(config.get("llm", {}).get("temperature", 0)),
         step=0.05,
     )
 
     if selected_provider == "ollama":
         ollama_url = config.get("llm", {}).get("ollama", {}).get("base_url", "http://localhost:11434")
-        st.caption(f"🏠 Connecting to local Ollama at `{ollama_url}`")
+        st.caption(f"🏠 Connecting to Ollama at `{ollama_url}`")
         st.caption("Make sure Ollama is running: `ollama serve`")
+
+    st.divider()
+
+    # ── Session management ────────────────────────────────────────
+    st.subheader("💬 Sessions")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("✨ New", use_container_width=True):
+            new_session = sm.new_session(provider=selected_provider, model=selected_model)
+            st.session_state.current_session = new_session
+            st.rerun()
+    with col2:
+        if st.button("🗑️ Delete", use_container_width=True):
+            if "current_session" in st.session_state:
+                sm.delete(st.session_state.current_session["session_id"])
+                del st.session_state.current_session
+                st.rerun()
+
+    # Past sessions list
+    past_sessions = sm.list_sessions()
+    if past_sessions:
+        st.caption(f"📁 {len(past_sessions)} saved session(s) — backend: `{sm.backend_name}`")
+        for s in past_sessions:
+            # Highlight active session
+            is_active = (
+                "current_session" in st.session_state
+                and st.session_state.current_session["session_id"] == s["session_id"]
+            )
+            label = f"{'▶ ' if is_active else ''}{s['title'][:35]}"
+            if st.button(label, key=f"sess_{s['session_id']}", use_container_width=True):
+                loaded = sm.load(s["session_id"])
+                if loaded:
+                    st.session_state.current_session = loaded
+                    st.rerun()
+    else:
+        st.caption("No saved sessions yet.")
 
     st.divider()
     st.caption("Changes apply on next message.")
 
 # ─────────────────────────────────────────────────────────────────
-# Agent factory — recreated when provider/model changes
+# Session init
+# ─────────────────────────────────────────────────────────────────
+if "current_session" not in st.session_state:
+    st.session_state.current_session = sm.new_session(
+        provider=selected_provider,
+        model=selected_model,
+    )
+
+session = st.session_state.current_session
+
+# ─────────────────────────────────────────────────────────────────
+# Agent factory
 # ─────────────────────────────────────────────────────────────────
 @st.cache_resource(hash_funcs={dict: lambda d: str(sorted(d.items()))})
-def load_agent(provider_key: str, model: str, temp: float, _config: dict):
-    """
-    Creates the LangGraph ReAct agent.
-    Cached per (provider, model, temperature) — rebuilt only when settings change.
-    """
+def load_agent(provider_key: str, model: str, temp: float, _config: dict, system_prompt: str):
     print(f"🔮 Oracle initialized — provider={provider_key}, model={model}, temp={temp}")
-
     llm = get_llm(
         provider_key=provider_key,
         model=model,
         config={**_config, "llm": {**_config.get("llm", {}), "temperature": temp}},
     )
-
     tools = [search_knowledge_base]
-    return create_react_agent(llm, tools, prompt=SYSTEM_PROMPT)
+    return llm, create_react_agent(llm, tools, prompt=system_prompt)
 
 
-# ── Agent init (errors here = config/key problem, block the whole app) ──────
 try:
-    agent = load_agent(selected_provider, selected_model, temperature, config)
+    # Build the enriched system prompt with memory summary injected
+    enriched_prompt, _ = mm.build_agent_input(session, BASE_SYSTEM_PROMPT)
+
+    llm, agent = load_agent(selected_provider, selected_model, temperature, config, enriched_prompt)
     st.caption(f"Connected to **{selected_provider_label}** · `{selected_model}`")
+
+    # Show memory status in caption if a summary exists
+    if session.get("summary"):
+        word_count = len(session["summary"].split())
+        st.caption(f"🧠 Memory active — {len(session['messages'])} recent messages + {word_count}-word summary")
 
 except Exception as e:
     oracle_error = handle_llm_error(e, provider=selected_provider, model=selected_model)
-
     st.error(
         f"**{oracle_error.icon} {oracle_error.title}**\n\n"
         f"The Oracle could not start.\n\n"
@@ -160,22 +221,25 @@ except Exception as e:
 # ─────────────────────────────────────────────────────────────────
 # Chat UI
 # ─────────────────────────────────────────────────────────────────
-if "messages" not in st.session_state:
-    st.session_state.messages = []
 
-for msg in st.session_state.messages:
+# Display current session title
+if session.get("title") and session["title"] != "New conversation":
+    st.caption(f"📖 **{session['title']}**")
+
+# Render existing messages
+for msg in session.get("messages", []):
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
 if prompt := st.chat_input("What do the ancient scriptures say?"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
+
+    # Add user message to session
+    session["messages"].append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    history = [
-        ("user" if msg["role"] == "user" else "assistant", msg["content"])
-        for msg in st.session_state.messages
-    ]
+    # Build history from recent window (memory-aware)
+    _, history = mm.build_agent_input(session, BASE_SYSTEM_PROMPT)
 
     with st.chat_message("assistant"):
         try:
@@ -184,9 +248,22 @@ if prompt := st.chat_input("What do the ancient scriptures say?"):
                 response = result["messages"][-1].content
 
             st.markdown(response)
-            st.session_state.messages.append({"role": "assistant", "content": response})
+
+            # Add assistant response to session
+            session["messages"].append({"role": "assistant", "content": response})
+
+            # ── Memory compression (if needed) ────────────────────
+            if mm.needs_summarization(session["messages"], session.get("summary", "")):
+                with st.spinner("🧠 The Oracle is consolidating its memory..."):
+                    session = mm.compress(session, llm)
+                    st.session_state.current_session = session
+
+            # ── Persist session ───────────────────────────────────
+            session["provider"] = selected_provider
+            session["model"] = selected_model
+            sm.save(session)
+            st.session_state.current_session = session
 
         except Exception as e:
-            # Chat errors — shown inline, app stays alive
             oracle_error = handle_llm_error(e, provider=selected_provider, model=selected_model)
             display_error(oracle_error)
