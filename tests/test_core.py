@@ -1,10 +1,9 @@
-import json
 import unittest
 from unittest.mock import patch, MagicMock
 from langchain_core.documents import Document
-from core.ingestion import seed_database
-from core.preprocess import QuestionProcessor
-from core.vector_manager import VectorManager
+from core.pipeline.ingestion import seed_database
+from core.pipeline.preprocess import QuestionProcessor
+from core.database.vector_manager import VectorManager
 
 class TestSeedDatabase(unittest.TestCase):
 

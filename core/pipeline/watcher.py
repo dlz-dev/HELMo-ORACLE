@@ -6,10 +6,10 @@ from langchain_groq import ChatGroq
 import shutil
 import json
 from converters import convert_csv, convert_markdown, convert_json
-from core.guardian import load_api_key, is_valid_lore_file
-from core.vector_manager import VectorManager
+from core.agent.guardian import load_api_key, is_valid_lore_file
+from core.database.vector_manager import VectorManager
 from converters import convert_text
-from core.guardian import _load_config
+from core.agent.guardian import _load_config
 
 
 class LoreWatcherHandler(FileSystemEventHandler):
