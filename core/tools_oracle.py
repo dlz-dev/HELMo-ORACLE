@@ -1,5 +1,4 @@
 from langchain_core.tools import tool
-
 from core.vector_manager import VectorManager
 
 
@@ -20,4 +19,7 @@ def search_knowledge_base(query: str) -> str:
         source = metadata.get('source', 'Unknown archive')
         contexte_lignes.append(f"[Source: {source}]\nExcerpt: {contenu}")
 
-    return "\n\n".join(contexte_lignes)
+    formatted_results = "\n\n".join(contexte_lignes)
+
+    # We wrap the result in XML tags so that the AI reads it carefully (code injection)
+    return f"<archives_sacrees>\n{formatted_results}\n</archives_sacrees>"
