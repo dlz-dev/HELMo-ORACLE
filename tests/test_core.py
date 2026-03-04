@@ -6,7 +6,6 @@ from core.ingestion import seed_database
 from core.preprocess import QuestionProcessor
 from core.vector_manager import VectorManager
 
-
 class TestSeedDatabase(unittest.TestCase):
 
     @patch("core.ingestion.os.listdir")
