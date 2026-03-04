@@ -1,6 +1,7 @@
 import json
 import os
-
+import shutil
+from guardian import is_valid_lore_file, load_api_key
 from converters import convert_csv, convert_markdown, convert_text, convert_json
 from core.vector_manager import VectorManager
 
@@ -11,18 +12,29 @@ def seed_database() -> None:
     """
     current_dir = os.path.dirname(os.path.abspath(__file__))
     input_folder = os.path.join(current_dir, "..", "data", "files")
+    quarantine_folder = os.path.join(current_dir, "..", "data", "quarantaine")
+
+    # Création du dossier quarantaine s'il n'existe pas
+    os.makedirs(quarantine_folder, exist_ok=True)
 
     print("Ingestion started")
     db_manager = VectorManager()
 
+    api_key = load_api_key()
+
     for file_name in os.listdir(input_folder):
+        file_path = os.path.join(input_folder, file_name)
+
         if not file_name.startswith("lore_"):
-            print(f"Fichier ignoré : {file_name} (ne commence pas par 'lore_')")
+            print(f"Fichier ignoré : {file_name}")
             continue
 
-        file_path = os.path.join(input_folder, file_name)
-        extension = os.path.splitext(file_name)[1].lower()
+        if not is_valid_lore_file(file_path, api_key):
+            print(f"REJETÉ (Hors-sujet). Déplacement vers /quarantaine : {file_name}")
+            shutil.move(file_path, os.path.join(quarantine_folder, file_name))
+            continue
 
+        extension = os.path.splitext(file_name)[1].lower()
         chunks_to_insert = []
         base_metadata = {"source": file_name}
 
