@@ -1,15 +1,17 @@
-import time
-import os
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-from langchain_groq import ChatGroq
-import shutil
 import json
+import os
+import shutil
+import time
+
+from langchain_groq import ChatGroq
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
+
 from converters import convert_csv, convert_markdown, convert_json
-from core.agent.guardian import load_api_key, is_valid_lore_file
-from core.database.vector_manager import VectorManager
 from converters import convert_text
 from core.agent.guardian import _load_config
+from core.agent.guardian import load_api_key, is_valid_lore_file
+from core.database.vector_manager import VectorManager
 
 
 class LoreWatcherHandler(FileSystemEventHandler):
@@ -34,8 +36,6 @@ class LoreWatcherHandler(FileSystemEventHandler):
         # connexion base de données
         self.db_manager = VectorManager()
 
-
-
     def on_created(self, event):
         """Cette fonction se déclenche automatiquement dès qu'un fichier est ajouté"""
 
@@ -49,8 +49,6 @@ class LoreWatcherHandler(FileSystemEventHandler):
 
         # envoi du fichier à la validation
         self.process_file(event.src_path)
-
-
 
     def process_file(self, file_path):
 
@@ -95,13 +93,12 @@ class LoreWatcherHandler(FileSystemEventHandler):
                 for text, metadata in chunks:
                     self.db_manager.add_document(text, metadata=metadata)
                 print(f"[DB] {len(chunks)} fragments insérés pour {file_name}")
-                      
+
             # 4. Archivage du fichier source
             shutil.move(file_path, os.path.join(valid_archive, file_name))
 
         except Exception as e:
             print(f"Erreur lors du traitement de {file_name} : {e}")
-
 
 
 def start_watching():

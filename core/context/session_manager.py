@@ -1,6 +1,4 @@
 """
-core/session_manager.py
-
 Persistent session storage with automatic environment detection:
   - Local / dev  → JSON files in storage/sessions/<user_id>/
   - Streamlit Cloud → Supabase (table: chat_sessions), filtered by user_id

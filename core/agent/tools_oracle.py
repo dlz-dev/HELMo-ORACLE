@@ -1,6 +1,4 @@
 """
-core/tools_oracle.py
-
 LangGraph tool — searches the knowledge base and exposes raw results
 with RRF confidence scores for Chain-of-Thought display in the UI.
 
