@@ -1,19 +1,3 @@
-"""
-core/guardian.py
-
-Le Gardien IA — valide que chaque fichier appartient au lore Dofus/MMORPG
-avant ingestion dans la base vectorielle.
-
-Le LLM utilisé est configurable dans config.yaml (section "guardian").
-Il réutilise le même système de providers que l'Oracle principal.
-
-Stratégie fail-safe :
-  - Erreur API / lecture impossible → ACCEPTÉ (mieux vaut ingérer un fichier
-    douteux que perdre du vrai lore)
-  - Réponse ambiguë du modèle     → ACCEPTÉ
-  - Réponse NON explicite          → REJETÉ
-"""
-
 import os
 import sys
 
