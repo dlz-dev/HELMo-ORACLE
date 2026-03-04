@@ -28,9 +28,10 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage
 
 
-# Approximate token count (1 token ≈ 4 chars — conservative estimate)
+# Approximate token count (1 token ≈ 3 chars for French/mixed content — conservative)
+# Using 3 instead of 4 to avoid underestimating context size and hitting API 400 errors.
 def _estimate_tokens(text: str) -> int:
-    return max(1, len(text) // 4)
+    return max(1, len(text) // 3)
 
 
 def _messages_tokens(messages: list[dict]) -> int:
@@ -104,23 +105,35 @@ class MemoryManager:
     Args:
         max_recent_tokens:  Token budget for recent messages passed to the agent.
                             When exceeded, oldest messages are summarized.
-                            Default: 2000 tokens (~8000 chars) — safe for all models.
+                            Default: 1200 tokens — safe ceiling accounting for
+                            system prompt + tool results overhead (~2000+ tokens).
         min_recent_messages: Always keep at least this many recent messages intact,
                              regardless of token count. Prevents over-summarization.
     """
 
     def __init__(
             self,
-            max_recent_tokens: int = 2000,
+            max_recent_tokens: int = 1200,
             min_recent_messages: int = 4,
     ):
         self.max_recent_tokens = max_recent_tokens
         self.min_recent_messages = min_recent_messages
 
     def needs_summarization(self, messages: list[dict], current_summary: str) -> bool:
-        """Returns True if the recent messages exceed the token budget."""
+        """
+        Returns True if the recent messages exceed the token budget.
+
+        Uses a conservative check: messages tokens + estimated overhead for
+        system prompt and tool results (which are not in the messages list
+        but DO count against the model's context window).
+        """
         recent = self._get_recent_window(messages)
-        return _messages_tokens(recent) > self.max_recent_tokens
+        messages_tokens = _messages_tokens(recent)
+        summary_tokens  = _estimate_tokens(current_summary) if current_summary else 0
+        # Overhead: system prompt (~500t) + tool results per turn (~300t avg)
+        overhead = 500 + (300 * max(1, len(recent) // 2))
+        total_estimated = messages_tokens + summary_tokens + overhead
+        return total_estimated > self.max_recent_tokens
 
     def _get_recent_window(self, messages: list[dict]) -> list[dict]:
         """

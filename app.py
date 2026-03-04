@@ -3,11 +3,13 @@ import re
 
 import streamlit as st
 import yaml
+from langchain_huggingface import HuggingFaceEmbeddings
 from langgraph.prebuilt import create_react_agent
 
 from core.memory_manager import MemoryManager
 from core.session_manager import SessionManager, _is_cloud
-from core.tools_oracle import search_knowledge_base
+from core.tools_oracle import get_search_tool
+from core.vector_manager import VectorManager
 from providers import get_llm, get_available_models, PROVIDER_LABELS
 from providers.error_handler import handle_llm_error, OracleError
 
@@ -85,6 +87,27 @@ st.title("🔮 The Sacred Oracle")
 # Singletons
 # ─────────────────────────────────────────────────────────────────
 @st.cache_resource
+def get_embeddings_model() -> HuggingFaceEmbeddings:
+    """
+    Single shared instance of the embedding model.
+    Prevents duplicate PyTorch loading across VectorManager and all embeddings consumers.
+    which causes: "Cannot copy out of meta tensor; no data!"
+    """
+    return HuggingFaceEmbeddings(
+        model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    )
+
+
+@st.cache_resource
+def get_vector_manager() -> VectorManager:
+    """
+    Single shared VectorManager — reuses the shared embedding model.
+    Prevents PyTorch from loading the model multiple times.
+    """
+    return VectorManager(embeddings_model=get_embeddings_model())
+
+
+@st.cache_resource
 def get_session_manager() -> SessionManager:
     return SessionManager()
 
@@ -98,6 +121,7 @@ def get_memory_manager() -> MemoryManager:
 
 sm = get_session_manager()
 mm = get_memory_manager()
+vm = get_vector_manager()
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -250,7 +274,8 @@ try:
     enriched_prompt, _ = mm.build_agent_input(session, BASE_SYSTEM_PROMPT)
 
     # Always fresh — no cache — system prompt reflects current session memory
-    agent = create_react_agent(llm, [search_knowledge_base], prompt=enriched_prompt)
+    search_tool = get_search_tool(vm)
+    agent = create_react_agent(llm, [search_tool], prompt=enriched_prompt)
 
     st.caption(f"Connected to **{selected_provider_label}** · `{selected_model}`")
 
@@ -304,9 +329,7 @@ if prompt := st.chat_input("What do the ancient scriptures say?"):
         try:
             with st.spinner("The Oracle is consulting the stars..."):
                 result = agent.invoke({"messages": history})
-                response = result["messages"][-1].content
-
-            response = _format_response(result["messages"][-1].content)
+                response = _format_response(result["messages"][-1].content)
 
             st.markdown(response)
 

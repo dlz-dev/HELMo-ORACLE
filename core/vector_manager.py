@@ -93,7 +93,7 @@ class VectorManager:
     ────────────────────────────────────────────────────────────────
     """
 
-    def __init__(self):
+    def __init__(self, embeddings_model=None):
         if "connection_string" in config["database"]:
             self.conn = psycopg.connect(
                 config["database"]["connection_string"],
@@ -110,9 +110,16 @@ class VectorManager:
             )
 
         register_vector(self.conn)
-        self.embeddings_model = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-        )
+
+        # Accept an externally shared embedding model to avoid duplicate PyTorch
+        # instantiation. Always pass the singleton from app.py via get_vector_manager().
+        # If None (e.g. called from ingestion.py), creates its own instance.
+        if embeddings_model is not None:
+            self.embeddings_model = embeddings_model
+        else:
+            self.embeddings_model = HuggingFaceEmbeddings(
+                model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+            )
 
     # ─────────────────────────────────────────────────────────────
     # INSERT
