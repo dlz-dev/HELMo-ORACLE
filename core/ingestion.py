@@ -16,6 +16,10 @@ def seed_database() -> None:
     db_manager = VectorManager()
 
     for file_name in os.listdir(input_folder):
+        if not file_name.startswith("lore_"):
+            print(f"Fichier ignoré : {file_name} (ne commence pas par 'lore_')")
+            continue
+
         file_path = os.path.join(input_folder, file_name)
         extension = os.path.splitext(file_name)[1].lower()
 
