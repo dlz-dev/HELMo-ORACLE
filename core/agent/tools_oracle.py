@@ -11,7 +11,7 @@ Streamlit's execution model without relying on a mutable Python global.
 from langchain_core.tools import tool
 import streamlit as st
 
-from core.vector_manager import VectorManager
+from core.database.vector_manager import VectorManager
 
 # RRF score thresholds for confidence classification
 # These are empirical values for the paraphrase-multilingual-MiniLM-L12-v2 model

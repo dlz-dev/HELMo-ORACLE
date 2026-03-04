@@ -27,8 +27,8 @@ _BASE_DIR = os.path.dirname(_CORE_DIR)
 if _BASE_DIR not in sys.path:
     sys.path.insert(0, _BASE_DIR)
 
-from core.guardian import is_valid_lore_file, load_api_key
-from core.vector_manager import VectorManager
+from core.agent.guardian import is_valid_lore_file, load_api_key
+from core.database.vector_manager import VectorManager
 from converters import convert_csv, convert_markdown, convert_text, convert_json
 from providers import get_llm
 
@@ -95,8 +95,8 @@ def seed_database() -> None:
     Parcourt data/files/, valide, contextualise et ingère chaque fichier lore.
     """
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    input_folder = os.path.join(current_dir, "..", "data", "files")
-    quarantine_folder = os.path.join(current_dir, "..", "data", "quarantaine")
+    input_folder = os.path.join(current_dir, "../..", "data", "files")
+    quarantine_folder = os.path.join(current_dir, "../..", "data", "quarantaine")
     os.makedirs(quarantine_folder, exist_ok=True)
 
     config = _load_config()

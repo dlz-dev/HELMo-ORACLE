@@ -6,10 +6,10 @@ import yaml
 from langchain_huggingface import HuggingFaceEmbeddings
 from langgraph.prebuilt import create_react_agent
 
-from core.memory_manager import MemoryManager
-from core.session_manager import SessionManager, _is_cloud
-from core.tools_oracle import get_search_tool
-from core.vector_manager import VectorManager
+from core.context.memory_manager import MemoryManager
+from core.context.session_manager import SessionManager, _is_cloud
+from core.agent.tools_oracle import get_search_tool
+from core.database.vector_manager import VectorManager
 from providers import get_llm, get_available_models, PROVIDER_LABELS
 from providers.error_handler import handle_llm_error, OracleError
 
