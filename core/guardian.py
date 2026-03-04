@@ -11,7 +11,10 @@ def load_api_key() -> tuple[Any, Any]:
 
     with open(config_path, "r", encoding='utf-8') as f:
         config = yaml.safe_load(f)
-    return config["api_class"]["model"], config["api_class"]["api_key"]
+
+    model = config["llm"]["default_model"]
+    api_key = config["llm"]["groq"]["api_key"]
+    return model, api_key
 
 def is_valid_lore_file(file_path: str, llm: ChatGroq) -> bool:
     """
