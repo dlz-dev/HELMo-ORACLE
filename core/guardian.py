@@ -16,6 +16,7 @@ Stratégie fail-safe :
 
 import os
 import sys
+
 import yaml
 
 # ── Résolution du chemin pour imports depuis core/ ou racine ─────
@@ -24,7 +25,7 @@ _BASE_DIR = os.path.dirname(_CORE_DIR)
 if _BASE_DIR not in sys.path:
     sys.path.insert(0, _BASE_DIR)
 
-from providers import get_llm, get_available_models, PROVIDERS
+from providers import get_llm
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -119,7 +120,7 @@ def is_valid_lore_file(file_path: str, api_key: str = None) -> bool:
         config = _load_config()
         guardian_cfg = config.get("guardian", {})
         provider_key = guardian_cfg.get("provider", "groq")
-        model        = guardian_cfg.get("model", "gemma2-9b-it")
+        model = guardian_cfg.get("model", "gemma2-9b-it")
         llm = get_llm(provider_key=provider_key, model=model, config=config)
 
     except Exception as e:
@@ -135,7 +136,7 @@ def is_valid_lore_file(file_path: str, api_key: str = None) -> bool:
 
     try:
         response = llm.invoke(prompt)
-        answer  = response.content.strip().upper()
+        answer = response.content.strip().upper()
         verdict = "OUI" in answer
 
         status = "✅ ACCEPTÉ" if verdict else "❌ REJETÉ"

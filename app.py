@@ -5,11 +5,12 @@ import streamlit as st
 import yaml
 from langgraph.prebuilt import create_react_agent
 
-from core.tools_oracle import search_knowledge_base
-from core.session_manager import SessionManager, _is_cloud
 from core.memory_manager import MemoryManager
+from core.session_manager import SessionManager, _is_cloud
+from core.tools_oracle import search_knowledge_base
 from providers import get_llm, get_available_models, PROVIDER_LABELS
 from providers.error_handler import handle_llm_error, OracleError
+
 
 # ─────────────────────────────────────────────────────────────────
 # Response formatter — fixes LLM plain text → proper Markdown
@@ -35,11 +36,11 @@ def _format_response(text: str) -> str:
 
         # Section headers: short line ending with ":" → bold
         elif (
-            stripped.endswith(":")
-            and len(stripped) < 60
-            and not stripped.startswith("-")
-            and not stripped.startswith("*")
-            and not stripped.startswith("[")   # avoid mangling [Source: ...]
+                stripped.endswith(":")
+                and len(stripped) < 60
+                and not stripped.startswith("-")
+                and not stripped.startswith("*")
+                and not stripped.startswith("[")  # avoid mangling [Source: ...]
         ):
             line = f"\n**{stripped}**"
 
@@ -52,6 +53,7 @@ def _format_response(text: str) -> str:
     result = "\n".join(formatted)
     result = re.sub(r"\n{3,}", "\n\n", result)
     return result.strip()
+
 
 # ─────────────────────────────────────────────────────────────────
 # Config & Prompt loading
@@ -78,6 +80,7 @@ else:
 st.set_page_config(page_title="HELMo's Oracle", page_icon="🔮")
 st.title("🔮 The Sacred Oracle")
 
+
 # ─────────────────────────────────────────────────────────────────
 # Singletons
 # ─────────────────────────────────────────────────────────────────
@@ -85,14 +88,17 @@ st.title("🔮 The Sacred Oracle")
 def get_session_manager() -> SessionManager:
     return SessionManager()
 
+
 @st.cache_resource
 def get_memory_manager() -> MemoryManager:
     max_tokens = config.get("memory", {}).get("max_recent_tokens", 2000)
     min_recent = config.get("memory", {}).get("min_recent_messages", 4)
     return MemoryManager(max_recent_tokens=max_tokens, min_recent_messages=min_recent)
 
+
 sm = get_session_manager()
 mm = get_memory_manager()
+
 
 # ─────────────────────────────────────────────────────────────────
 # Error display helper
@@ -111,6 +117,7 @@ def display_error(err: OracleError) -> None:
             f"Detail     : {err.technical_msg}",
             language="text",
         )
+
 
 # ─────────────────────────────────────────────────────────────────
 # Sidebar
@@ -190,8 +197,8 @@ with st.sidebar:
         for s in past_sessions:
             # Highlight active session
             is_active = (
-                "current_session" in st.session_state
-                and st.session_state.current_session["session_id"] == s["session_id"]
+                    "current_session" in st.session_state
+                    and st.session_state.current_session["session_id"] == s["session_id"]
             )
             label = f"{'▶ ' if is_active else ''}{s['title'][:35]}"
             if st.button(label, key=f"sess_{s['session_id']}", use_container_width=True):
@@ -215,6 +222,7 @@ if "current_session" not in st.session_state:
     )
 
 session = st.session_state.current_session
+
 
 # ─────────────────────────────────────────────────────────────────
 # Agent factory

@@ -11,6 +11,7 @@ Design philosophy:
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
 
@@ -20,71 +21,71 @@ from enum import Enum
 # ─────────────────────────────────────────────────────────────────────────────
 
 class ErrorType(Enum):
-    QUOTA_EXCEEDED    = "quota_exceeded"
-    INVALID_API_KEY   = "invalid_api_key"
+    QUOTA_EXCEEDED = "quota_exceeded"
+    INVALID_API_KEY = "invalid_api_key"
     MODEL_UNAVAILABLE = "model_unavailable"
-    RATE_LIMITED      = "rate_limited"
-    CONNECTION_ERROR  = "connection_error"
-    CONTEXT_TOO_LONG  = "context_too_long"
-    CONTENT_FILTERED  = "content_filtered"
-    OLLAMA_OFFLINE    = "ollama_offline"
-    UNKNOWN           = "unknown"
+    RATE_LIMITED = "rate_limited"
+    CONNECTION_ERROR = "connection_error"
+    CONTEXT_TOO_LONG = "context_too_long"
+    CONTENT_FILTERED = "content_filtered"
+    OLLAMA_OFFLINE = "ollama_offline"
+    UNKNOWN = "unknown"
 
 
 # Maps each ErrorType to what the user sees
 _USER_MESSAGES: dict[ErrorType, dict] = {
     ErrorType.QUOTA_EXCEEDED: {
-        "icon":       "💸",
-        "title":      "Usage limit reached",
-        "message":    "You've used up all your available credits for this service.",
+        "icon": "💸",
+        "title": "Usage limit reached",
+        "message": "You've used up all your available credits for this service.",
         "suggestion": "Wait for your quota to reset (usually monthly), or switch to another provider in the sidebar.",
     },
     ErrorType.INVALID_API_KEY: {
-        "icon":       "🔑",
-        "title":      "Invalid API key",
-        "message":    "The Oracle cannot authenticate with this provider.",
+        "icon": "🔑",
+        "title": "Invalid API key",
+        "message": "The Oracle cannot authenticate with this provider.",
         "suggestion": "Check that the API key in your config.yaml is correct and hasn't expired.",
     },
     ErrorType.MODEL_UNAVAILABLE: {
-        "icon":       "🚫",
-        "title":      "Model not available",
-        "message":    "The selected model is temporarily unavailable or doesn't exist.",
+        "icon": "🚫",
+        "title": "Model not available",
+        "message": "The selected model is temporarily unavailable or doesn't exist.",
         "suggestion": "Try selecting a different model in the sidebar, or come back later.",
     },
     ErrorType.RATE_LIMITED: {
-        "icon":       "⏳",
-        "title":      "Too many requests",
-        "message":    "The Oracle is being consulted too frequently.",
+        "icon": "⏳",
+        "title": "Too many requests",
+        "message": "The Oracle is being consulted too frequently.",
         "suggestion": "Wait a few seconds and try again. If this keeps happening, consider switching to a different provider.",
     },
     ErrorType.CONNECTION_ERROR: {
-        "icon":       "📡",
-        "title":      "Connection failed",
-        "message":    "The Oracle cannot reach the AI service right now.",
+        "icon": "📡",
+        "title": "Connection failed",
+        "message": "The Oracle cannot reach the AI service right now.",
         "suggestion": "Check your internet connection. The service may also be temporarily down.",
     },
     ErrorType.CONTEXT_TOO_LONG: {
-        "icon":       "📜",
-        "title":      "Conversation too long",
-        "message":    "The Oracle's memory is full — the conversation has grown too long.",
+        "icon": "📜",
+        "title": "Conversation too long",
+        "message": "The Oracle's memory is full — the conversation has grown too long.",
         "suggestion": "Start a new conversation by refreshing the page.",
     },
     ErrorType.CONTENT_FILTERED: {
-        "icon":       "🛡️",
-        "title":      "Message blocked by safety filter",
-        "message":    "The AI provider refused to process this message for safety reasons.",
+        "icon": "🛡️",
+        "title": "Message blocked by safety filter",
+        "message": "The AI provider refused to process this message for safety reasons.",
         "suggestion": "Try rephrasing your question.",
     },
     ErrorType.OLLAMA_OFFLINE: {
-        "icon":       "🏠",
-        "title":      "Local AI server not running",
-        "message":    "Ollama doesn't seem to be running on your machine.",
+        "icon": "🏠",
+        "title": "Local AI server not running",
+        "message": "Ollama doesn't seem to be running on your machine.",
         "suggestion": "Open a terminal and run: `ollama serve`. Then try again.",
     },
     ErrorType.UNKNOWN: {
-        "icon":       "⚡",
-        "title":      "Unexpected error",
-        "message":    "Something unexpected went wrong with the AI service.",
+        "icon": "⚡",
+        "title": "Unexpected error",
+        "message": "Something unexpected went wrong with the AI service.",
         "suggestion": "Try again in a moment. If the problem persists, try switching to a different provider.",
     },
 }
@@ -109,9 +110,9 @@ class OracleError:
         message:        Plain-English explanation for the user.
         suggestion:     Actionable next step for the user.
     """
-    error_type:    ErrorType
-    provider:      str
-    model:         str
+    error_type: ErrorType
+    provider: str
+    model: str
     technical_msg: str
 
     @property

@@ -16,13 +16,14 @@ Pipeline d'ingestion des fichiers lore dans la base vectorielle.
 
 import json
 import os
-import sys
 import shutil
+import sys
+
 import yaml
 
 # ── Résolution des imports depuis core/ ─────────────────────────
 _CORE_DIR = os.path.dirname(os.path.abspath(__file__))
-_BASE_DIR  = os.path.dirname(_CORE_DIR)
+_BASE_DIR = os.path.dirname(_CORE_DIR)
 if _BASE_DIR not in sys.path:
     sys.path.insert(0, _BASE_DIR)
 
@@ -94,7 +95,7 @@ def seed_database() -> None:
     Parcourt data/files/, valide, contextualise et ingère chaque fichier lore.
     """
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    input_folder     = os.path.join(current_dir, "..", "data", "files")
+    input_folder = os.path.join(current_dir, "..", "data", "files")
     quarantine_folder = os.path.join(current_dir, "..", "data", "quarantaine")
     os.makedirs(quarantine_folder, exist_ok=True)
 
@@ -103,8 +104,8 @@ def seed_database() -> None:
     # ── Initialisation du LLM pour la contextualisation ──────────
     # On réutilise le provider du Gardien (petit modèle, suffisant pour résumer)
     guardian_cfg = config.get("guardian", {})
-    ctx_provider  = guardian_cfg.get("provider", "groq")
-    ctx_model     = guardian_cfg.get("model", "gemma2-9b-it")
+    ctx_provider = guardian_cfg.get("provider", "groq")
+    ctx_model = guardian_cfg.get("model", "gemma2-9b-it")
 
     try:
         context_llm = get_llm(provider_key=ctx_provider, model=ctx_model, config=config)

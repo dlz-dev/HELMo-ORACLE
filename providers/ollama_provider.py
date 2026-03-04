@@ -4,8 +4,9 @@ No API key required. Ollama must be running locally (default: http://localhost:1
 Dependency: langchain-ollama
 """
 
-from .base import BaseLLMProvider
 from langchain_core.language_models.chat_models import BaseChatModel
+
+from .base import BaseLLMProvider
 
 # Default models — user can override via config.yaml (ollama.models)
 DEFAULT_MODELS = [

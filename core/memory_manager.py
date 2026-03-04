@@ -24,13 +24,14 @@ are summarized and merged into the running summary via an LLM call.
 
 from __future__ import annotations
 
-from typing import Optional
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage
+
 
 # Approximate token count (1 token ≈ 4 chars — conservative estimate)
 def _estimate_tokens(text: str) -> int:
     return max(1, len(text) // 4)
+
 
 def _messages_tokens(messages: list[dict]) -> int:
     return sum(_estimate_tokens(m.get("content", "")) for m in messages)
@@ -69,9 +70,9 @@ def _format_messages_for_summary(messages: list[dict]) -> str:
 
 
 def summarize_messages(
-    messages_to_summarize: list[dict],
-    existing_summary: str,
-    llm: BaseChatModel,
+        messages_to_summarize: list[dict],
+        existing_summary: str,
+        llm: BaseChatModel,
 ) -> str:
     """
     Calls the LLM to produce an updated summary merging existing_summary
@@ -109,9 +110,9 @@ class MemoryManager:
     """
 
     def __init__(
-        self,
-        max_recent_tokens: int = 2000,
-        min_recent_messages: int = 4,
+            self,
+            max_recent_tokens: int = 2000,
+            min_recent_messages: int = 4,
     ):
         self.max_recent_tokens = max_recent_tokens
         self.min_recent_messages = min_recent_messages
@@ -142,9 +143,9 @@ class MemoryManager:
         return recent
 
     def compress(
-        self,
-        session: dict,
-        llm: BaseChatModel,
+            self,
+            session: dict,
+            llm: BaseChatModel,
     ) -> dict:
         """
         Compresses the session memory:
@@ -176,9 +177,9 @@ class MemoryManager:
         return session
 
     def build_agent_input(
-        self,
-        session: dict,
-        base_system_prompt: str,
+            self,
+            session: dict,
+            base_system_prompt: str,
     ) -> tuple[str, list[tuple[str, str]]]:
         """
         Prepares the inputs for create_react_agent:

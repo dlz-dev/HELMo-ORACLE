@@ -3,8 +3,9 @@ OpenAI provider — ChatGPT cloud models.
 Dependency: langchain-openai
 """
 
-from .base import BaseLLMProvider
 from langchain_core.language_models.chat_models import BaseChatModel
+
+from .base import BaseLLMProvider
 
 
 class OpenAIProvider(BaseLLMProvider):

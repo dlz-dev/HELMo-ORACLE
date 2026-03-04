@@ -115,10 +115,10 @@ class _LocalBackend:
                         data = json.load(f)
                         sessions.append({
                             "session_id": data["session_id"],
-                            "title":      data.get("title", "Untitled"),
+                            "title": data.get("title", "Untitled"),
                             "updated_at": data.get("updated_at", ""),
-                            "provider":   data.get("provider", ""),
-                            "model":      data.get("model", ""),
+                            "provider": data.get("provider", ""),
+                            "model": data.get("model", ""),
                         })
                 except (json.JSONDecodeError, KeyError):
                     continue
@@ -167,12 +167,12 @@ class _SupabaseBackend:
         session["updated_at"] = _now_iso()
         payload = {
             "session_id": session["session_id"],
-            "user_id":    self._user_id,           # ← ownership
-            "title":      session.get("title", ""),
-            "provider":   session.get("provider", ""),
-            "model":      session.get("model", ""),
-            "messages":   session.get("messages", []),
-            "summary":    session.get("summary", ""),
+            "user_id": self._user_id,  # ← ownership
+            "title": session.get("title", ""),
+            "provider": session.get("provider", ""),
+            "model": session.get("model", ""),
+            "messages": session.get("messages", []),
+            "summary": session.get("summary", ""),
             "updated_at": session["updated_at"],
         }
         self._client.table("chat_sessions").upsert(payload).execute()
@@ -182,7 +182,7 @@ class _SupabaseBackend:
             self._client.table("chat_sessions")
             .select("*")
             .eq("session_id", session_id)
-            .eq("user_id", self._user_id)          # ← user cannot load another user's session
+            .eq("user_id", self._user_id)  # ← user cannot load another user's session
             .single()
             .execute()
         )
@@ -192,7 +192,7 @@ class _SupabaseBackend:
         res = (
             self._client.table("chat_sessions")
             .select("session_id, title, updated_at, provider, model")
-            .eq("user_id", self._user_id)          # ← user only sees their own sessions
+            .eq("user_id", self._user_id)  # ← user only sees their own sessions
             .order("updated_at", desc=True)
             .limit(50)
             .execute()
@@ -204,7 +204,7 @@ class _SupabaseBackend:
             self._client.table("chat_sessions")
             .delete()
             .eq("session_id", session_id)
-            .eq("user_id", self._user_id)          # ← user cannot delete another user's session
+            .eq("user_id", self._user_id)  # ← user cannot delete another user's session
             .execute()
         )
 
@@ -245,12 +245,12 @@ class SessionManager:
         """Creates a fresh session dict (not yet saved)."""
         return {
             "session_id": str(uuid.uuid4()),
-            "user_id":    self.user_id,
-            "title":      "New conversation",
-            "provider":   provider,
-            "model":      model,
-            "messages":   [],
-            "summary":    "",
+            "user_id": self.user_id,
+            "title": "New conversation",
+            "provider": provider,
+            "model": model,
+            "messages": [],
+            "summary": "",
             "created_at": _now_iso(),
             "updated_at": _now_iso(),
         }

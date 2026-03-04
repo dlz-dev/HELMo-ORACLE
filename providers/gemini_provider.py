@@ -3,8 +3,9 @@ Google Gemini provider — cloud models via Google AI Studio.
 Dependency: langchain-google-genai
 """
 
-from .base import BaseLLMProvider
 from langchain_core.language_models.chat_models import BaseChatModel
+
+from .base import BaseLLMProvider
 
 
 class GeminiProvider(BaseLLMProvider):

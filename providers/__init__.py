@@ -7,19 +7,19 @@ Usage:
     llm = get_llm(provider_key="groq", model="llama-3.3-70b-versatile", config=config)
 """
 
-from .groq_provider import GroqProvider
-from .openai_provider import OpenAIProvider
 from .anthropic_provider import AnthropicProvider
 from .gemini_provider import GeminiProvider
+from .groq_provider import GroqProvider
 from .ollama_provider import OllamaProvider
+from .openai_provider import OpenAIProvider
 
 # Maps config key → (display label, provider class)
 PROVIDERS = {
-    "groq":      ("⚡ Groq (Cloud)",       GroqProvider),
-    "openai":    ("🤖 OpenAI / ChatGPT",   OpenAIProvider),
+    "groq": ("⚡ Groq (Cloud)", GroqProvider),
+    "openai": ("🤖 OpenAI / ChatGPT", OpenAIProvider),
     "anthropic": ("🧠 Anthropic / Claude", AnthropicProvider),
-    "gemini":    ("✨ Google Gemini",       GeminiProvider),
-    "ollama":    ("🏠 Ollama (Local)",      OllamaProvider),
+    "gemini": ("✨ Google Gemini", GeminiProvider),
+    "ollama": ("🏠 Ollama (Local)", OllamaProvider),
 }
 
 # For Streamlit selectbox display
@@ -70,10 +70,10 @@ def get_llm(provider_key: str, model: str, config: dict):
         import os
         # API key: config.yaml > environment variable
         env_map = {
-            "groq":      "GROQ_API_KEY",
-            "openai":    "OPENAI_API_KEY",
+            "groq": "GROQ_API_KEY",
+            "openai": "OPENAI_API_KEY",
             "anthropic": "ANTHROPIC_API_KEY",
-            "gemini":    "GOOGLE_API_KEY",
+            "gemini": "GOOGLE_API_KEY",
         }
         api_key = provider_cfg.get("api_key") or os.environ.get(env_map[provider_key], "")
         return provider_cls(model=model, temperature=temperature, api_key=api_key).get_llm()

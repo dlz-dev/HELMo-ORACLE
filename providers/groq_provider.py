@@ -3,8 +3,9 @@ Groq provider — fast cloud inference (LLaMA, Mixtral, Gemma via Groq API).
 Dependency: langchain-groq
 """
 
-from .base import BaseLLMProvider
 from langchain_core.language_models.chat_models import BaseChatModel
+
+from .base import BaseLLMProvider
 
 
 class GroqProvider(BaseLLMProvider):

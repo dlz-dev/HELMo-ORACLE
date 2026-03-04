@@ -1,8 +1,10 @@
 import os
 from typing import List
+
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+
 
 def process_pdf_file(file_path: str, chunk_size: int = 800, chunk_overlap: int = 80) -> List[Document]:
     """
