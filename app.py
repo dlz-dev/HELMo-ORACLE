@@ -6,6 +6,7 @@ from langgraph.prebuilt import create_react_agent
 
 from core.tools_oracle import search_knowledge_base
 from providers import get_llm, get_available_models, PROVIDER_LABELS
+from providers.error_handler import handle_llm_error, OracleError
 
 # ─────────────────────────────────────────────────────────────────
 # Config & Prompt loading
@@ -33,17 +34,47 @@ st.set_page_config(page_title="HELMo's Oracle", page_icon="🔮")
 st.title("🔮 The Sacred Oracle")
 
 # ─────────────────────────────────────────────────────────────────
+# Error display helper
+# ─────────────────────────────────────────────────────────────────
+def display_error(err: OracleError) -> None:
+    """
+    Renders a structured, user-friendly error card in the Streamlit chat.
+    Three layers of information:
+      1. A clear title & plain-English explanation  → for everyone
+      2. An actionable suggestion                   → for everyone
+      3. A collapsible technical detail             → for developers
+    """
+    st.error(
+        f"**{err.icon} {err.title}**\n\n"
+        f"{err.message}\n\n"
+        f"💡 **What to do:** {err.suggestion}"
+    )
+
+    # Collapsible technical details — visible but not intrusive
+    with st.expander("🔧 Technical details (for developers)"):
+        st.code(
+            f"Error type : {err.error_type.value}\n"
+            f"Provider   : {err.provider}\n"
+            f"Model      : {err.model}\n"
+            f"Detail     : {err.technical_msg}",
+            language="text",
+        )
+
+
+# ─────────────────────────────────────────────────────────────────
 # Sidebar — LLM provider selector
 # ─────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.header("⚙️ Oracle Configuration")
 
-    # Provider selection
     provider_options = list(PROVIDER_LABELS.keys())
     provider_display = list(PROVIDER_LABELS.values())
 
     default_provider = config.get("llm", {}).get("default_provider", "groq")
-    default_provider_idx = provider_options.index(default_provider) if default_provider in provider_options else 0
+    default_provider_idx = (
+        provider_options.index(default_provider)
+        if default_provider in provider_options else 0
+    )
 
     selected_provider_label = st.selectbox(
         "🌐 LLM Provider",
@@ -52,11 +83,12 @@ with st.sidebar:
     )
     selected_provider = provider_options[provider_display.index(selected_provider_label)]
 
-    # Model selection — dynamic list based on provider
     available_models = get_available_models(selected_provider, config)
-
     default_model = config.get("llm", {}).get("default_model", available_models[0])
-    default_model_idx = available_models.index(default_model) if default_model in available_models else 0
+    default_model_idx = (
+        available_models.index(default_model)
+        if default_model in available_models else 0
+    )
 
     selected_model = st.selectbox(
         "🧩 Model",
@@ -64,7 +96,6 @@ with st.sidebar:
         index=default_model_idx,
     )
 
-    # Temperature override
     temperature = st.slider(
         "🌡️ Temperature",
         min_value=0.0,
@@ -73,7 +104,6 @@ with st.sidebar:
         step=0.05,
     )
 
-    # Local note for Ollama
     if selected_provider == "ollama":
         ollama_url = config.get("llm", {}).get("ollama", {}).get("base_url", "http://localhost:11434")
         st.caption(f"🏠 Connecting to local Ollama at `{ollama_url}`")
@@ -89,8 +119,7 @@ with st.sidebar:
 def load_agent(provider_key: str, model: str, temp: float, _config: dict):
     """
     Creates the LangGraph ReAct agent.
-    Cached per (provider, model, temperature) combination.
-    A new agent is created only when the user changes settings.
+    Cached per (provider, model, temperature) — rebuilt only when settings change.
     """
     print(f"🔮 Oracle initialized — provider={provider_key}, model={model}, temp={temp}")
 
@@ -104,17 +133,28 @@ def load_agent(provider_key: str, model: str, temp: float, _config: dict):
     return create_react_agent(llm, tools, prompt=SYSTEM_PROMPT)
 
 
-# Resolve current config override for temperature
-config_with_temp = {
-    **config,
-    "llm": {**config.get("llm", {}), "temperature": temperature},
-}
-
+# ── Agent init (errors here = config/key problem, block the whole app) ──────
 try:
     agent = load_agent(selected_provider, selected_model, temperature, config)
     st.caption(f"Connected to **{selected_provider_label}** · `{selected_model}`")
+
 except Exception as e:
-    st.error(f"⚠️ Could not initialize the Oracle: {e}")
+    oracle_error = handle_llm_error(e, provider=selected_provider, model=selected_model)
+
+    st.error(
+        f"**{oracle_error.icon} {oracle_error.title}**\n\n"
+        f"The Oracle could not start.\n\n"
+        f"{oracle_error.message}\n\n"
+        f"💡 **What to do:** {oracle_error.suggestion}"
+    )
+    with st.expander("🔧 Technical details (for developers)"):
+        st.code(
+            f"Error type : {oracle_error.error_type.value}\n"
+            f"Provider   : {oracle_error.provider}\n"
+            f"Model      : {oracle_error.model}\n"
+            f"Detail     : {oracle_error.technical_msg}",
+            language="text",
+        )
     st.stop()
 
 # ─────────────────────────────────────────────────────────────────
@@ -147,4 +187,6 @@ if prompt := st.chat_input("What do the ancient scriptures say?"):
             st.session_state.messages.append({"role": "assistant", "content": response})
 
         except Exception as e:
-            st.error(f"The Oracle is troubled: {e}")
+            # Chat errors — shown inline, app stays alive
+            oracle_error = handle_llm_error(e, provider=selected_provider, model=selected_model)
+            display_error(oracle_error)
