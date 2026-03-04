@@ -17,5 +17,6 @@ __pycache__/
 build/
 dist/
 *.egg-info/
-data/files
+data/files/
+data/quarantine/
 storage
