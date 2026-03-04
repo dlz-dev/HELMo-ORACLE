@@ -104,7 +104,7 @@ def is_valid_lore_file(file_path: str, api_key: str = None) -> bool:
         config = _load_config()
         guardian_cfg = config.get("guardian", {})
         provider_key = guardian_cfg.get("provider", "groq")
-        model = guardian_cfg.get("model", "gemma2-9b-it")
+        model = guardian_cfg.get("model", "llama-3.1-8b-instant")
         llm = get_llm(provider_key=provider_key, model=model, config=config)
 
     except Exception as e:

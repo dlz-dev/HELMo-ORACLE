@@ -9,13 +9,20 @@ from converters import convert_csv, convert_markdown, convert_json
 from core.guardian import load_api_key, is_valid_lore_file
 from core.vector_manager import VectorManager
 from converters import convert_text
+from core.guardian import _load_config
 
 
 class LoreWatcherHandler(FileSystemEventHandler):
 
     def __init__(self):
         # récupération de la config (nom du modèle + clé api) avec la fonction load_api_key()
-        model_name, api_key = load_api_key()
+        config = _load_config()
+
+        guardian_cfg = config.get("guardian", {})
+        provider = guardian_cfg.get("provider", "groq")
+        model_name = guardian_cfg.get("model", "llama-3.1-8b-instant")
+
+        api_key = load_api_key()
 
         # on prépare l'IA une seule fois au démarrage de Watcher
         self.llm = ChatGroq(
