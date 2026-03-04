@@ -1,33 +1,50 @@
+"""
+LangGraph tool used by the Oracle agent to search the knowledge base.
+
+The VectorManager is NOT instantiated here — it is injected via
+get_search_tool() from app.py, which passes the shared @st.cache_resource
+singleton. This prevents duplicate PyTorch embedding model loading which
+causes: "Cannot copy out of meta tensor; no data!"
+"""
+
 from langchain_core.tools import tool
 
 from core.vector_manager import VectorManager
 
 
-@tool
-def search_knowledge_base(query: str) -> str:
+def get_search_tool(vm: VectorManager):
     """
-    Searches the Oracle's complete database for any information.
-    Uses hybrid search (semantic cosine + BM25 keywords) fused with
-    Reciprocal Rank Fusion for maximum recall on both conceptual
-    questions and exact term lookups (item names, codes, proper nouns).
+    Factory that returns a LangGraph-compatible search tool bound to
+    the shared VectorManager singleton from app.py.
+
+    Usage in app.py:
+        search_tool = get_search_tool(vm)
+        agent = create_react_agent(llm, [search_tool], prompt=...)
     """
-    vm = VectorManager()
 
-    # Embed the query once — reused by both semantic and hybrid search
-    query_vector = vm.embeddings_model.embed_query(query)
+    @tool
+    def search_knowledge_base(query: str) -> str:
+        """
+        Searches the Oracle's complete database for any information.
+        Uses hybrid search (semantic cosine + BM25 keywords) fused with
+        Reciprocal Rank Fusion for maximum recall on both conceptual
+        questions and exact term lookups (item names, codes, proper nouns).
+        """
+        # Embed using the shared model — no new PyTorch instance created
+        query_vector = vm.embeddings_model.embed_query(query)
 
-    # Hybrid search: semantic + BM25 + RRF fusion
-    results = vm.search_hybrid(query=query, query_vector=query_vector)
+        results = vm.search_hybrid(query=query, query_vector=query_vector)
 
-    if not results:
-        return "<archives_sacrees>\nAucun document trouvé pour cette requête.\n</archives_sacrees>"
+        if not results:
+            return "<archives_sacrees>\nAucun document trouvé pour cette requête.\n</archives_sacrees>"
 
-    contexte_lignes = []
-    for content, rrf_score, metadata in results:
-        source = metadata.get("source", "Unknown archive")
-        contexte_lignes.append(f"[Source: {source}]\nExcerpt: {content}")
+        contexte_lignes = []
+        for content, rrf_score, metadata in results:
+            source = metadata.get("source", "Unknown archive")
+            contexte_lignes.append(f"[Source: {source}]\nExcerpt: {content}")
 
-    formatted_results = "\n\n".join(contexte_lignes)
+        formatted_results = "\n\n".join(contexte_lignes)
 
-    # XML wrapping — prevents prompt injection from retrieved content
-    return f"<archives_sacrees>\n{formatted_results}\n</archives_sacrees>"
+        return f"<archives_sacrees>\n{formatted_results}\n</archives_sacrees>"
+
+    return search_knowledge_base
