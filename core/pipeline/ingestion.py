@@ -20,8 +20,9 @@ import sys
 import yaml
 
 # ── Résolution des imports depuis core/ ─────────────────────────
-_CORE_DIR = os.path.dirname(os.path.abspath(__file__))
-_BASE_DIR = os.path.dirname(_CORE_DIR)
+_PIPELINE_DIR = os.path.dirname(os.path.abspath(__file__))
+_CORE_DIR = os.path.dirname(_PIPELINE_DIR)
+_BASE_DIR = os.path.dirname(_CORE_DIR)  # app/
 if _BASE_DIR not in sys.path:
     sys.path.insert(0, _BASE_DIR)
 

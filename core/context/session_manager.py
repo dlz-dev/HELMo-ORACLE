@@ -30,7 +30,8 @@ import streamlit as st
 # ─────────────────────────────────────────────────────────────────
 # Paths
 # ─────────────────────────────────────────────────────────────────
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# __file__ = app/core/context/*.py → ×3 = app/
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 STORAGE_DIR = os.path.join(BASE_DIR, "storage", "sessions")
 
 

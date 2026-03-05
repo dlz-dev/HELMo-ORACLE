@@ -4,8 +4,9 @@ import sys
 import yaml
 
 # ── Résolution du chemin pour imports depuis core/ ou racine ─────
-_CORE_DIR = os.path.dirname(os.path.abspath(__file__))
-_BASE_DIR = os.path.dirname(_CORE_DIR)
+_AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
+_CORE_DIR = os.path.dirname(_AGENT_DIR)
+_BASE_DIR = os.path.dirname(_CORE_DIR)  # app/
 if _BASE_DIR not in sys.path:
     sys.path.insert(0, _BASE_DIR)
 
