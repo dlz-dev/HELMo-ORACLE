@@ -1,3 +1,13 @@
+<div align="center">
+
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Groq](https://img.shields.io/badge/Groq_LLM-f55036?style=for-the-badge)](https://groq.com/)
+[![Ollama](https://img.shields.io/badge/Ollama_Local-000000?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.com/)
+[![Multi-LLM](https://img.shields.io/badge/Multi--LLM-OpenAI_|_Gemini_|_Anthropic-412991?style=for-the-badge)](#)
+
+</div>
+
 # 🔮 The Sacred Oracle - RAG Project
 
 This project aims to design an **intelligent Oracle** capable of answering questions about a video game universe by relying on a **RAG (Retrieval-Augmented Generation)** architecture. It ensures context-aware responses by searching through ancient archives stored in a vector database.
