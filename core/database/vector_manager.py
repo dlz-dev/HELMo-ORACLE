@@ -34,7 +34,8 @@ from pgvector.psycopg import register_vector
 # ─────────────────────────────────────────────────────────────────
 # Config loading
 # ─────────────────────────────────────────────────────────────────
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# __file__ = app/core/database/vector_manager.py → ×3 = app/
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CONFIG_PATH = os.path.join(BASE_DIR, "config", "config.yaml")
 
 if os.path.exists(CONFIG_PATH):
