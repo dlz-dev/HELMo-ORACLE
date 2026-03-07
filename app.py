@@ -6,10 +6,11 @@ import yaml
 from langchain_huggingface import HuggingFaceEmbeddings
 from langgraph.prebuilt import create_react_agent
 
+from core.agent.tools_oracle import get_search_tool
 from core.context.memory_manager import MemoryManager
 from core.context.session_manager import SessionManager, _is_cloud
-from core.agent.tools_oracle import get_search_tool
 from core.database.vector_manager import VectorManager
+from core.pipeline.pii_manager import PIIManager
 from providers import get_llm, get_available_models, PROVIDER_LABELS
 from providers.error_handler import handle_llm_error, OracleError
 
@@ -86,6 +87,7 @@ def get_memory_manager() -> MemoryManager:
 sm = get_session_manager()
 mm = get_memory_manager()
 vm = get_vector_manager()
+pii = PIIManager()  # Singleton — modèle spaCy chargé une seule fois
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -272,9 +274,12 @@ def view_chat(selected_provider, selected_model, temperature, k_final):
     )
 
     if prompt:
-        session["messages"].append({"role": "user", "content": prompt})
+        # Masquer les PII avant stockage et envoi au LLM
+        # L'utilisateur voit son message original ; le LLM reçoit la version masquée
+        prompt_masked = pii.mask(prompt)
+        session["messages"].append({"role": "user", "content": prompt_masked})
         with st.chat_message("user"):
-            st.markdown(prompt)
+            st.markdown(prompt)  # Affichage original (non masqué) pour l'UX
         sm.save(session)
         st.session_state.current_session = session
         has_pending = True
