@@ -19,4 +19,5 @@ dist/
 *.egg-info/
 data/files/
 data/quarantine/
+data/quarantaine/
 storage
