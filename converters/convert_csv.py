@@ -24,6 +24,8 @@ def load_csv_data(file_path: str) -> list[dict[str, str]]:
 
         return data
 
+    except FileNotFoundError:
+        raise
     except UnicodeDecodeError as e:
         print(f"⚠️ Erreur d'encodage (non UTF-8 valide) pour {file_path} : {e}")
         return []

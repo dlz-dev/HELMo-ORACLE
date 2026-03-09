@@ -95,7 +95,7 @@ def seed_database() -> None:
     """
     current_dir = os.path.dirname(os.path.abspath(__file__))
     input_folder = os.path.join(current_dir, "../..", "data", "files")
-    quarantine_folder = os.path.join(current_dir, "../..", "data", "quarantaine")
+    quarantine_folder = os.path.join(current_dir, "../..", "data", "quarantine")
     os.makedirs(quarantine_folder, exist_ok=True)
 
     config = _load_config()
