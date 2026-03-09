@@ -1,17 +1,19 @@
-import json
+import sys
 import os
-import shutil
 import time
+import shutil
+import json
 
-from langchain_groq import ChatGroq
-from watchdog.events import FileSystemEventHandler
+# --- IMPORTS DES OUTILS ---
 from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+from langchain_groq import ChatGroq
 
-from converters import convert_csv, convert_markdown, convert_json
-from converters import convert_text
-from core.agent.guardian import _load_config
-from core.agent.guardian import load_api_key, is_valid_lore_file
+# --- IMPORTS DU PROJET (Chemins réels) ---
+from core.agent.guardian import load_api_key, is_valid_lore_file, _load_config
 from core.database.vector_manager import VectorManager
+from converters import convert_csv, convert_markdown, convert_json, convert_text
+from converters.convert_unstructured import process_with_unstructured
 
 
 class LoreWatcherHandler(FileSystemEventHandler):
@@ -71,7 +73,7 @@ class LoreWatcherHandler(FileSystemEventHandler):
             chunks = []
             meta = {"source": file_name}
 
-            # On réutilise les convertisseurs des fichiers existants
+            # ROUTAGE DES FICHIERS VERS LES BONS CONVERT. --> MAJ DU 09/03/2026
             if extension == '.txt':
                 docs = convert_text.process_text_file(file_path)
                 chunks = [(d.page_content, meta) for d in docs]
@@ -87,6 +89,14 @@ class LoreWatcherHandler(FileSystemEventHandler):
             elif extension == '.json':
                 data_chunks = convert_json.parse_json(file_path)
                 chunks = [(text, {**meta, **m}) for text, m in data_chunks]
+
+            # SI AUCUN DE CE FORMAT ON ENVOIE A UNSTRUCTURED.IO
+            else:
+                print(f"[SYSTEM] Format complexe / inconnu détecté. Appel à Unstructured.io...")
+                docs = process_with_unstructured(file_path)
+
+                # On transforme les objets Document de LangChain en tuples (texte, meta)
+                chunks = [(d.page_content, d.metadata) for d in docs]
 
             # 3. Insertion réelle dans Supabase via VectorManager
             if chunks:
@@ -150,4 +160,4 @@ if __name__ == "__main__":
     start_watching()
 
 # lancer le module
-# python -m core.watcher
+# python watcher.py
