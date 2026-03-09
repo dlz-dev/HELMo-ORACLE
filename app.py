@@ -276,7 +276,7 @@ def view_chat(selected_provider, selected_model, temperature, k_final):
     if prompt:
         # Masquer les PII avant stockage et envoi au LLM
         # L'utilisateur voit son message original ; le LLM reçoit la version masquée
-        prompt_masked = pii.mask(prompt)
+        prompt_masked = pii.mask_text(prompt)
         session["messages"].append({"role": "user", "content": prompt_masked})
         with st.chat_message("user"):
             st.markdown(prompt)  # Affichage original (non masqué) pour l'UX
