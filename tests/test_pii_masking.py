@@ -1,4 +1,4 @@
-from core.pipeline.pii_manager import PIIManager
+from core.pipeline import PIIManager
 import time
 
 

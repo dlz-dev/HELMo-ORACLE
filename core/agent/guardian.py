@@ -90,15 +90,27 @@ def is_valid_lore_file(file_path: str, api_key: str = None) -> bool:
           provider: "groq"            # provider du Gardien (indépendant de l'Oracle)
           model: "gemma2-9b-it"       # modèle léger suffisant pour classification
     """
-    fname = os.path.basename(file_path)
 
     # ── Lecture du fichier ────────────────────────────────────────
+    fname = os.path.basename(file_path)
+    extension = os.path.splitext(fname)[1].lower()
+
+    # Si c'est un PDF, on bypass la lecture texte (le Gardien auto-accepte)
+    if extension == '.pdf':
+        print(f"  📄 [{fname}] Format binaire (PDF) → Auto-Accepté pour conversion Unstructured")
+        return True
+
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             sample_text = f.read(1500)
     except Exception as e:
-        print(f"  🚫 [{fname}] Erreur de lecture : {e} → REFUSÉ (impossible à lire)")
-        return False  # fail-strict : on ne peut pas valider ce qu'on ne lit pas
+        # Fallback pour les fichiers texte avec des encodages bizarres
+        try:
+            with open(file_path, "r", encoding="latin-1") as f:
+                sample_text = f.read(1500)
+        except:
+            print(f"  🚫 [{fname}] Erreur de lecture : {e} → REFUSÉ (impossible à lire)")
+            return False
 
     # ── Chargement config & LLM ───────────────────────────────────
     try:
