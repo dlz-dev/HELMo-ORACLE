@@ -4,48 +4,131 @@
 
 ```mermaid
 flowchart TD
-    A([📁 data/files/\n fichier lore]) --> B
+    INPUT([📁 data/files/]) --> ROUTE
 
-    subgraph PIPELINE ["⚙️ core/pipeline/ingestion.py"]
+    subgraph ROUTE ["🔀 Router — détection du format"]
+        direction LR
+        R1["📊 .csv / .json / .txt — Converters maison"]
+        R2["📄 .pdf / .docx / .md / .html — Unstructured.io"]
+    end
+
+    ROUTE -->|".csv .json .txt"| MAISON
+    ROUTE -->|".pdf .docx .md .html ..."| UNSTRUCT
+
+    subgraph MAISON ["🏠 Converters maison — inchangés"]
         direction TB
-        B[🛡️ Guardian\nValidation IA\nfail-strict]
-        D[🔒 PII Manager\nMasquage données\npersonnelles]
-        E[📄 Converter\nParsing selon format\ncsv · md · txt · json]
-        F[✂️ Chunker\nDécoupage en\nfragments]
-        G[🧠 Contextual Retrieval\nLLM génère un contexte\nglobal pour le fichier]
-        H[⚡ Embeddings\nparaphrase-multilingual\nMiniLM-L12-v2]
-
-        B -->|❌ Rejet| C([🗑️ Ignoré])
-        B -->|✅ Validé| D
-        D --> E --> F --> G --> H
+        M1["convert_csv.py — load_csv_data()"]
+        M2["convert_json.py — parse_json()"]
+        M3["convert_text.py — process_text_file()"]
     end
 
-    H --> I[(🗄️ Supabase / pgvector\ncontent · vecteur · metadata · fts_vector)]
-
-    subgraph WATCHER ["👁️ core/pipeline/watcher.py"]
-        W[Watchdog Observer\nSurveille data/new_files/\nen temps réel]
+    subgraph UNSTRUCT ["⚙️ Unstructured.io — NOUVEAU"]
+        direction TB
+        U1["partition_auto() — détecte le format"]
+        U2["Éléments typés — Title · NarrativeText · Table · Image"]
+        U3["chunk_by_title() ou chunk_by_similarity()"]
+        U1 --> U2 --> U3
     end
 
-    W -->|"🆕 Nouveau fichier détecté"| B
+    MAISON --> GUARD
+    UNSTRUCT --> GUARD
 
-    linkStyle 0 stroke:#a78bfa,stroke-width:2px
-    linkStyle 1 stroke:#f87171,stroke-width:2px
-    linkStyle 2 stroke:#34d399,stroke-width:2px
-    linkStyle 3 stroke:#60a5fa,stroke-width:2px
-    linkStyle 4 stroke:#60a5fa,stroke-width:2px
-    linkStyle 5 stroke:#60a5fa,stroke-width:2px
-    linkStyle 6 stroke:#60a5fa,stroke-width:2px
-    linkStyle 7 stroke:#60a5fa,stroke-width:2px
-    linkStyle 8 stroke:#f59e0b,stroke-width:2px,stroke-dasharray:5
+    subgraph GUARD ["🛡️ Guardian — inchangé · fail-strict"]
+        G1{"Contenu lore Dofus ?"}
+        G1 -->|"❌ Non"| G2(["🗑️ Quarantaine"])
+        G1 -->|"✅ Oui"| G3["Validé"]
+    end
 
-    style PIPELINE fill:#1e1e2e,stroke:#7c3aed,color:#e2e8f0
+    G3 --> PII
+
+    subgraph PII ["🔒 PII Manager — inchangé"]
+        P1["mask_text() — spaCy + Regex"]
+    end
+
+    PII --> CTX
+
+    subgraph CTX ["🧠 Contextual Retrieval — inchangé"]
+        direction TB
+        C1["LLM génère une description globale du fichier"]
+        C2["Préfixée à chaque chunk — 1 appel LLM par fichier"]
+        C1 --> C2
+    end
+
+    CTX --> EMBED
+
+    subgraph EMBED ["⚡ Embeddings — MIGRATION"]
+        direction TB
+        E_OLD["❌ MiniLM-L12-v2 — local · PyTorch · lent"]
+        E_NEW["✅ text-embedding-3-small — OpenAI API · 1536 dim · meilleur FR"]
+        E_OLD -. "remplacé par" .-> E_NEW
+    end
+
+    EMBED --> LLAMA
+
+    subgraph LLAMA ["🦙 LlamaIndex — NOUVEAU"]
+        direction TB
+        L1["SupabaseVectorStore — connecteur natif"]
+        L2["VectorStoreIndex — index unifié"]
+        L3["RetrieverQueryEngine — recherche + ranking"]
+        L1 --> L2 --> L3
+    end
+
+    LLAMA --> DB
+
+    subgraph DB ["🗄️ Supabase pgvector — inchangé"]
+        D1["content · vecteur · metadata · fts_vector · ingested_at"]
+    end
+
+    subgraph MTEB ["🏆 MTEB — guide le choix du modèle"]
+        direction TB
+        MT1["Benchmark Retrieval · FR"]
+        MT2["text-embedding-3-small ✅ — e5-large 🔍 — bge-m3 🔍"]
+        MT1 --> MT2
+    end
+
+    MTEB -.->|"guide le choix"| EMBED
+
+    subgraph WATCHER ["👁️ Watcher — inchangé"]
+        W1["Watchdog — data/new_files/"]
+    end
+
+    W1 -->|"🆕 nouveau fichier"| ROUTE
+
+    linkStyle 0  stroke:#a78bfa,stroke-width:2px
+    linkStyle 1  stroke:#60a5fa,stroke-width:2px
+    linkStyle 2  stroke:#60a5fa,stroke-width:2px
+    linkStyle 3  stroke:#22c55e,stroke-width:2px
+    linkStyle 4  stroke:#94a3b8,stroke-width:2px
+    linkStyle 5  stroke:#22c55e,stroke-width:2px
+    linkStyle 6  stroke:#f87171,stroke-width:2px
+    linkStyle 7  stroke:#34d399,stroke-width:2px
+    linkStyle 8  stroke:#34d399,stroke-width:2px
+    linkStyle 9  stroke:#3b82f6,stroke-width:2px
+    linkStyle 10 stroke:#8b5cf6,stroke-width:2px
+    linkStyle 11 stroke:#8b5cf6,stroke-width:2px
+    linkStyle 12 stroke:#8b5cf6,stroke-width:2px
+    linkStyle 13 stroke:#f87171,stroke-width:2px,stroke-dasharray:4
+    linkStyle 14 stroke:#38bdf8,stroke-width:2px
+    linkStyle 15 stroke:#38bdf8,stroke-width:2px
+    linkStyle 16 stroke:#38bdf8,stroke-width:2px
+    linkStyle 17 stroke:#059669,stroke-width:2px
+    linkStyle 18 stroke:#94a3b8,stroke-width:1px
+    linkStyle 19 stroke:#94a3b8,stroke-width:1px,stroke-dasharray:4
+    linkStyle 20 stroke:#f59e0b,stroke-width:2px,stroke-dasharray:5
+
+    style ROUTE    fill:#1e1e2e,stroke:#7c3aed,color:#e2e8f0
+    style MAISON   fill:#1e1e2e,stroke:#475569,color:#e2e8f0
+    style UNSTRUCT fill:#1e2a1e,stroke:#22c55e,color:#e2e8f0
+    style GUARD    fill:#1e1e2e,stroke:#f59e0b,color:#e2e8f0
+    style PII      fill:#1e1e2e,stroke:#3b82f6,color:#e2e8f0
+    style CTX      fill:#1e1e2e,stroke:#8b5cf6,color:#e2e8f0
+    style EMBED    fill:#1e1e2e,stroke:#f87171,color:#e2e8f0
+    style LLAMA    fill:#1a2030,stroke:#38bdf8,color:#e2e8f0
+    style DB       fill:#1e1e2e,stroke:#059669,color:#e2e8f0
+    style MTEB     fill:#1e1e2e,stroke:#475569,color:#94a3b8
     style WATCHER  fill:#1e1e2e,stroke:#0891b2,color:#e2e8f0
-    style I        fill:#1e1e2e,stroke:#059669,color:#e2e8f0
-    style C        fill:#1e1e2e,stroke:#dc2626,color:#e2e8f0
-    style A        fill:#312e81,stroke:#818cf8,color:#e2e8f0
-    style B        fill:#78350f,stroke:#f59e0b,color:#e2e8f0
-    style D        fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
-    style W        fill:#164e63,stroke:#22d3ee,color:#e2e8f0
+    style INPUT    fill:#312e81,stroke:#818cf8,color:#e2e8f0
+    style G2       fill:#3b0f0f,stroke:#dc2626,color:#e2e8f0
 ```
 
 ---
