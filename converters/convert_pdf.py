@@ -1,38 +1,30 @@
 import os
-from typing import List
+from typing import List, Tuple
 
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_core.documents import Document
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from llama_index.core import SimpleDirectoryReader
+from llama_index.core.node_parser import SentenceSplitter
 
 
-def process_pdf_file(file_path: str, chunk_size: int = 800, chunk_overlap: int = 80) -> List[Document]:
+def process_pdf_file(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50) -> List[Tuple[str, dict]]:
     """
-    Charge un fichier PDF, extrait le texte et le découpe en segments.
-    Ajoute le numéro de page et la source aux métadonnées.
+    Charge un fichier PDF, extrait le texte et le découpe en segments avec LlamaIndex.
+    Les numéros de page sont automatiquement ajoutés aux métadonnées.
     """
-    # 1. Chargement du PDF (découpage automatique par page)
-    loader = PyPDFLoader(file_path)
-    pages = loader.load()
+    # 1. Chargement du PDF via le lecteur standard de LlamaIndex
+    reader = SimpleDirectoryReader(input_files=[file_path])
+    documents = reader.load_data()
 
-    # 2. Configuration du splitter
-    # Note : Le format PDF étant souvent plus dense, on peut augmenter légèrement le chunk_size
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap,
-        length_function=len,
-        separators=["\n\n", "\n", ".", " ", ""]
-    )
-
-    # 3. Découpage en documents
-    chunks = text_splitter.split_documents(pages)
-
-    # 4. Enrichissement des métadonnées
     nom_fichier = os.path.basename(file_path)
-    for chunk in chunks:
-        chunk.metadata["source"] = nom_fichier
-        # 'page' est déjà inclus par PyPDFLoader, mais on peut s'assurer qu'il est explicite
-        if "page" in chunk.metadata:
-            chunk.metadata["page_number"] = chunk.metadata["page"] + 1
+    for doc in documents:
+        doc.metadata["source"] = nom_fichier
 
-    return chunks
+        # Le SimpleDirectoryReader de LlamaIndex crée une clé 'page_label',
+        # on la duplique en 'page_number' pour garder la compatibilité avec ton existant.
+        if "page_label" in doc.metadata:
+            doc.metadata["page_number"] = doc.metadata["page_label"]
+
+    # 2. Découpage en fragments (Nodes)
+    text_splitter = SentenceSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+    nodes = text_splitter.get_nodes_from_documents(documents)
+
+    return [(node.get_content(), node.metadata) for node in nodes]

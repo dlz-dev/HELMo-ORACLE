@@ -73,35 +73,34 @@ class LoreWatcherHandler(FileSystemEventHandler):
             chunks = []
             meta = {"source": file_name}
 
-            # ROUTAGE DES FICHIERS VERS LES BONS CONVERT. --> MAJ DU 09/03/2026
+            # ROUTAGE DES FICHIERS VERS LES BONS CONVERT.
             if extension == '.txt':
-                docs = convert_text.process_text_file(file_path)
-                chunks = [(d.page_content, meta) for d in docs]
+                chunks = convert_text.process_text_file(file_path)
 
             elif extension == '.csv':
-                data = convert_csv.load_csv_data(file_path)
-                chunks = [(json.dumps(r, ensure_ascii=False), meta) for r in data]
+                # Si tu as aussi adapté convert_csv pour renvoyer des tuples
+                chunks = convert_csv.load_csv_data(file_path)
 
             elif extension == '.md':
-                docs = convert_markdown.parse_markdown(file_path)
-                chunks = [(d.page_content, d.metadata) for d in docs]
+                chunks = convert_markdown.parse_markdown(file_path)
 
             elif extension == '.json':
-                data_chunks = convert_json.parse_json(file_path)
-                chunks = [(text, {**meta, **m}) for text, m in data_chunks]
+                chunks = convert_json.parse_json(file_path)
+
+            elif extension == '.pdf':
+                chunks = convert_pdf.process_pdf_file(file_path)
 
             # SI AUCUN DE CE FORMAT ON ENVOIE A UNSTRUCTURED.IO
             else:
-                print(f"[SYSTEM] Format complexe / inconnu détecté. Appel à Unstructured.io...")
-                docs = process_with_unstructured(file_path)
-
-                # On transforme les objets Document de LangChain en tuples (texte, meta)
-                chunks = [(d.page_content, d.metadata) for d in docs]
+                print(f"[SYSTEM] Format complexe / inconnu détecté. Appel à Unstructured.io (LlamaIndex)...")
+                chunks = process_with_unstructured(file_path)
 
             # 3. Insertion réelle dans Supabase via VectorManager
             if chunks:
-                for text, metadata in chunks:
-                    self.db_manager.add_document(text, metadata=metadata)
+                for text, base_metadata in chunks:
+                    # Fusion des métadonnées spécifiques du chunk avec les métadonnées globales
+                    merged_metadata = {**meta, **base_metadata}
+                    self.db_manager.add_document(text, metadata=merged_metadata)
                 print(f"[DB] {len(chunks)} fragments insérés pour {file_name}")
 
             # 4. Archivage du fichier source
