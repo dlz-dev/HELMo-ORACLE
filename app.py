@@ -10,7 +10,7 @@ from core.agent.tools_oracle import get_search_tool
 from core.context.memory_manager import MemoryManager
 from core.context.session_manager import SessionManager, _is_cloud
 from core.database.vector_manager import VectorManager
-from core.pipeline import PIIManager
+from core.pipeline.pii_manager import PIIManager
 from providers import get_llm, get_available_models, PROVIDER_LABELS
 from providers.error_handler import handle_llm_error, OracleError
 
