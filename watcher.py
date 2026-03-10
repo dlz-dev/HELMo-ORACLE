@@ -85,9 +85,6 @@ class LoreWatcherHandler(FileSystemEventHandler):
             elif extension == '.json':
                 chunks = convert_json.parse_json(file_path)
 
-            elif extension == '.pdf':
-                chunks = convert_pdf.process_pdf_file(file_path)
-
             # SI AUCUN DE CE FORMAT ON ENVOIE A UNSTRUCTURED.IO
             else:
                 print(f"[SYSTEM] Format complexe / inconnu détecté. Appel à Unstructured.io (LlamaIndex)...")
