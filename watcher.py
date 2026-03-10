@@ -10,7 +10,7 @@ from langchain_groq import ChatGroq
 # --- IMPORTS DU PROJET (Chemins réels) ---
 from core.agent.guardian import load_api_key, is_valid_lore_file, _load_config
 from core.database.vector_manager import VectorManager
-from converters import convert_csv, convert_markdown, convert_json, convert_text
+from converters import convert_csv, convert_markdown, convert_json, convert_text, convert_pdf
 from data.new_files.convert_unstructured import process_with_unstructured
 
 
