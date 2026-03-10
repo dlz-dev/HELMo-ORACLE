@@ -1,8 +1,6 @@
-import sys
 import os
 import time
 import shutil
-import json
 
 # --- IMPORTS DES OUTILS ---
 from watchdog.observers import Observer
@@ -13,7 +11,7 @@ from langchain_groq import ChatGroq
 from core.agent.guardian import load_api_key, is_valid_lore_file, _load_config
 from core.database.vector_manager import VectorManager
 from converters import convert_csv, convert_markdown, convert_json, convert_text
-from converters.convert_unstructured import process_with_unstructured
+from data.new_files.convert_unstructured import process_with_unstructured
 
 
 class LoreWatcherHandler(FileSystemEventHandler):

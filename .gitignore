@@ -18,6 +18,7 @@ build/
 dist/
 *.egg-info/
 data/files/
+data/new_files/
 data/quarantine/
 data/quarantaine/
 storage
