@@ -37,7 +37,7 @@ def get_search_tool(vm: VectorManager, k_final: int = 5):
         """
         st.session_state["_cot_results"] = []
 
-        query_vector = vm.embeddings_model.embed_query(query)
+        query_vector = vm.embeddings_model.get_query_embedding(query)
         results = vm.search_hybrid(query=query, query_vector=query_vector, k_final=k_final)
 
         if not results:

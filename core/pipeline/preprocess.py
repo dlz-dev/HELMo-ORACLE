@@ -2,8 +2,7 @@ import string
 import unicodedata
 
 from typing import List
-from langchain_huggingface import HuggingFaceEmbeddings
-
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 class QuestionProcessor:
     """
@@ -12,8 +11,7 @@ class QuestionProcessor:
 
     def __init__(self):
         print(f"Chargement de l'Oracle...")
-        self.embeddings_model = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+        self.embeddings_model = HuggingFaceEmbedding(model_name="intfloat/multilingual-e5-base")
 
     def preprocess_text(self, text: str) -> str:
         """
@@ -29,4 +27,4 @@ class QuestionProcessor:
         Transforms a text string into a numerical vector (embedding).
         """
         # The embed_query method returns a list of floats compatible with pgvector
-        return self.embeddings_model.embed_query(text)
+        return self.embeddings_model.get_query_embedding(text)

@@ -1,33 +1,31 @@
-from typing import List
+import os
+from typing import List, Tuple
 
-from langchain_community.document_loaders import TextLoader
-from langchain_core.documents import Document
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from llama_index.core import Document
+from llama_index.core.node_parser import SentenceSplitter
 
 
-def process_text_file(file_path: str, chunk_size: int = 500, chunk_overlap: int = 50) -> List[Document]:
+def process_text_file(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50) -> List[Tuple[str, dict]]:
     """
-    Loads a text file and splits it into smaller chunks for vector indexing.
-    Extracts the beginning of the document to serve as global context.
+    Charge un fichier texte et le découpe en fragments pour l'indexation vectorielle.
+    Extrait le début du document pour servir de contexte global.
     """
-    loader = TextLoader(file_path, encoding="utf-8")
-    documents = loader.load()
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        full_text = f.read()
 
-    # Extracting global context (first 300 characters of the file)
-    full_text = documents[0].page_content
+    nom_fichier = os.path.basename(file_path)
+
+    # Extraction du contexte global (300 premiers caractères)
     global_context = full_text[:300].strip() + "..."
 
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap,
-        length_function=len,
-        is_separator_regex=False
-    )
+    # Création du Document LlamaIndex avec les métadonnées initiales
+    doc = Document(text=full_text, metadata={
+        "source": nom_fichier,
+        "global_context": global_context
+    })
 
-    chunks = text_splitter.split_documents(documents)
+    # Découpage avec le splitter optimisé
+    text_splitter = SentenceSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+    nodes = text_splitter.get_nodes_from_documents([doc])
 
-    # Injecting the global context into the metadata of each chunk
-    for chunk in chunks:
-        chunk.metadata["global_context"] = global_context
-
-    return chunks
+    return [(node.get_content(), node.metadata) for node in nodes]

@@ -28,7 +28,7 @@ from typing import List, Tuple, Dict
 import psycopg
 import streamlit as st
 import yaml
-from langchain_huggingface import HuggingFaceEmbeddings
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from pgvector.psycopg import register_vector
 
 # ─────────────────────────────────────────────────────────────────
@@ -118,8 +118,9 @@ class VectorManager:
         if embeddings_model is not None:
             self.embeddings_model = embeddings_model
         else:
-            self.embeddings_model = HuggingFaceEmbeddings(
-                model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+            # Modèle performant du MTEB (768 dimensions)
+            self.embeddings_model = HuggingFaceEmbedding(
+                model_name="intfloat/multilingual-e5-base"
             )
 
     # ─────────────────────────────────────────────────────────────
@@ -143,7 +144,7 @@ class VectorManager:
         elif "category" in metadata and "item_name" in metadata:
             text_to_embed = f"Category: {metadata['category']} | Item: {metadata['item_name']}\n\nContent: {text}"
 
-        vector = self.embeddings_model.embed_query(text_to_embed)
+        vector = self.embeddings_model.get_text_embedding(text_to_embed)
         ingested_at = datetime.now(timezone.utc)
 
         with self.conn.cursor() as cur:
