@@ -79,9 +79,6 @@ class LoreWatcherHandler(FileSystemEventHandler):
                 # Si tu as aussi adapté convert_csv pour renvoyer des tuples
                 chunks = convert_csv.load_csv_data(file_path)
 
-            elif extension == '.md':
-                chunks = convert_markdown.parse_markdown(file_path)
-
             elif extension == '.json':
                 chunks = convert_json.parse_json(file_path)
 
