@@ -12,7 +12,6 @@ Pipeline d'ingestion des fichiers lore dans la base vectorielle.
                Le texte ORIGINAL (sans préfixe) est stocké en base pour la lecture.
 """
 
-import json
 import os
 import shutil
 import sys
@@ -29,7 +28,7 @@ if _BASE_DIR not in sys.path:
 from core.agent.guardian import is_valid_lore_file, load_api_key
 from core.database.vector_manager import VectorManager
 from converters import convert_csv, convert_markdown, convert_text, convert_json, convert_pdf
-from converters.convert_unstructured import process_with_unstructured
+from data.new_files.convert_unstructured import process_with_unstructured
 from providers import get_llm
 
 
