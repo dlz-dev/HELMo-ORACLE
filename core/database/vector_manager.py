@@ -21,28 +21,17 @@ Why RRF over ColBERT re-ranking?
 """
 
 import json
-import os
 from datetime import datetime, timezone
 from typing import List, Tuple, Dict
 
 import psycopg
 import streamlit as st
-import yaml
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from pgvector.psycopg import register_vector
 
-# ─────────────────────────────────────────────────────────────────
-# Config loading
-# ─────────────────────────────────────────────────────────────────
-# __file__ = app/core/database/vector_manager.py → ×3 = app/
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-CONFIG_PATH = os.path.join(BASE_DIR, "config", "config.yaml")
+from core.utils.utils import _load_config
 
-if os.path.exists(CONFIG_PATH):
-    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-        config = yaml.safe_load(f)
-else:
-    config = st.secrets
+config = _load_config()
 
 _SEARCH_CFG = config.get("search", {})
 _K_SEMANTIC = _SEARCH_CFG.get("k_semantic", 10)

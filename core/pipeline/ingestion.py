@@ -14,16 +14,6 @@ Pipeline d'ingestion des fichiers lore dans la base vectorielle.
 
 import os
 import shutil
-import sys
-
-import yaml
-
-# ── Résolution des imports depuis core/ ─────────────────────────
-_PIPELINE_DIR = os.path.dirname(os.path.abspath(__file__))
-_CORE_DIR = os.path.dirname(_PIPELINE_DIR)
-_BASE_DIR = os.path.dirname(_CORE_DIR)  # app/
-if _BASE_DIR not in sys.path:
-    sys.path.insert(0, _BASE_DIR)
 
 from core.agent.guardian import is_valid_lore_file, load_api_key
 from core.database.vector_manager import VectorManager
@@ -31,35 +21,11 @@ from converters import convert_csv, convert_markdown, convert_text, convert_json
 from data.new_files.convert_unstructured import process_with_unstructured
 from providers import get_llm
 
-
-# ─────────────────────────────────────────────────────────────────
-# Config loader
-# ─────────────────────────────────────────────────────────────────
-
-def _load_config() -> dict:
-    config_path = os.path.join(_BASE_DIR, "config", "config.yaml")
-    with open(config_path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
-
+from core.utils.utils import _load_config, _CONTEXT_PROMPT
 
 # ─────────────────────────────────────────────────────────────────
 # Contextual Retrieval — génération du contexte global par fichier
 # ─────────────────────────────────────────────────────────────────
-
-_CONTEXT_PROMPT = """Tu analyses un document provenant des archives du jeu Dofus (MMORPG).
-Écris en 2-3 phrases maximum une description du CONTENU GLOBAL de ce document.
-Cette description sera utilisée comme contexte pour chaque fragment du document.
-
-Sois précis : mentionne le type de données (armes, monstres, quêtes, lore historique...),
-les entités principales couvertes, et l'utilité pour un joueur Dofus.
-
-Document (extrait des 3000 premiers caractères) :
----
-{sample}
----
-
-Réponds avec UNIQUEMENT la description, sans introduction ni ponctuation finale."""
-
 
 def generate_document_context(file_path: str, llm) -> str:
     """
