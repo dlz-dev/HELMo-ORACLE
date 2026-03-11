@@ -2,41 +2,7 @@ import os
 import sys
 
 from providers import get_llm
-from core.utils.utils import _load_config
-
-# ─────────────────────────────────────────────────────────────────
-# Prompt du Gardien
-# ─────────────────────────────────────────────────────────────────
-
-_GUARDIAN_PROMPT = """Tu es le Gardien des Archives du jeu Dofus (MMORPG fantasy d'Ankama).
-Ta mission : déterminer si le contenu ci-dessous fait partie de l'univers Dofus ou d'un MMORPG fantasy.
-
-RÈGLE IMPORTANTE : Le contenu peut se présenter sous n'importe quel format :
-- Texte narratif (description de lore, histoire du monde)
-- JSON ou CSV avec des noms d'armes, monstres, sorts, équipements, classes, objets
-- Statistiques de jeu (dommages, PA, PM, pods, résistances, niveaux)
-- URLs vers dofus.com ou ankama.com (= preuve formelle que c'est du lore Dofus)
-- Noms propres Dofus : Amakna, Bonta, Brakmar, Pandala, Iop, Osamodas, Sacrieur...
-
-EXEMPLES ACCEPTÉS → répondre OUI :
-- {{"nom": "Hache Ériphe", "Type": "Hache", "url": "https://www.dofus.com/..."}}
-- "Mazic est le Méryde de la naissance..."
-- "Chaque personnage dans Dofus possède un alignement..."
-- Données CSV sur les classes, donjons ou monstres du jeu
-
-EXEMPLES REJETÉS → répondre NON :
-- Une recette de cuisine réelle
-- Du code source informatique sans rapport avec un jeu
-- Une facture ou document administratif
-- Un texte sur de l'informatique ou des sciences sans lien avec un MMORPG
-
-Contenu à analyser :
----
-{sample_text}
----
-
-Réponds STRICTEMENT par OUI (contenu Dofus/MMORPG) ou NON (hors-sujet), sans aucune explication."""
-
+from core.utils.utils import _load_config, _GUARDIAN_PROMPT
 
 # ─────────────────────────────────────────────────────────────────
 # Gardien principal

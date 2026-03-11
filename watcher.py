@@ -7,6 +7,7 @@ from langchain_groq import ChatGroq
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
+from core.agent.guardian import is_valid_lore_file
 from core.database.vector_manager import VectorManager
 from converters import convert_csv, convert_json, convert_text
 from converters.convert_unstructured import process_with_unstructured
