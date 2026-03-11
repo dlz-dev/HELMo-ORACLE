@@ -24,6 +24,7 @@ import os
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
+from core.utils.utils import _BASE_DIR, _STORAGE_DIR
 
 import streamlit as st
 
@@ -40,7 +41,7 @@ def _is_cloud() -> bool:
     Returns True when running on Streamlit Cloud.
     Detection: config.yaml absent → we're in cloud mode using st.secrets.
     """
-    config_path = os.path.join(BASE_DIR, "config", "config.yaml")
+    config_path = os.path.join(_BASE_DIR, "config", "config.yaml")
     return not os.path.exists(config_path)
 
 
@@ -86,7 +87,7 @@ class _LocalBackend:
     """
 
     def __init__(self, user_id: str):
-        self._user_dir = os.path.join(STORAGE_DIR, user_id)
+        self._user_dir = os.path.join(_STORAGE_DIR, user_id)
         os.makedirs(self._user_dir, exist_ok=True)
 
     def _path(self, session_id: str) -> str:

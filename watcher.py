@@ -1,154 +1,136 @@
 import os
-import time
 import shutil
+import time
+from typing import Any, Dict, List, Tuple
 
-# --- IMPORTS DES OUTILS ---
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
 from langchain_groq import ChatGroq
+from watchdog.events import FileSystemEvent, FileSystemEventHandler
+from watchdog.observers import Observer
 
-# --- IMPORTS DU PROJET (Chemins réels) ---
-from core.agent.guardian import load_api_key, is_valid_lore_file, _load_config
 from core.database.vector_manager import VectorManager
-from converters import convert_csv, convert_markdown, convert_json, convert_text, convert_pdf
+from converters import convert_csv, convert_json, convert_text
 from converters.convert_unstructured import process_with_unstructured
-
+from core.utils.utils import _load_config, load_api_key
 
 class LoreWatcherHandler(FileSystemEventHandler):
+    """
+    Gestionnaire d'événements pour la surveillance et l'ingestion automatique
+    des fichiers de lore dans la base vectorielle.
+    """
 
-    def __init__(self):
-        # récupération de la config (nom du modèle + clé api) avec la fonction load_api_key()
-        config = _load_config()
+    def __init__(self) -> None:
+        super().__init__()
 
-        guardian_cfg = config.get("guardian", {})
-        provider = guardian_cfg.get("provider", "groq")
-        model_name = guardian_cfg.get("model", "llama-3.1-8b-instant")
+        config: Dict[str, Any] = _load_config()
+        guardian_cfg: Dict[str, Any] = config.get("guardian", {})
 
-        api_key = load_api_key()
+        model_name: str = guardian_cfg.get("model", "llama-3.1-8b-instant")
+        api_key: str = load_api_key()
 
-        # on prépare l'IA une seule fois au démarrage de Watcher
-        self.llm = ChatGroq(
+        self.llm: ChatGroq = ChatGroq(
             model_name=model_name,
             groq_api_key=api_key,
-            temperature=0
+            temperature=0.0
         )
 
-        # connexion base de données
-        self.db_manager = VectorManager()
+        self.db_manager: VectorManager = VectorManager()
 
-    def on_created(self, event):
-        """Cette fonction se déclenche automatiquement dès qu'un fichier est ajouté"""
-
-        # si c'est un dossier qui est créé, on ne fait rien (pas besoin)
-        if event.is_directory or os.path.basename(event.src_path).startswith(('.', '~')):
+    def on_created(self, event: FileSystemEvent) -> None:
+        """Point d'entrée de watchdog lors de la création d'un fichier."""
+        file_name: str = os.path.basename(event.src_path)
+        if event.is_directory or file_name.startswith(('.', '~')):
             return
 
-        print(f"[WATCHER] Nouveau fichier détecté : {os.path.basename(event.src_path)}")
+        print(f"[WATCHER] Nouveau fichier détecté : {file_name}")
+        time.sleep(1.0)
 
-        time.sleep(1)
-
-        # envoi du fichier à la validation
         self.process_file(event.src_path)
 
-    def process_file(self, file_path):
+    def process_file(self, file_path: str) -> None:
+        """Traite un fichier : validation IA, conversion, vectorisation et archivage."""
+        file_name: str = os.path.basename(file_path)
+        base_dir: str = os.path.join(os.getcwd(), "data")
 
-        file_name = os.path.basename(file_path)
-        base_dir = os.path.join(os.getcwd(), "data")
+        valid_archive: str = os.path.join(base_dir, "files")
+        refused_dir: str = os.path.join(base_dir, "quarantine")
 
-        # dossier cible
-        valid_archive = os.path.join(base_dir, "files")  # Archive des fichiers traités
-        refused_dir = os.path.join(base_dir, "quarantine")
+        os.makedirs(valid_archive, exist_ok=True)
+        os.makedirs(refused_dir, exist_ok=True)
 
-        # Validation IA (Le Gardien)
+        print(f"[IA] Évaluation de {file_name} par le Gardien...")
         if not is_valid_lore_file(file_path, self.llm):
-            print(f"[IA] REJETÉ : {file_name}. Vers 'quarantine'.")
+            print(f"[IA] REJETÉ : {file_name}. Déplacement vers 'quarantine'.")
             shutil.move(file_path, os.path.join(refused_dir, file_name))
             return
 
         try:
-            print(f"[SYSTEM] Conversion et Vectorisation de {file_name}...")
-            extension = os.path.splitext(file_name)[1].lower()
-            chunks = []
-            meta = {"source": file_name}
+            print(f"[SYSTEM] Conversion de {file_name}...")
+            extension: str = os.path.splitext(file_name)[1].lower()
+            chunks: List[Tuple[str, Dict[str, Any]]] = []
+            meta: Dict[str, Any] = {"source": file_name}
 
-            # ROUTAGE DES FICHIERS VERS LES BONS CONVERT.
+            # Routage dynamique selon l'extension du fichier
             if extension == '.txt':
                 chunks = convert_text.process_text_file(file_path)
-
             elif extension == '.csv':
-                # Si tu as aussi adapté convert_csv pour renvoyer des tuples
                 chunks = convert_csv.load_csv_data(file_path)
-
             elif extension == '.json':
                 chunks = convert_json.parse_json(file_path)
-
-            # SI AUCUN DE CE FORMAT ON ENVOIE A UNSTRUCTURED.IO
             else:
-                print(f"[SYSTEM] Format complexe / inconnu détecté. Appel à Unstructured.io (LlamaIndex)...")
+                print("[SYSTEM] Format complexe détecté. Appel à Unstructured.io...")
                 chunks = process_with_unstructured(file_path)
 
-            # 3. Insertion réelle dans Supabase via VectorManager
             if chunks:
                 for text, base_metadata in chunks:
-                    # Fusion des métadonnées spécifiques du chunk avec les métadonnées globales
-                    merged_metadata = {**meta, **base_metadata}
+                    merged_metadata: Dict[str, Any] = {**meta, **base_metadata}
                     self.db_manager.add_document(text, metadata=merged_metadata)
-                print(f"[DB] {len(chunks)} fragments insérés pour {file_name}")
 
-            # 4. Archivage du fichier source
+                print(f"[DB] {len(chunks)} fragments insérés avec succès pour {file_name}.")
+            else:
+                print(f"[SYSTEM] Avertissement : Aucun contenu extrait de {file_name}.")
+
             shutil.move(file_path, os.path.join(valid_archive, file_name))
 
         except Exception as e:
-            print(f"Erreur lors du traitement de {file_name} : {e}")
+            print(f"[ERREUR] Échec lors du traitement de {file_name} : {e}")
 
 
-def start_watching():
-    """Configure et lance la surveillance du dossier"""
+def start_watching() -> None:
+    """Lance la surveillance du dossier d'ingestion et rattrape les fichiers en attente."""
+    path: str = os.path.join(os.getcwd(), "data", "new_files")
+    os.makedirs(path, exist_ok=True)
 
-    path = os.path.join(os.getcwd(), "data", "new_files")
-
-    # si le dossier n'existe pas, on le crée pour éviter les erreurs
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-    # On initialise notre gestionnaire d'événements (le Handler)
     event_handler = LoreWatcherHandler()
 
-    # rattraper les fichiers existants - on traite les fichiers déjà présents
-    print(f"Vérification des fichiers existants dans : {path}...")
-    existing_files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+    # Traitement des fichiers déposés avant le lancement du script (rattrapage)
+    print(f"[INIT] Vérification des fichiers existants dans : {path}...")
+    existing_files: List[str] = [
+        f for f in os.listdir(path)
+        if os.path.isfile(os.path.join(path, f))
+    ]
 
     for file_name in existing_files:
-        # On ignore les fichiers cachés
         if not file_name.startswith(('.', '~')):
-            file_path = os.path.join(path, file_name)
+            file_path: str = os.path.join(path, file_name)
             print(f"[RATTRAPAGE] Traitement de : {file_name}")
             event_handler.process_file(file_path)
 
-    # On initialise l'observateur système
     observer = Observer()
-
-    # On lui dit de surveiller 'path' avec notre 'event_handler'
     observer.schedule(event_handler, path, recursive=False)
-
-    # on démarre la surveillance
     observer.start()
 
-    print(f"Watcher actif sur : {path}")
-
-    # boucle pour surveiller en permanence
+    print(f"\n[WATCHER] Actif et en attente de fichiers sur : {path}\nAppuyez sur Ctrl+C pour arrêter.")
 
     try:
         while True:
-            time.sleep(1)
+            time.sleep(1.0)
     except KeyboardInterrupt:
+        print("\n[WATCHER] Arrêt demandé par l'utilisateur.")
         observer.stop()
 
     observer.join()
+    print("[WATCHER] Processus terminé.")
 
 
 if __name__ == "__main__":
     start_watching()
-
-# lancer le module
-# python watcher.py

@@ -9,21 +9,12 @@ from unstructured_client.models import operations
 # Nouveaux imports LlamaIndex
 from llama_index.core import Document
 from llama_index.core.node_parser import SentenceSplitter
+from core.utils.utils import _load_config
+
 
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if root not in sys.path:
     sys.path.insert(0, root)
-
-try:
-    from core.guardian import _load_config
-except ImportError:
-    import yaml
-
-
-    def _load_config():
-        path = os.path.join(root, "config", "config.yaml")
-        with open(path, "r") as f:
-            return yaml.safe_load(f)
 
 
 def process_with_unstructured(file_path: str) -> List[Tuple[str, dict]]:
