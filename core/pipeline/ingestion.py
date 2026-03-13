@@ -17,8 +17,7 @@ import shutil
 
 from core.agent.guardian import is_valid_lore_file, load_api_key
 from core.database.vector_manager import VectorManager
-from converters import convert_csv, convert_markdown, convert_text, convert_json, convert_pdf
-from data.new_files.convert_unstructured import process_with_unstructured
+from converters import convert_csv, convert_markdown, convert_text, convert_json, convert_pdf, convert_unstructured
 from providers import get_llm
 
 from core.utils.utils import _load_config, _CONTEXT_PROMPT
@@ -134,7 +133,7 @@ def seed_database() -> None:
             extracted_chunks = convert_pdf.process_pdf_file(file_path)
         else:
             print(f"  🔄 Format complexe détecté. Appel à Unstructured.io...")
-            extracted_chunks = process_with_unstructured(file_path)
+            extracted_chunks = convert_unstructured.process_with_unstructured(file_path)
 
         # ── Étape 4 : Vectorisation et insertion ──────────────────
         if extracted_chunks:
