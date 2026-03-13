@@ -1,15 +1,14 @@
 """
-Ollama provider — local models running via Ollama.
-No API key required. Ollama must be running locally (default: http://localhost:11434).
-Dependency: langchain-ollama
+Ollama provider mapping for local models.
+No API key required. Ollama must be running locally.
 """
 
 from langchain_core.language_models.chat_models import BaseChatModel
 
 from .base import BaseLLMProvider
 
-# Default models — user can override via config.yaml (ollama.models)
-DEFAULT_MODELS = [
+# Default models — user can override via config (ollama.models)
+DEFAULT_MODELS: list[str] = [
     "llama3.1",
     "llama3.2",
     "mistral",
@@ -22,12 +21,19 @@ DEFAULT_MODELS = [
 
 
 class OllamaProvider(BaseLLMProvider):
+    """
+    Implementation of the BaseLLMProvider for local Ollama instances.
+    """
 
-    @classmethod
-    def available_models(cls) -> list[str]:
-        return DEFAULT_MODELS
+    def __init__(self, model: str, temperature: float, base_url: str = "http://localhost:11434") -> None:
+        super().__init__(model, temperature)
+        self.base_url = base_url
 
     def get_llm(self) -> BaseChatModel:
+        """
+        Returns an instance of ChatOllama.
+        """
+        # Lazy import to prevent hard dependency crashes if the package is missing.
         try:
             from langchain_ollama import ChatOllama
         except ImportError:
@@ -39,6 +45,9 @@ class OllamaProvider(BaseLLMProvider):
             base_url=self.base_url,
         )
 
-    def __init__(self, model: str, temperature: float, base_url: str = "http://localhost:11434"):
-        super().__init__(model, temperature)
-        self.base_url = base_url
+    @classmethod
+    def available_models(cls) -> list[str]:
+        """
+        Returns a list of default local Ollama models available.
+        """
+        return DEFAULT_MODELS

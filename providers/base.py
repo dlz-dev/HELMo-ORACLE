@@ -1,6 +1,8 @@
 """
 Base class for all LLM providers.
-Each provider must implement the `get_llm` method.
+
+Each provider must implement the `get_llm` method to return a LangChain-compatible
+chat model, and `available_models` to list supported models.
 """
 
 from abc import ABC, abstractmethod
@@ -10,11 +12,10 @@ from langchain_core.language_models.chat_models import BaseChatModel
 
 class BaseLLMProvider(ABC):
     """
-    Abstract base class that every LLM provider must inherit.
-    Ensures a consistent interface across all providers.
+    Abstract base class ensuring a consistent interface across all LLM providers.
     """
 
-    def __init__(self, model: str, temperature: float = 0):
+    def __init__(self, model: str, temperature: float = 0.0) -> None:
         self.model = model
         self.temperature = temperature
 
@@ -22,7 +23,6 @@ class BaseLLMProvider(ABC):
     def get_llm(self) -> BaseChatModel:
         """
         Returns a LangChain-compatible chat model instance.
-        Must be implemented by each provider subclass.
         """
         pass
 
@@ -31,6 +31,5 @@ class BaseLLMProvider(ABC):
     def available_models(cls) -> list[str]:
         """
         Returns the list of models available for this provider.
-        Used to populate the Streamlit sidebar selector.
         """
         pass

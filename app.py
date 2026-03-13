@@ -13,7 +13,6 @@ from core.database.vector_manager import VectorManager
 from core.pipeline.pii_manager import PIIManager
 from providers import get_llm, get_available_models, PROVIDER_LABELS
 from providers.error_handler import handle_llm_error, OracleError
-from core.utils.utils import _BASE_DIR, _CONFIG_PATH, _PROMPT_PATH
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -35,15 +34,18 @@ def _format_response(text: str) -> str:
 # ─────────────────────────────────────────────────────────────────
 # Config & Prompt
 # ─────────────────────────────────────────────────────────────────
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH = os.path.join(BASE_DIR, "config", "config.yaml")
+PROMPT_PATH = os.path.join(BASE_DIR, "config", "prompt.txt")
 
-if os.path.exists(_CONFIG_PATH):
-    with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
+if os.path.exists(CONFIG_PATH):
+    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 else:
     config = st.secrets
 
-if os.path.exists(_PROMPT_PATH):
-    with open(_PROMPT_PATH, "r", encoding="utf-8") as f:
+if os.path.exists(PROMPT_PATH):
+    with open(PROMPT_PATH, "r", encoding="utf-8") as f:
         BASE_SYSTEM_PROMPT = f.read()
 else:
     BASE_SYSTEM_PROMPT = st.secrets["prompts"]["system_prompt"]
