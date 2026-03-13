@@ -1,9 +1,5 @@
-import os
-import re
-
 import streamlit as st
-import yaml
-from langchain_huggingface import HuggingFaceEmbeddings
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from langgraph.prebuilt import create_react_agent
 
 from core.agent.tools_oracle import get_search_tool
@@ -14,86 +10,52 @@ from core.pipeline.pii_manager import PIIManager
 from providers import get_llm, get_available_models, PROVIDER_LABELS
 from providers.error_handler import handle_llm_error, OracleError
 
+from core.utils.utils import load_config, load_base_prompt, format_response
 
-# ─────────────────────────────────────────────────────────────────
-# Response formatter
-# ─────────────────────────────────────────────────────────────────
-def _format_response(text: str) -> str:
-    # Supprime les balises "Analyse:" ou "Analysis:" si l'IA les met quand même
-    text = re.sub(r"^(Analyse|Analysis|Context)\s*:?", "", text, flags=re.IGNORECASE | re.MULTILINE)
-
-    # Nettoie les espaces inutiles
-    text = text.strip()
-
-    # Évite les accumulations de sauts de ligne (max 2)
-    text = re.sub(r"\n{3,}", "\n\n", text)
-
-    return text
-
-
-# ─────────────────────────────────────────────────────────────────
-# Config & Prompt
-# ─────────────────────────────────────────────────────────────────
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH = os.path.join(BASE_DIR, "config", "config.yaml")
-PROMPT_PATH = os.path.join(BASE_DIR, "config", "prompt.txt")
-
-if os.path.exists(CONFIG_PATH):
-    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-        config = yaml.safe_load(f)
-else:
-    config = st.secrets
-
-if os.path.exists(PROMPT_PATH):
-    with open(PROMPT_PATH, "r", encoding="utf-8") as f:
-        BASE_SYSTEM_PROMPT = f.read()
-else:
-    BASE_SYSTEM_PROMPT = st.secrets["prompts"]["system_prompt"]
-
-# ─────────────────────────────────────────────────────────────────
-# Page setup
-# ─────────────────────────────────────────────────────────────────
 st.set_page_config(page_title="HELMo's Oracle", page_icon="🔮", layout="wide")
 
+config = load_config()
+BASE_SYSTEM_PROMPT = load_base_prompt()
 
-# ─────────────────────────────────────────────────────────────────
-# Singletons (@st.cache_resource)
-# ─────────────────────────────────────────────────────────────────
 @st.cache_resource
-def get_embeddings_model() -> HuggingFaceEmbeddings:
-    """Single PyTorch instance — prevents 'Cannot copy out of meta tensor' crash."""
-    return HuggingFaceEmbeddings(
-        model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+def get_embeddings_model() -> HuggingFaceEmbedding:
+    """
+    Initializes and caches the HuggingFace embeddings model.
+    Uses a single PyTorch instance to prevent memory allocation crashes.
+    """
+    return HuggingFaceEmbedding(
+        model_name="intfloat/multilingual-e5-base"
     )
-
 
 @st.cache_resource
 def get_vector_manager() -> VectorManager:
+    """Initializes and caches the VectorManager."""
     return VectorManager(embeddings_model=get_embeddings_model())
-
 
 @st.cache_resource
 def get_session_manager() -> SessionManager:
+    """Initializes and caches the SessionManager."""
     return SessionManager()
-
 
 @st.cache_resource
 def get_memory_manager() -> MemoryManager:
+    """Initializes and caches the MemoryManager based on config parameters."""
     max_tokens = config.get("memory", {}).get("max_recent_tokens", 1200)
     min_recent = config.get("memory", {}).get("min_recent_messages", 4)
     return MemoryManager(max_recent_tokens=max_tokens, min_recent_messages=min_recent)
 
-
 sm = get_session_manager()
 mm = get_memory_manager()
 vm = get_vector_manager()
-pii = PIIManager()  # Singleton — modèle spaCy chargé une seule fois
+pii = PIIManager() 
 
-
-# ─────────────────────────────────────────────────────────────────
-# Error display
-# ─────────────────────────────────────────────────────────────────
 def display_error(err: OracleError) -> None:
+    """
+    Renders an error message in the Streamlit UI with technical details.
+
+    Args:
+        err (OracleError): The custom error object caught during LLM execution.
+    """
     st.error(f"**{err.icon} {err.title}**\n\n{err.message}\n\n💡 **What to do:** {err.suggestion}")
     with st.expander("🔧 Technical details"):
         st.code(
@@ -104,11 +66,13 @@ def display_error(err: OracleError) -> None:
             language="text",
         )
 
-
-# ─────────────────────────────────────────────────────────────────
-# Chain-of-Thought expander
-# ─────────────────────────────────────────────────────────────────
 def _render_cot(cot_results: list[dict]) -> None:
+    """
+    Renders the Chain-of-Thought (CoT) and search sources used by the agent.
+
+    Args:
+        cot_results (list[dict]): A list of dictionaries containing source metadata and previews.
+    """
     if not cot_results:
         return
 
@@ -123,21 +87,20 @@ def _render_cot(cot_results: list[dict]) -> None:
                 "Voici ce qui s'en rapproche le plus — fiabilité limitée."
             )
         for i, r in enumerate(cot_results):
-            icon = icons[r["confidence"]]
-            label = labels[r["confidence"]]
+            icon = icons.get(r["confidence"], "⚪")
+            label = labels.get(r["confidence"], "inconnue")
+            
             preview = r["content"][:240].replace("\n", " ")
             if len(r["content"]) > 240:
                 preview += "…"
+                
             st.markdown(f"**{icon} `{r['source']}`** — correspondance {label} · score `{r['rrf_score']}`")
             st.caption(f"> {preview}")
             if i < len(cot_results) - 1:
                 st.divider()
 
-
-# ─────────────────────────────────────────────────────────────────
-# VIEW: Archives Dashboard
-# ─────────────────────────────────────────────────────────────────
-def view_archives():
+def view_archives() -> None:
+    """Renders the Archives dashboard showing ingested documents and vector stats."""
     st.title("🗄️ Archives Sacrées")
     st.markdown("Explorez les documents et connaissances ingérés dans la mémoire de l'Oracle.")
 
@@ -147,7 +110,6 @@ def view_archives():
             st.session_state.pop("_db_sources", None)
             st.rerun()
 
-    # Chargement des sources
     if "_db_sources" not in st.session_state:
         with st.spinner("Lecture des parchemins..."):
             st.session_state["_db_sources"] = vm.list_sources()
@@ -158,9 +120,8 @@ def view_archives():
         st.info("La bibliothèque est vide.", icon="🕸️")
         return
 
-    # Metrics
     total_files = len(db_sources)
-    total_chunks = sum(s["chunk_count"] for s in db_sources)
+    total_chunks = sum(s.get("chunk_count", 0) for s in db_sources)
 
     m1, m2, m3 = st.columns(3)
     m1.metric("📜 Fichiers", total_files)
@@ -169,12 +130,10 @@ def view_archives():
 
     st.divider()
 
-    # Affichage des fichiers sous forme de tableau interactif ou cartes
-    # On trie par date d'ingestion (plus récent en haut si dispo, sinon alphabétique)
     sorted_sources = sorted(db_sources, key=lambda x: x.get('source', ''))
 
     for src in sorted_sources:
-        with st.expander(f"📄 **{src['source']}** ({src['chunk_count']} chunks)"):
+        with st.expander(f"📄 **{src['source']}** ({src.get('chunk_count', 0)} chunks)"):
             c1, c2 = st.columns([3, 1])
             with c1:
                 st.markdown("**Contexte Global (généré par IA) :**")
@@ -182,19 +141,21 @@ def view_archives():
             with c2:
                 st.caption("🕒 Ingéré le :")
                 st.text(src.get("ingested_at", "?"))
-
-                # Simulation d'un aperçu des métadonnées brutes
                 with st.popover("Données brutes"):
                     st.json(src)
 
+def view_chat(selected_provider: str, selected_model: str, temperature: float, k_final: int) -> None:
+    """
+    Renders the main chat interface, handling user input, PII masking, and LLM communication.
 
-# ─────────────────────────────────────────────────────────────────
-# VIEW: Chat Oracle
-# ─────────────────────────────────────────────────────────────────
-def view_chat(selected_provider, selected_model, temperature, k_final):
+    Args:
+        selected_provider (str): The chosen LLM provider API (e.g., 'groq').
+        selected_model (str): The chosen model identifier.
+        temperature (float): The generation temperature for the LLM.
+        k_final (int): The number of context chunks to retrieve during vector search.
+    """
     st.title("🔮 The Sacred Oracle")
 
-    # Session Init
     if "current_session" not in st.session_state:
         st.session_state.current_session = sm.new_session(
             provider=selected_provider, model=selected_model,
@@ -204,7 +165,6 @@ def view_chat(selected_provider, selected_model, temperature, k_final):
     if session.get("title") and session["title"] != "New conversation":
         st.caption(f"📖 **{session['title']}**")
 
-    # ── Starter prompts ───────────────────────────────────────────
     if not session.get("messages"):
         st.info(
             "**L'Oracle répond uniquement depuis ses archives Dofus.** "
@@ -213,7 +173,7 @@ def view_chat(selected_provider, selected_model, temperature, k_final):
             icon="💡",
         )
 
-        STARTERS = [
+        starters = [
             ("🗺️ Débuter", "Je suis tout nouveau sur Dofus. Par où commencer et quelle classe choisir ?"),
             ("⚔️ Combat", "Explique-moi les mécaniques de combat : PA, PM, portée, défis de combat."),
             ("🏰 Donjons", "Comment fonctionne un donjon ? Comment se préparer et quoi apporter ?"),
@@ -223,30 +183,26 @@ def view_chat(selected_provider, selected_model, temperature, k_final):
         ]
 
         cols = st.columns(3)
-        for i, (label, question) in enumerate(STARTERS):
+        for i, (label, question) in enumerate(starters):
             with cols[i % 3]:
                 if st.button(label, use_container_width=True, key=f"start_{i}"):
                     st.session_state["_inject_prompt"] = question
                     st.rerun()
 
-    # Inject starter prompt
     if "_inject_prompt" in st.session_state:
         injected = st.session_state.pop("_inject_prompt")
-        session["messages"].append({"role": "user", "content": injected})
+        session.setdefault("messages", []).append({"role": "user", "content": injected})
         sm.save(session)
         st.session_state.current_session = session
 
-    # ── Render History ────────────────────────────────────────────
     for msg in session.get("messages", []):
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
             if msg["role"] == "assistant" and msg.get("_cot"):
                 _render_cot(msg["_cot"])
 
-    # ── Input & Agent Logic ───────────────────────────────────────
     prompt = st.chat_input("Posez votre question aux archives sacrées…")
 
-    # Initialize Agent
     try:
         @st.cache_resource(hash_funcs={dict: lambda d: str(sorted(d.items()))})
         def load_llm(provider_key: str, model: str, temp: float, _config: dict):
@@ -265,21 +221,20 @@ def view_chat(selected_provider, selected_model, temperature, k_final):
         st.error(f"Erreur d'initialisation de l'agent : {e}")
         return
 
-    # Check for pending processing
     messages = session.get("messages", [])
     has_pending = (
-            messages and messages[-1]["role"] == "user"
-            and (len(messages) == 1 or messages[-2]["role"] == "assistant"
-                 or (len(messages) >= 2 and messages[-2]["role"] == "user"))
+        messages and messages[-1]["role"] == "user"
+        and (len(messages) == 1 or messages[-2]["role"] == "assistant"
+             or (len(messages) >= 2 and messages[-2]["role"] == "user"))
     )
 
     if prompt:
-        # Masquer les PII avant stockage et envoi au LLM
-        # L'utilisateur voit son message original ; le LLM reçoit la version masquée
         prompt_masked = pii.mask_text(prompt)
-        session["messages"].append({"role": "user", "content": prompt_masked})
+        session.setdefault("messages", []).append({"role": "user", "content": prompt_masked})
+        
         with st.chat_message("user"):
-            st.markdown(prompt)  # Affichage original (non masqué) pour l'UX
+            st.markdown(prompt) 
+            
         sm.save(session)
         st.session_state.current_session = session
         has_pending = True
@@ -291,7 +246,7 @@ def view_chat(selected_provider, selected_model, temperature, k_final):
             try:
                 with st.spinner("L'Oracle consulte les astres…"):
                     result = agent.invoke({"messages": history})
-                    response = _format_response(result["messages"][-1].content)
+                    response = format_response(result["messages"][-1].content)
 
                 cot_results = st.session_state.get("_cot_results", [])
                 _render_cot(cot_results)
@@ -317,139 +272,140 @@ def view_chat(selected_provider, selected_model, temperature, k_final):
                 oracle_error = handle_llm_error(e, provider=selected_provider, model=selected_model)
                 display_error(oracle_error)
 
+def main() -> None:
+    """Main application loop managing sidebar state and view routing."""
+    with st.sidebar:
+        if _is_cloud():
+            try:
+                user = st.experimental_user
+                if user and user.email:
+                    st.caption(f"👤 **{user.name or user.email}**")
+            except Exception:
+                pass
 
-# ─────────────────────────────────────────────────────────────────
-# Sidebar & Main Execution
-# ─────────────────────────────────────────────────────────────────
-with st.sidebar:
-    # ── User Info ────────────────────────────────────────────────
-    if _is_cloud():
-        try:
-            user = st.experimental_user
-            if user and user.email:
-                st.caption(f"👤 **{user.name or user.email}**")
-        except Exception:
-            pass
-
-    # ── Navigation ───────────────────────────────────────────────
-    st.subheader("Navigation")
-    page_selection = st.radio(
-        "Mode",
-        ["🔮 Oracle", "🗄️ Archives"],
-        label_visibility="collapsed"
-    )
-    st.divider()
-
-    # ── Contextual Sidebar Content ───────────────────────────────
-
-    # > Settings (Only relevant for Chat)
-    if page_selection == "🔮 Oracle":
-        with st.popover("⚙️ Paramètres IA", use_container_width=True):
-            st.markdown("**Modèle**")
-            provider_options = list(PROVIDER_LABELS.keys())
-            provider_display = list(PROVIDER_LABELS.values())
-            default_provider = config.get("llm", {}).get("default_provider", "groq")
-            default_provider_idx = (
-                provider_options.index(default_provider)
-                if default_provider in provider_options else 0
-            )
-            selected_provider_label = st.selectbox(
-                "Provider", options=provider_display, index=default_provider_idx,
-                label_visibility="collapsed",
-            )
-            selected_provider = provider_options[provider_display.index(selected_provider_label)]
-
-            available_models = get_available_models(selected_provider, config)
-            default_model = config.get("llm", {}).get("default_model", available_models[0])
-            default_model_idx = (
-                available_models.index(default_model) if default_model in available_models else 0
-            )
-            selected_model = st.selectbox(
-                "Modèle", options=available_models, index=default_model_idx,
-            )
-
-            st.markdown("**Génération**")
-            temperature = st.slider(
-                "🌡️ Température", min_value=0.0, max_value=1.0,
-                value=float(config.get("llm", {}).get("temperature", 0.0)), step=0.05,
-            )
-
-            st.markdown("**Recherche**")
-            default_k = config.get("search", {}).get("k_final", 5)
-            k_final = st.slider(
-                "📚 Sources (K)", min_value=1, max_value=15,
-                value=default_k, step=1,
-            )
-
+        st.subheader("Navigation")
+        page_selection = st.radio(
+            "Mode",
+            ["🔮 Oracle", "🗄️ Archives"],
+            label_visibility="collapsed"
+        )
         st.divider()
 
-        # > Sessions Management (Only relevant for Chat)
-        st.subheader("💬 Sessions")
-        col_new, col_del = st.columns(2)
-        with col_new:
-            if st.button("✨ Nouvelle", use_container_width=True):
-                new_s = sm.new_session(provider=selected_provider, model=selected_model)
-                st.session_state.current_session = new_s
-                st.session_state.pop("_rename_sid", None)
-                st.rerun()
-        with col_del:
-            if st.button("🗑️ Effacer", use_container_width=True):
-                if "current_session" in st.session_state:
-                    sm.delete(st.session_state.current_session["session_id"])
-                    del st.session_state.current_session
-                    st.session_state.pop("_rename_sid", None)
-                    st.rerun()
+        if page_selection == "🔮 Oracle":
+            with st.popover("⚙️ Paramètres IA", use_container_width=True):
+                st.markdown("**Modèle**")
+                
+                provider_options = list(PROVIDER_LABELS.keys())
+                provider_display = list(PROVIDER_LABELS.values())
+                default_provider = config.get("llm", {}).get("default_provider", "groq")
+                
+                default_provider_idx = (
+                    provider_options.index(default_provider)
+                    if default_provider in provider_options else 0
+                )
+                
+                selected_provider_label = st.selectbox(
+                    "Provider", options=provider_display, index=default_provider_idx,
+                    label_visibility="collapsed",
+                )
+                selected_provider = provider_options[provider_display.index(selected_provider_label)]
 
-        past_sessions = sm.list_sessions()
-        if past_sessions:
-            st.caption(f"📁 {len(past_sessions)} session(s)")
-            for s in past_sessions:
-                sid = s["session_id"]
-                is_active = (
-                        "current_session" in st.session_state
-                        and st.session_state.current_session["session_id"] == sid
+                available_models = get_available_models(selected_provider, config)
+                default_model = config.get("llm", {}).get("default_model", available_models[0])
+                default_model_idx = (
+                    available_models.index(default_model) if default_model in available_models else 0
+                )
+                
+                selected_model = st.selectbox(
+                    "Modèle", options=available_models, index=default_model_idx,
                 )
 
-                if st.session_state.get("_rename_sid") == sid:
-                    new_title = st.text_input(
-                        "Nouveau nom", value=s["title"],
-                        key=f"ri_{sid}", label_visibility="collapsed",
-                    )
-                    ok, cancel = st.columns(2)
-                    if ok.button("✅", key=f"rok_{sid}"):
-                        loaded = sm.load(sid)
-                        if loaded and new_title.strip():
-                            loaded["title"] = new_title.strip()
-                            sm.save(loaded)
-                            if is_active: st.session_state.current_session = loaded
-                        st.session_state.pop("_rename_sid")
-                        st.rerun()
-                    if cancel.button("❌", key=f"rno_{sid}"):
-                        st.session_state.pop("_rename_sid")
-                        st.rerun()
-                else:
-                    bt, edt = st.columns([5, 1])
-                    prefix = "▶ " if is_active else ""
-                    if bt.button(f"{prefix}{s['title'][:28]}", key=f"s_{sid}", use_container_width=True):
-                        loaded = sm.load(sid)
-                        if loaded:
-                            st.session_state.current_session = loaded
-                            st.rerun()
-                    if edt.button("✏️", key=f"re_{sid}"):
-                        st.session_state["_rename_sid"] = sid
-                        st.rerun()
-    else:
-        # Defaults for Archives view (since we don't show the params)
-        selected_provider = "groq"
-        selected_model = "llama3-70b-8192"
-        temperature = 0.0
-        k_final = 5
-        st.info("Mode exploration activé.\nLes sessions de chat sont masquées.")
+                st.markdown("**Génération**")
+                temperature = st.slider(
+                    "🌡️ Température", min_value=0.0, max_value=1.0,
+                    value=float(config.get("llm", {}).get("temperature", 0.0)), step=0.05,
+                )
 
-# ─────────────────────────────────────────────────────────────────
-# Routeur principal
-# ─────────────────────────────────────────────────────────────────
-if page_selection == "🔮 Oracle":
-    view_chat(selected_provider, selected_model, temperature, k_final)
-elif page_selection == "🗄️ Archives":
-    view_archives()
+                st.markdown("**Recherche**")
+                default_k = config.get("search", {}).get("k_final", 5)
+                k_final = st.slider(
+                    "📚 Sources (K)", min_value=1, max_value=15,
+                    value=default_k, step=1,
+                )
+
+            st.divider()
+            st.subheader("💬 Sessions")
+            
+            col_new, col_del = st.columns(2)
+            with col_new:
+                if st.button("✨ Nouvelle", use_container_width=True):
+                    new_s = sm.new_session(provider=selected_provider, model=selected_model)
+                    st.session_state.current_session = new_s
+                    st.session_state.pop("_rename_sid", None)
+                    st.rerun()
+                    
+            with col_del:
+                if st.button("🗑️ Effacer", use_container_width=True):
+                    if "current_session" in st.session_state:
+                        sm.delete(st.session_state.current_session["session_id"])
+                        del st.session_state.current_session
+                        st.session_state.pop("_rename_sid", None)
+                        st.rerun()
+
+            past_sessions = sm.list_sessions()
+            if past_sessions:
+                st.caption(f"📁 {len(past_sessions)} session(s)")
+                for s in past_sessions:
+                    sid = s["session_id"]
+                    is_active = (
+                        "current_session" in st.session_state
+                        and st.session_state.current_session["session_id"] == sid
+                    )
+
+                    if st.session_state.get("_rename_sid") == sid:
+                        new_title = st.text_input(
+                            "Nouveau nom", value=s["title"],
+                            key=f"ri_{sid}", label_visibility="collapsed",
+                        )
+                        ok, cancel = st.columns(2)
+                        
+                        if ok.button("✅", key=f"rok_{sid}"):
+                            loaded = sm.load(sid)
+                            if loaded and new_title.strip():
+                                loaded["title"] = new_title.strip()
+                                sm.save(loaded)
+                                if is_active: 
+                                    st.session_state.current_session = loaded
+                            st.session_state.pop("_rename_sid")
+                            st.rerun()
+                            
+                        if cancel.button("❌", key=f"rno_{sid}"):
+                            st.session_state.pop("_rename_sid")
+                            st.rerun()
+                    else:
+                        bt, edt = st.columns([5, 1])
+                        prefix = "▶ " if is_active else ""
+                        
+                        if bt.button(f"{prefix}{s['title'][:28]}", key=f"s_{sid}", use_container_width=True):
+                            loaded = sm.load(sid)
+                            if loaded:
+                                st.session_state.current_session = loaded
+                                st.rerun()
+                                
+                        if edt.button("✏️", key=f"re_{sid}"):
+                            st.session_state["_rename_sid"] = sid
+                            st.rerun()
+        else:
+            selected_provider = "groq"
+            selected_model = "llama3-70b-8192"
+            temperature = 0.0
+            k_final = 5
+            st.info("Mode exploration activé.\nLes sessions de chat sont masquées.")
+
+    if page_selection == "🔮 Oracle":
+        view_chat(selected_provider, selected_model, temperature, k_final)
+    elif page_selection == "🗄️ Archives":
+        view_archives()
+
+if __name__ == "__main__":
+    main()

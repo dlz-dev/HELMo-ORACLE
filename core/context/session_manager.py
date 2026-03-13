@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import streamlit as st
-from core.utils.utils import _BASE_DIR, _STORAGE_DIR
+from core.utils.utils import BASE_DIR, STORAGE_DIR
 
 # Constants
 LOCAL_USER_ID = "local_dev"
@@ -22,7 +22,7 @@ LOCAL_USER_ID = "local_dev"
 
 def _is_cloud() -> bool:
     """Detects if the application is running on Streamlit Cloud."""
-    config_path = os.path.join(_BASE_DIR, "config", "config.yaml")
+    config_path = os.path.join(BASE_DIR, "config", "config.yaml")
     return not os.path.exists(config_path)
 
 
@@ -54,7 +54,7 @@ class _LocalBackend:
     """Stores sessions as JSON files locally, scoped by user_id."""
 
     def __init__(self, user_id: str) -> None:
-        self._user_dir = os.path.join(_STORAGE_DIR, user_id)
+        self._user_dir = os.path.join(STORAGE_DIR, user_id)
         os.makedirs(self._user_dir, exist_ok=True)
 
     def _path(self, session_id: str) -> str:

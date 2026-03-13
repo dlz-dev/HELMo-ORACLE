@@ -160,3 +160,12 @@ def format_response(text: str) -> str:
     text = re.sub(r"\n{3,}", "\n\n", text)
     
     return text
+
+# Extract search variables once to avoid repeated dictionary lookups
+_config = load_config()
+_SEARCH_CFG = _config.get("search", {})
+K_SEMANTIC = _SEARCH_CFG.get("k_semantic", 10)
+K_BM25 = _SEARCH_CFG.get("k_bm25", 10)
+K_FINAL = _SEARCH_CFG.get("k_final", 5)
+RRF_K = _SEARCH_CFG.get("rrf_k", 60)
+FTS_LANG = _SEARCH_CFG.get("fts_language", "french")
