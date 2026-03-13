@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Tuple
 from converters import convert_csv, convert_markdown, convert_text, convert_json, convert_pdf, convert_unstructured
 from core.agent.guardian import is_valid_lore_file
 from core.database.vector_manager import VectorManager
-from core.utils.utils import _CONTEXT_PROMPT, load_config, load_api_key
+from core.utils.utils import _CONTEXT_PROMPT, ARCHIVE_DIR, QUARANTINE_DIR, load_config, load_api_key
 from providers import get_llm
 
 
@@ -51,9 +51,9 @@ def seed_database() -> None:
     Main pipeline to read files, validate them, generate context, chunk, and insert 
     them into the vector database.
     """
-    current_dir = Path(__file__).resolve().parent
-    input_folder = current_dir.parent.parent / "data" / "files"
-    quarantine_folder = current_dir.parent.parent / "data" / "quarantine"
+    input_folder = ARCHIVE_DIR
+    quarantine_folder = QUARANTINE_DIR
+
     quarantine_folder.mkdir(parents=True, exist_ok=True)
 
     config = load_config()

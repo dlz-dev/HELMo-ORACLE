@@ -14,18 +14,25 @@ from typing import Any, Dict
 import streamlit as st
 import yaml
 
-_CURRENT_DIR = Path(__file__).resolve().parent
-_CORE_DIR = _CURRENT_DIR.parent
-_BASE_DIR = _CORE_DIR.parent
+# Centralized Path Management
+CURRENT_DIR = Path(__file__).resolve().parent
+CORE_DIR = CURRENT_DIR.parent
+BASE_DIR = CORE_DIR.parent
 
-_STORAGE_DIR = _BASE_DIR / "storage" / "sessions"
-_CONFIG_PATH = _BASE_DIR / "config" / "config.yaml"
-_PIPELINE_DIR = _CURRENT_DIR
-_PROMPT_PATH = _BASE_DIR / "config" / "prompt.txt"
+# RAG Data Directories
+DATA_DIR = BASE_DIR / "data"
+NEW_FILES_DIR = DATA_DIR / "new_files"
+ARCHIVE_DIR = DATA_DIR / "files"
+QUARANTINE_DIR = DATA_DIR / "quarantine"
+
+STORAGE_DIR = BASE_DIR / "storage" / "sessions"
+CONFIG_PATH = BASE_DIR / "config" / "config.yaml"
+PIPELINE_DIR = CURRENT_DIR
+PROMPT_PATH = BASE_DIR / "config" / "prompt.txt"
 
 # Ensure the base directory is in the system path for module imports
-if str(_BASE_DIR) not in sys.path:
-    sys.path.insert(0, str(_BASE_DIR))
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 
 _CONTEXT_PROMPT = """
 Tu analyses un document provenant des archives du jeu Dofus (MMORPG).
@@ -102,7 +109,7 @@ def load_config() -> Dict[str, Any]:
     Returns:
         Dict[str, Any]: The parsed configuration dictionary.
     """
-    with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
+    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 @lru_cache(maxsize=1)
@@ -112,8 +119,8 @@ def load_base_prompt() -> str:
     Returns:
         str: The raw string content of the system prompt.
     """
-    if _PROMPT_PATH.exists():
-        with open(_PROMPT_PATH, "r", encoding="utf-8") as f:
+    if PROMPT_PATH.exists():
+        with open(PROMPT_PATH, "r", encoding="utf-8") as f:
             return f.read()
     return st.secrets["prompts"]["system_prompt"]
 
