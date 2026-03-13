@@ -1,79 +1,79 @@
 import os
-import sys
+from typing import Optional
 
 from providers import get_llm
 from core.utils.utils import _load_config, _GUARDIAN_PROMPT
 
-# ─────────────────────────────────────────────────────────────────
-# Gardien principal
-# ─────────────────────────────────────────────────────────────────
 
-def is_valid_lore_file(file_path: str, api_key: str = None) -> bool:
+def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> bool:
     """
-    Valide un fichier via le LLM configuré dans config.yaml [guardian].
+    Validates a file using the LLM configured in config.yaml under [guardian].
 
-    Le paramètre api_key est conservé pour rétro-compatibilité avec
-    ingestion.py mais n'est plus utilisé directement — la clé est
-    lue depuis le config via get_llm().
+    The `api_key` parameter is maintained for backward compatibility with 
+    legacy ingestion scripts but is no longer used directly; the key is 
+    read from the configuration via `get_llm()`.
 
-    Config yaml utilisée :
-        guardian:
-          provider: "groq"            # provider du Gardien (indépendant de l'Oracle)
-          model: "gemma2-9b-it"       # modèle léger suffisant pour classification
+    Args:
+        file_path (str): The absolute or relative path to the file.
+        api_key (Optional[str]): Legacy parameter, currently unused.
+
+    Returns:
+        bool: True if the file is accepted by the Guardian or is a known 
+              binary format, False otherwise.
+
+    Raises:
+        RuntimeError: If the Guardian LLM configuration is invalid or unreachable.
     """
-
-    # ── Lecture du fichier ────────────────────────────────────────
     fname = os.path.basename(file_path)
     extension = os.path.splitext(fname)[1].lower()
 
-    # Si c'est un PDF, on bypass la lecture texte (le Gardien auto-accepte)
+    # Bypass text reading for PDFs (auto-accept for Unstructured conversion)
     if extension == '.pdf':
-        print(f"  📄 [{fname}] Format binaire (PDF) → Auto-Accepté pour conversion Unstructured")
+        print(f"  📄 [{fname}] Binary format (PDF) → Auto-Accepted for Unstructured conversion")
         return True
 
+    # Attempt to read a sample of the file to evaluate its content
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             sample_text = f.read(1500)
-    except Exception as e:
-        # Fallback pour les fichiers texte avec des encodages bizarres
+    except UnicodeDecodeError:
         try:
             with open(file_path, "r", encoding="latin-1") as f:
                 sample_text = f.read(1500)
-        except:
-            print(f"  🚫 [{fname}] Erreur de lecture : {e} → REFUSÉ (impossible à lire)")
+        except Exception as e:
+            print(f"  🚫 [{fname}] Read error: {e} → REJECTED (Unreadable file)")
             return False
+    except Exception as e:
+        print(f"  🚫 [{fname}] Unexpected read error: {e} → REJECTED")
+        return False
 
-    # ── Chargement config & LLM ───────────────────────────────────
+    # Load configuration and initialize the LLM
     try:
         config = _load_config()
         guardian_cfg = config.get("guardian", {})
         provider_key = guardian_cfg.get("provider", "groq")
         model = guardian_cfg.get("model", "llama-3.1-8b-instant")
         llm = get_llm(provider_key=provider_key, model=model, config=config)
-
     except Exception as e:
-        # L'API du Gardien est indisponible → on bloque TOUTE l'ingestion
-        # pour éviter d'ingérer des fichiers non validés
         raise RuntimeError(
-            f"🚫 Gardien indisponible ({provider_key}/{model}) : {e}\n"
-            f"   Ingestion interrompue — aucun fichier ne sera ajouté sans validation."
-        )
+            f"🚫 Guardian unavailable ({provider_key}/{model}): {e}\n"
+            f"   Ingestion halted — no files will be added without validation."
+        ) from e
 
-    # ── Appel LLM ────────────────────────────────────────────────
+    # Query the LLM for validation
     prompt = _GUARDIAN_PROMPT.format(sample_text=sample_text)
 
     try:
         response = llm.invoke(prompt)
         answer = response.content.strip().upper()
-        verdict = "OUI" in answer
+        
+        # Note: We keep "OUI" since _GUARDIAN_PROMPT instructs the LLM in French
+        verdict = "OUI" in answer 
 
-        status = "✅ ACCEPTÉ" if verdict else "❌ REJETÉ"
-        print(f"  🛡️  Gardien [{fname}] via {provider_key}/{model} → '{response.content.strip()}' → {status}")
+        status = "✅ ACCEPTED" if verdict else "❌ REJECTED"
+        print(f"  🛡️  Guardian [{fname}] via {provider_key}/{model} → '{response.content.strip()}' → {status}")
 
         return verdict
-
     except Exception as e:
-        # Erreur pendant la validation d'UN fichier → on refuse CE fichier
-        # mais on laisse l'ingestion continuer pour les autres
-        print(f"  🚫 [{fname}] Erreur API durant la validation : {e} → REFUSÉ (non validé)")
-        return False  # fail-strict : pas de réponse = pas d'ingestion
+        print(f"  🚫 [{fname}] API error during validation: {e} → REJECTED (Not validated)")
+        return False

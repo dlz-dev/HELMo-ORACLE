@@ -1,20 +1,8 @@
 """
-Persistent session storage with automatic environment detection:
-  - Local / dev  → JSON files in storage/sessions/<user_id>/
-  - Streamlit Cloud → Supabase (table: chat_sessions), filtered by user_id
+Persistent session storage module with automatic environment detection.
 
-Multi-user isolation: every operation is scoped to a user_id.
-  - Cloud  : user_id = email from st.experimental_user (Streamlit auth)
-  - Local  : user_id = "local_dev" (fixed, single-user dev environment)
-
-A "session" contains:
-  - session_id    : unique identifier (UUID)
-  - user_id       : owner of the session
-  - title         : auto-generated from first user message
-  - created_at    : ISO timestamp
-  - updated_at    : ISO timestamp
-  - messages      : full list of {role, content} dicts
-  - summary       : condensed memory of older messages (may be empty string)
+Handles multi-user isolation and seamlessly switches between local JSON
+storage (for development) and Supabase (for Streamlit Cloud).
 """
 
 from __future__ import annotations
@@ -23,38 +11,23 @@ import json
 import os
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
-from core.utils.utils import _BASE_DIR, _STORAGE_DIR
+from typing import Any, Dict, List, Optional
 
 import streamlit as st
+from core.utils.utils import _BASE_DIR, _STORAGE_DIR
 
-# ─────────────────────────────────────────────────────────────────
-# Paths
-# ─────────────────────────────────────────────────────────────────
-# __file__ = app/core/context/*.py → ×3 = app/
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-STORAGE_DIR = os.path.join(BASE_DIR, "storage", "sessions")
+# Constants
+LOCAL_USER_ID = "local_dev"
 
 
 def _is_cloud() -> bool:
-    """
-    Returns True when running on Streamlit Cloud.
-    Detection: config.yaml absent → we're in cloud mode using st.secrets.
-    """
+    """Detects if the application is running on Streamlit Cloud."""
     config_path = os.path.join(_BASE_DIR, "config", "config.yaml")
     return not os.path.exists(config_path)
 
 
-LOCAL_USER_ID = "local_dev"
-
-
 def get_current_user_id() -> str:
-    """
-    Returns the current user's identifier.
-
-    - Streamlit Cloud (auth enabled) : email from st.experimental_user
-    - Local dev                       : fixed constant "local_dev"
-    """
+    """Retrieves the current user's identifier based on the environment."""
     if _is_cloud():
         try:
             user = st.experimental_user
@@ -67,107 +40,85 @@ def get_current_user_id() -> str:
 
 
 def _now_iso() -> str:
+    """Returns the current UTC time as an ISO formatted string."""
     return datetime.now(timezone.utc).isoformat()
 
 
 def _make_title(first_user_message: str) -> str:
-    """Truncates the first message to create a readable session title."""
+    """Truncates the first user message to create a readable session title."""
     title = first_user_message.strip().replace("\n", " ")
     return title[:60] + "…" if len(title) > 60 else title
 
 
-# ─────────────────────────────────────────────────────────────────
-# Local JSON backend
-# ─────────────────────────────────────────────────────────────────
-
 class _LocalBackend:
-    """
-    Stores sessions as JSON files in storage/sessions/<user_id>/<session_id>.json
-    Each user gets their own subdirectory — full isolation even in local/dev.
-    """
+    """Stores sessions as JSON files locally, scoped by user_id."""
 
-    def __init__(self, user_id: str):
+    def __init__(self, user_id: str) -> None:
         self._user_dir = os.path.join(_STORAGE_DIR, user_id)
         os.makedirs(self._user_dir, exist_ok=True)
 
     def _path(self, session_id: str) -> str:
         return os.path.join(self._user_dir, f"{session_id}.json")
 
-    def save(self, session: dict) -> None:
+    def save(self, session: Dict[str, Any]) -> None:
+        """Persists a session dictionary to a local JSON file."""
         session["updated_at"] = _now_iso()
         with open(self._path(session["session_id"]), "w", encoding="utf-8") as f:
             json.dump(session, f, ensure_ascii=False, indent=2)
 
-    def load(self, session_id: str) -> Optional[dict]:
+    def load(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Loads a session dictionary from local storage."""
         path = self._path(session_id)
         if not os.path.exists(path):
             return None
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
 
-    def list_sessions(self) -> list[dict]:
-        """Returns sessions for this user only, sorted by updated_at descending."""
+    def list_sessions(self) -> List[Dict[str, Any]]:
+        """Retrieves all sessions for the current user, sorted by updated_at."""
         sessions = []
         for fname in os.listdir(self._user_dir):
-            if fname.endswith(".json"):
-                try:
-                    with open(os.path.join(self._user_dir, fname), "r", encoding="utf-8") as f:
-                        data = json.load(f)
-                        sessions.append({
-                            "session_id": data["session_id"],
-                            "title": data.get("title", "Untitled"),
-                            "updated_at": data.get("updated_at", ""),
-                            "provider": data.get("provider", ""),
-                            "model": data.get("model", ""),
-                        })
-                except (json.JSONDecodeError, KeyError):
-                    continue
+            if not fname.endswith(".json"):
+                continue
+            
+            try:
+                with open(os.path.join(self._user_dir, fname), "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    sessions.append({
+                        "session_id": data.get("session_id"),
+                        "title": data.get("title", "Untitled"),
+                        "updated_at": data.get("updated_at", ""),
+                        "provider": data.get("provider", ""),
+                        "model": data.get("model", ""),
+                    })
+            except (json.JSONDecodeError, KeyError):
+                continue
+                
         return sorted(sessions, key=lambda s: s["updated_at"], reverse=True)
 
     def delete(self, session_id: str) -> None:
+        """Deletes a local session file."""
         path = self._path(session_id)
         if os.path.exists(path):
             os.remove(path)
 
 
-# ─────────────────────────────────────────────────────────────────
-# Supabase backend
-# ─────────────────────────────────────────────────────────────────
-
 class _SupabaseBackend:
-    """
-    Stores sessions in Supabase, scoped by user_id for full multi-user isolation.
+    """Stores sessions in a Supabase database, scoped by user_id."""
 
-    Required SQL (run once in Supabase SQL editor):
-    ─────────────────────────────────────────────────
-    CREATE TABLE IF NOT EXISTS chat_sessions (
-        session_id  TEXT PRIMARY KEY,
-        user_id     TEXT NOT NULL,
-        title       TEXT,
-        provider    TEXT,
-        model       TEXT,
-        messages    JSONB,
-        summary     TEXT DEFAULT '',
-        created_at  TIMESTAMPTZ DEFAULT now(),
-        updated_at  TIMESTAMPTZ DEFAULT now()
-    );
-    CREATE INDEX IF NOT EXISTS idx_chat_sessions_user_id
-        ON chat_sessions(user_id);
-    ─────────────────────────────────────────────────
-    """
-
-    def __init__(self, user_id: str):
+    def __init__(self, user_id: str) -> None:
         from supabase import create_client
         url = st.secrets["database"]["supabase_url"]
         key = st.secrets["database"]["supabase_anon_key"]
         self._client = create_client(url, key)
         self._user_id = user_id
 
-    def save(self, session: dict) -> None:
+    def save(self, session: Dict[str, Any]) -> None:
+        """Upserts a session record in the Supabase database."""
         session["updated_at"] = _now_iso()
         payload = {
             "session_id": session["session_id"],
-            "user_id": self._user_id,  # ← ownership
+            "user_id": self._user_id,
             "title": session.get("title", ""),
             "provider": session.get("provider", ""),
             "model": session.get("model", ""),
@@ -177,22 +128,24 @@ class _SupabaseBackend:
         }
         self._client.table("chat_sessions").upsert(payload).execute()
 
-    def load(self, session_id: str) -> Optional[dict]:
+    def load(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Loads a session record from the Supabase database."""
         res = (
             self._client.table("chat_sessions")
             .select("*")
             .eq("session_id", session_id)
-            .eq("user_id", self._user_id)  # ← user cannot load another user's session
+            .eq("user_id", self._user_id)
             .single()
             .execute()
         )
         return res.data if res.data else None
 
-    def list_sessions(self) -> list[dict]:
+    def list_sessions(self) -> List[Dict[str, Any]]:
+        """Retrieves all session metadata for the user from Supabase."""
         res = (
             self._client.table("chat_sessions")
             .select("session_id, title, updated_at, provider, model")
-            .eq("user_id", self._user_id)  # ← user only sees their own sessions
+            .eq("user_id", self._user_id)
             .order("updated_at", desc=True)
             .limit(50)
             .execute()
@@ -200,33 +153,20 @@ class _SupabaseBackend:
         return res.data or []
 
     def delete(self, session_id: str) -> None:
+        """Deletes a session record from the Supabase database."""
         (
             self._client.table("chat_sessions")
             .delete()
             .eq("session_id", session_id)
-            .eq("user_id", self._user_id)  # ← user cannot delete another user's session
+            .eq("user_id", self._user_id)
             .execute()
         )
 
 
-# ─────────────────────────────────────────────────────────────────
-# SessionManager — public interface
-# ─────────────────────────────────────────────────────────────────
-
 class SessionManager:
-    """
-    Unified session manager. Automatically uses the right backend.
+    """Unified session manager that automatically routes to the correct backend."""
 
-    Usage in app.py:
-        sm = SessionManager()
-        session = sm.new_session(provider="groq", model="llama-3.3-70b")
-        sm.save(session)
-        sessions = sm.list_sessions()
-        session = sm.load(session_id)
-        sm.delete(session_id)
-    """
-
-    def __init__(self):
+    def __init__(self) -> None:
         self.user_id = get_current_user_id()
 
         if _is_cloud():
@@ -234,15 +174,14 @@ class SessionManager:
                 self._backend = _SupabaseBackend(self.user_id)
                 self.backend_name = "supabase"
             except Exception:
-                # Fallback to local if Supabase isn't configured yet
                 self._backend = _LocalBackend(self.user_id)
                 self.backend_name = "local"
         else:
             self._backend = _LocalBackend(self.user_id)
             self.backend_name = "local"
 
-    def new_session(self, provider: str = "", model: str = "") -> dict:
-        """Creates a fresh session dict (not yet saved)."""
+    def new_session(self, provider: str = "", model: str = "") -> Dict[str, Any]:
+        """Creates and returns a fresh session dictionary."""
         return {
             "session_id": str(uuid.uuid4()),
             "user_id": self.user_id,
@@ -255,21 +194,20 @@ class SessionManager:
             "updated_at": _now_iso(),
         }
 
-    def save(self, session: dict) -> None:
-        """Persists the session. Auto-generates title from first user message."""
-        # Auto-title on first user message
+    def save(self, session: Dict[str, Any]) -> None:
+        """Persists the session, auto-generating a title if it is new."""
         if session.get("title") == "New conversation":
             user_msgs = [m for m in session.get("messages", []) if m["role"] == "user"]
             if user_msgs:
                 session["title"] = _make_title(user_msgs[0]["content"])
         self._backend.save(session)
 
-    def load(self, session_id: str) -> Optional[dict]:
-        """Loads a session by ID. Returns None if not found."""
+    def load(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Loads a session by its ID."""
         return self._backend.load(session_id)
 
-    def list_sessions(self) -> list[dict]:
-        """Returns metadata (no messages) for all sessions, newest first."""
+    def list_sessions(self) -> List[Dict[str, Any]]:
+        """Returns metadata for all sessions, sorted by newest first."""
         return self._backend.list_sessions()
 
     def delete(self, session_id: str) -> None:

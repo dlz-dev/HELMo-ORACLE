@@ -1,129 +1,87 @@
 """
-Manages vector operations and hybrid search against the PostgreSQL/Supabase database.
+Manages vector operations and hybrid search against a PostgreSQL/Supabase database.
 
 Search strategy:
-  - Semantic search  : cosine distance (<=>)  — finds conceptually similar content
-  - BM25 / FTS       : PostgreSQL tsvector     — finds exact keyword matches
-  - Hybrid fusion    : Reciprocal Rank Fusion  — merges both result lists optimally
-
-Why cosine over euclidean (L2)?
-  Cosine measures the angle between vectors, ignoring magnitude.
-  For text embeddings, two semantically similar sentences may have different
-  vector norms — cosine handles this correctly, L2 does not.
-
-Why RRF over ColBERT re-ranking?
-  RRF (Reciprocal Rank Fusion) is a proven, zero-dependency algorithm that
-  consistently outperforms individual rankings. ColBERT adds ~300-500ms latency
-  and an extra model dependency for marginal gains at this data scale.
-
-  RRF formula: score(d) = Σ 1 / (k + rank(d))
-  where k=60 is the standard constant that dampens the influence of high ranks.
+  - Semantic search: Cosine distance (<=>) for conceptually similar content.
+  - BM25 / FTS: PostgreSQL tsvector for exact keyword matches.
+  - Hybrid fusion: Reciprocal Rank Fusion (RRF) to optimally merge both result lists.
 """
 
 import json
 from datetime import datetime, timezone
-from typing import List, Tuple, Dict
+from typing import Any, Dict, List, Optional, Tuple
 
 import psycopg
-import streamlit as st
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from pgvector.psycopg import register_vector
 
 from core.utils.utils import _load_config
 
+# Load configuration once at module level
 config = _load_config()
 
-_SEARCH_CFG = config.get("search", {})
-_K_SEMANTIC = _SEARCH_CFG.get("k_semantic", 10)
-_K_BM25 = _SEARCH_CFG.get("k_bm25", 10)
-_K_FINAL = _SEARCH_CFG.get("k_final", 5)
-_RRF_K = _SEARCH_CFG.get("rrf_k", 60)
-_FTS_LANG = _SEARCH_CFG.get("fts_language", "french")
+_SEARCH_CFG: Dict[str, Any] = config.get("search", {})
+_K_SEMANTIC: int = _SEARCH_CFG.get("k_semantic", 10)
+_K_BM25: int = _SEARCH_CFG.get("k_bm25", 10)
+_K_FINAL: int = _SEARCH_CFG.get("k_final", 5)
+_RRF_K: int = _SEARCH_CFG.get("rrf_k", 60)
+_FTS_LANG: str = _SEARCH_CFG.get("fts_language", "french")
 
 
 class VectorManager:
     """
-    Handles connections to PostgreSQL/Supabase and manages hybrid search.
+    Handles connections to PostgreSQL/Supabase and manages hybrid search operations.
 
-    ── Required SQL (run once in Supabase SQL editor) ──────────────
-
-    -- 1. Add ingested_at column (if not already done)
-    ALTER TABLE documents
-        ADD COLUMN IF NOT EXISTS ingested_at TIMESTAMPTZ DEFAULT now();
-
-    -- 2. Add tsvector column for BM25/FTS
-    ALTER TABLE documents
-        ADD COLUMN IF NOT EXISTS fts_vector TSVECTOR;
-
-    -- 3. Populate fts_vector for existing rows
-    UPDATE documents
-        SET fts_vector = to_tsvector('french', content);
-
-    -- 4. Create GIN index for fast full-text search
-    CREATE INDEX IF NOT EXISTS idx_documents_fts
-        ON documents USING GIN(fts_vector);
-
-    -- 5. Create cosine distance index
-    CREATE INDEX IF NOT EXISTS idx_documents_cosine
-        ON documents USING ivfflat (vecteur vector_cosine_ops)
-        WITH (lists = 100);
-
-    -- 6. Trigger to auto-update fts_vector on insert/update
-    CREATE OR REPLACE FUNCTION update_fts_vector()
-    RETURNS TRIGGER AS $$
-    BEGIN
-        NEW.fts_vector := to_tsvector('french', NEW.content);
-        RETURN NEW;
-    END;
-    $$ LANGUAGE plpgsql;
-
-    CREATE OR REPLACE TRIGGER trig_update_fts
-        BEFORE INSERT OR UPDATE ON documents
-        FOR EACH ROW EXECUTE FUNCTION update_fts_vector();
-    ────────────────────────────────────────────────────────────────
+    Attributes:
+        conn (psycopg.Connection): The database connection.
+        embeddings_model (Any): The model used to generate text embeddings.
     """
 
-    def __init__(self, embeddings_model=None):
-        if "connection_string" in config["database"]:
+    def __init__(self, embeddings_model: Optional[Any] = None) -> None:
+        """
+        Initializes the VectorManager, establishes the database connection, 
+        and sets up the embedding model.
+
+        Args:
+            embeddings_model (Optional[Any]): An externally shared embedding model 
+                instance to avoid duplicate instantiation. Defaults to None.
+        """
+        db_config = config.get("database", {})
+        
+        if "connection_string" in db_config:
             self.conn = psycopg.connect(
-                config["database"]["connection_string"],
+                db_config["connection_string"],
                 autocommit=True,
             )
         else:
             self.conn = psycopg.connect(
-                host=config["database"]["host"],
-                dbname=config["database"]["dbname"],
-                user=config["database"]["user"],
-                password=config["database"]["password"],
-                port=int(config["database"]["port"]),
+                host=db_config.get("host"),
+                dbname=db_config.get("dbname"),
+                user=db_config.get("user"),
+                password=db_config.get("password"),
+                port=int(db_config.get("port", 5432)),
                 sslmode="require",
+                autocommit=True,
             )
 
         register_vector(self.conn)
 
-        # Accept an externally shared embedding model to avoid duplicate PyTorch
-        # instantiation. Always pass the singleton from app.py via get_vector_manager().
-        # If None (e.g. called from ingestion.py), creates its own instance.
         if embeddings_model is not None:
             self.embeddings_model = embeddings_model
         else:
-            # Modèle performant du MTEB (768 dimensions)
             self.embeddings_model = HuggingFaceEmbedding(
                 model_name="intfloat/multilingual-e5-base"
             )
 
-    # ─────────────────────────────────────────────────────────────
-    # INSERT
-    # ─────────────────────────────────────────────────────────────
-
-    def add_document(self, text: str, metadata: dict = None) -> None:
+    def add_document(self, text: str, metadata: Optional[Dict[str, Any]] = None) -> None:
         """
         Generates an embedding and saves the text with metadata and ingestion timestamp.
-        The fts_vector column is populated automatically by the database trigger.
-        """
-        if metadata is None:
-            metadata = {}
 
+        Args:
+            text (str): The document content to store and embed.
+            metadata (Optional[Dict[str, Any]]): Associated metadata for the document.
+        """
+        metadata = metadata or {}
         text_to_embed = text
 
         if "global_context" in metadata:
@@ -138,22 +96,24 @@ class VectorManager:
 
         with self.conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO documents (content, vecteur, metadata, ingested_at) VALUES (%s, %s, %s, %s)",
+                """
+                INSERT INTO documents (content, vecteur, metadata, ingested_at) 
+                VALUES (%s, %s, %s, %s)
+                """,
                 (text, vector, json.dumps(metadata), ingested_at),
             )
-        self.conn.commit()
 
-    # ─────────────────────────────────────────────────────────────
-    # SEARCH — Semantic cosine
-    # ─────────────────────────────────────────────────────────────
-
-    def search_semantic(
-            self, query_vector: List[float], k: int = _K_SEMANTIC
-    ) -> List[Tuple[str, float, dict]]:
+    def search_semantic(self, query_vector: List[float], k: int = _K_SEMANTIC) -> List[Tuple[str, float, Dict[str, Any]]]:
         """
-        Cosine similarity search (<=>) — finds semantically related content.
-        Lower score = more similar (cosine distance, not similarity).
-        Returns list of (content, distance, metadata).
+        Performs a cosine similarity search to find semantically related content.
+
+        Args:
+            query_vector (List[float]): The embedded representation of the query.
+            k (int): The number of results to return.
+
+        Returns:
+            List[Tuple[str, float, Dict[str, Any]]]: A list containing the content, 
+            cosine distance score, and metadata. Lower scores indicate higher similarity.
         """
         with self.conn.cursor() as cur:
             cur.execute(
@@ -161,24 +121,23 @@ class VectorManager:
                 SELECT content, vecteur <=> %s::vector AS distance, metadata
                 FROM documents
                 ORDER BY distance
-                    LIMIT %s
+                LIMIT %s
                 """,
                 (query_vector, k),
             )
             return cur.fetchall()
 
-    # ─────────────────────────────────────────────────────────────
-    # SEARCH — BM25 / Full-Text Search
-    # ─────────────────────────────────────────────────────────────
-
-    def search_bm25(
-            self, query: str, k: int = _K_BM25
-    ) -> List[Tuple[str, float, dict]]:
+    def search_bm25(self, query: str, k: int = _K_BM25) -> List[Tuple[str, float, Dict[str, Any]]]:
         """
-        PostgreSQL Full-Text Search — finds exact keyword and term matches.
-        Uses ts_rank for scoring (approximates BM25 behaviour natively).
-        Falls back gracefully if fts_vector column doesn't exist yet.
-        Returns list of (content, rank_score, metadata).
+        Performs a PostgreSQL Full-Text Search for exact keyword matches.
+
+        Args:
+            query (str): The raw text query.
+            k (int): The number of results to return.
+
+        Returns:
+            List[Tuple[str, float, Dict[str, Any]]]: A list containing the content, 
+            rank score, and metadata.
         """
         try:
             with self.conn.cursor() as cur:
@@ -196,36 +155,26 @@ class VectorManager:
                 )
                 return cur.fetchall()
         except Exception as e:
-            print(f"  ⚠️  BM25 unavailable ({e}) — semantic-only fallback active")
+            print(f"⚠️ BM25 unavailable ({e}) — semantic-only fallback active")
             return []
 
-    # ─────────────────────────────────────────────────────────────
-    # SEARCH — Hybrid RRF fusion
-    # ─────────────────────────────────────────────────────────────
-
-    def search_hybrid(
-            self,
-            query: str,
-            query_vector: List[float],
-            k_final: int = _K_FINAL,
-    ) -> List[Tuple[str, float, dict]]:
+    def search_hybrid(self, query: str, query_vector: List[float], k_final: int = _K_FINAL) -> List[Tuple[str, float, Dict[str, Any]]]:
         """
-        Hybrid search: semantic cosine + BM25, fused with Reciprocal Rank Fusion.
+        Executes a hybrid search fusing semantic and BM25 results via Reciprocal Rank Fusion.
 
-        RRF score = Σ  1 / (rrf_k + rank_position)
+        Args:
+            query (str): The raw text query for BM25.
+            query_vector (List[float]): The embedded representation of the query.
+            k_final (int): The final number of fused results to return.
 
-        Documents appearing in BOTH result lists get a cumulative RRF boost,
-        making them rank higher — exactly what you want for high-confidence results.
-        Documents found only by BM25 (exact name match) are still surfaced even
-        if semantically distant.
-
-        Returns list of (content, rrf_score, metadata), best first.
+        Returns:
+            List[Tuple[str, float, Dict[str, Any]]]: The fused and sorted search results.
         """
         semantic_results = self.search_semantic(query_vector, k=_K_SEMANTIC)
         bm25_results = self.search_bm25(query, k=_K_BM25)
 
         rrf_scores: Dict[str, float] = {}
-        doc_store: Dict[str, Tuple] = {}
+        doc_store: Dict[str, Tuple[str, float, Dict[str, Any]]] = {}
 
         for rank, (content, score, metadata) in enumerate(semantic_results):
             rrf_scores[content] = rrf_scores.get(content, 0.0) + 1.0 / (_RRF_K + rank + 1)
@@ -235,52 +184,52 @@ class VectorManager:
             rrf_scores[content] = rrf_scores.get(content, 0.0) + 1.0 / (_RRF_K + rank + 1)
             doc_store[content] = (content, score, metadata)
 
-        sorted_docs = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
+        sorted_docs = sorted(rrf_scores.items(), key=lambda item: item[1], reverse=True)
 
         return [
             (doc_store[content][0], rrf_score, doc_store[content][2])
             for content, rrf_score in sorted_docs[:k_final]
         ]
 
-    # ─────────────────────────────────────────────────────────────
-    # DATABASE EXPLORER
-    # ─────────────────────────────────────────────────────────────
-
-    def list_sources(self) -> list[dict]:
+    def list_sources(self) -> List[Dict[str, Any]]:
         """
-        Returns one entry per unique source file in the database.
-        Each entry: { source, chunk_count, global_context, ingested_at }
-        Groups by source filename — not by individual chunk.
+        Retrieves a summary of unique source files stored in the database.
+
+        Returns:
+            List[Dict[str, Any]]: A list of dictionaries detailing the source file, 
+            chunk count, global context, and ingestion timestamp.
         """
         try:
             with self.conn.cursor() as cur:
-                cur.execute("""
-                            SELECT metadata ->>'source' AS source, COUNT (*) AS chunk_count, MAX (metadata->>'global_context') AS global_context, MAX (ingested_at) AS ingested_at
-                            FROM documents
-                            WHERE metadata->>'source' IS NOT NULL
-                            GROUP BY metadata->>'source'
-                            ORDER BY MAX (ingested_at) DESC NULLS LAST
-                            """)
+                cur.execute(
+                    """
+                    SELECT metadata ->>'source' AS source, 
+                           COUNT(*) AS chunk_count, 
+                           MAX(metadata->>'global_context') AS global_context, 
+                           MAX(ingested_at) AS ingested_at
+                    FROM documents
+                    WHERE metadata->>'source' IS NOT NULL
+                    GROUP BY metadata->>'source'
+                    ORDER BY MAX(ingested_at) DESC NULLS LAST
+                    """
+                )
                 rows = cur.fetchall()
+                
                 return [
                     {
-                        "source": r[0],
-                        "chunk_count": r[1],
-                        "global_context": r[2] or "Aucun contexte global disponible.",
-                        "ingested_at": r[3].strftime("%Y-%m-%d %H:%M UTC") if r[3] else "—",
+                        "source": row[0],
+                        "chunk_count": row[1],
+                        "global_context": row[2] or "Aucun contexte global disponible.",
+                        "ingested_at": row[3].strftime("%Y-%m-%d %H:%M UTC") if row[3] else "—",
                     }
-                    for r in rows
+                    for row in rows
                 ]
         except Exception as e:
-            print(f"⚠️  list_sources failed: {e}")
+            print(f"⚠️ list_sources failed: {e}")
             return []
 
-    # ─────────────────────────────────────────────────────────────
-    # LEGACY
-    # ─────────────────────────────────────────────────────────────
-
-    def search_similar(
-            self, query_vector: List[float], k: int = _K_FINAL
-    ) -> List[Tuple[str, float, dict]]:
-        """Alias for search_semantic() — kept for backward compatibility."""
+    def search_similar(self, query_vector: List[float], k: int = _K_FINAL) -> List[Tuple[str, float, Dict[str, Any]]]:
+        """
+        Alias for search_semantic(), kept for backward compatibility.
+        """
         return self.search_semantic(query_vector, k)

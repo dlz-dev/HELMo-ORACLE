@@ -1,35 +1,34 @@
 """
-Pipeline d'ingestion des fichiers lore dans la base vectorielle.
+Ingestion pipeline for lore files into the vector database.
 
-Étapes pour chaque fichier :
-  1. GARDE    — Le Gardien IA valide que le fichier est du lore Dofus/MMORPG.
-               Si l'API est indisponible → ingestion stoppée (fail-strict).
-  2. PARSE    — Conversion selon le format via LlamaIndex (csv, md, txt, json, pdf, unstructured).
-  3. CONTEXTE — Un LLM génère une description globale du document (1 appel/fichier).
-               Ce contexte est préfixé à chaque chunk AVANT vectorisation
-               (Contextual Retrieval — améliore la qualité de la recherche).
-  4. VECTORISE — Chaque chunk contextualisé est vectorisé et sauvegardé.
-               Le texte ORIGINAL (sans préfixe) est stocké en base pour la lecture.
+Pipeline steps per file:
+  1. GUARD    — Validates that the file is Dofus/MMORPG lore.
+  2. CONTEXT  — An LLM generates a global description of the document.
+  3. PARSE    — Converts the file based on its extension via LlamaIndex.
+  4. VECTORIZE— Each contextualized chunk is vectorized and saved to the DB.
 """
 
-import os
 import shutil
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
-from core.agent.guardian import is_valid_lore_file, load_api_key
-from core.database.vector_manager import VectorManager
 from converters import convert_csv, convert_markdown, convert_text, convert_json, convert_pdf, convert_unstructured
+from core.agent.guardian import is_valid_lore_file
+from core.database.vector_manager import VectorManager
+from core.utils.utils import _CONTEXT_PROMPT, _load_config, load_api_key
 from providers import get_llm
 
-from core.utils.utils import _load_config, _CONTEXT_PROMPT
 
-# ─────────────────────────────────────────────────────────────────
-# Contextual Retrieval — génération du contexte global par fichier
-# ─────────────────────────────────────────────────────────────────
-
-def generate_document_context(file_path: str, llm) -> str:
+def generate_document_context(file_path: Path, llm: Any) -> str:
     """
-    Génère une description contextuelle du document entier via LLM.
-    Utilisée comme préfixe pour chaque chunk avant vectorisation.
+    Generates a contextual description of the entire document using an LLM.
+
+    Args:
+        file_path (Path): The path to the file to read.
+        llm (Any): The language model instance used for generation.
+
+    Returns:
+        str: The generated context, or an empty string if it fails.
     """
     try:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -40,124 +39,107 @@ def generate_document_context(file_path: str, llm) -> str:
     try:
         response = llm.invoke(_CONTEXT_PROMPT.format(sample=sample))
         context = response.content.strip()
-        print(f"    📝 Contexte généré : {context[:80]}{'...' if len(context) > 80 else ''}")
+        print(f"    📝 Context generated: {context[:80]}...")
         return context
     except Exception as e:
-        print(f"    ⚠️  Génération de contexte échouée ({e}) — vectorisation sans contexte")
+        print(f"    ⚠️ Context generation failed ({e}) — vectorizing without context")
         return ""
 
 
-# ─────────────────────────────────────────────────────────────────
-# Pipeline principal
-# ─────────────────────────────────────────────────────────────────
-
 def seed_database() -> None:
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    input_folder = os.path.join(current_dir, "../..", "data", "files")
-    quarantine_folder = os.path.join(current_dir, "../..", "data", "quarantine")
-    os.makedirs(quarantine_folder, exist_ok=True)
+    """
+    Main pipeline to read files, validate them, generate context, chunk, and insert 
+    them into the vector database.
+    """
+    current_dir = Path(__file__).resolve().parent
+    input_folder = current_dir.parent.parent / "data" / "files"
+    quarantine_folder = current_dir.parent.parent / "data" / "quarantine"
+    quarantine_folder.mkdir(parents=True, exist_ok=True)
 
     config = _load_config()
 
-    # ── Initialisation du LLM pour la contextualisation ──────────
     guardian_cfg = config.get("guardian", {})
     ctx_provider = guardian_cfg.get("provider", "groq")
     ctx_model = guardian_cfg.get("model", "gemma2-9b-it")
 
     try:
         context_llm = get_llm(provider_key=ctx_provider, model=ctx_model, config=config)
-        print(f"🔮 Contextualisation via {ctx_provider}/{ctx_model}")
+        print(f"🔮 Contextualization initialized via {ctx_provider}/{ctx_model}")
     except Exception as e:
         context_llm = None
-        print(f"⚠️  LLM de contextualisation indisponible ({e}) — ingestion sans contexte LLM")
+        print(f"⚠️ Context LLM unavailable ({e}) — ingestion will proceed without LLM context")
 
-    # ── Initialisation DB ─────────────────────────────────────────
-    print("🗄️  Connexion à la base vectorielle...")
+    print("🗄️ Connecting to vector database...")
     db_manager = VectorManager()
-
     api_key = load_api_key()
 
-    print(f"\n📂 Lecture des fichiers dans : {input_folder}")
+    print(f"\n📂 Reading files from: {input_folder}")
     print("─" * 60)
 
-    files = sorted(os.listdir(input_folder))
+    files = sorted(input_folder.iterdir())
     total_accepted = total_rejected = total_chunks = 0
 
-    for file_name in files:
-        file_path = os.path.join(input_folder, file_name)
-
-        if not file_name.startswith("lore_"):
-            print(f"  ⏭️  Ignoré (pas de préfixe lore_) : {file_name}")
+    for file_path in files:
+        if not file_path.is_file() or not file_path.name.startswith("lore_"):
             continue
 
-        print(f"\n📄 {file_name}")
+        print(f"\n📄 {file_path.name}")
 
-        # ── Étape 1 : Validation par le Gardien ───────────────────
         try:
-            valid = is_valid_lore_file(file_path, api_key)
+            valid = is_valid_lore_file(str(file_path), api_key)
         except RuntimeError as e:
-            print(f"\n🛑 {e}")
-            print("   Ingestion interrompue. Relancez quand le service est disponible.")
+            print(f"\n🛑 {e}\n   Ingestion interrupted. Restart when the service is available.")
             return
 
         if not valid:
             total_rejected += 1
-            print(f"  🚫 REJETÉ → déplacé en quarantaine")
-            shutil.move(file_path, os.path.join(quarantine_folder, file_name))
+            print("  🚫 REJECTED → moved to quarantine")
+            shutil.move(str(file_path), str(quarantine_folder / file_path.name))
             continue
 
         total_accepted += 1
-
-        # ── Étape 2 : Génération du contexte global ───────────────
         doc_context = ""
+        
         if context_llm is not None:
             doc_context = generate_document_context(file_path, context_llm)
 
-        base_metadata = {"source": file_name}
+        base_metadata: Dict[str, Any] = {"source": file_path.name}
         if doc_context:
             base_metadata["global_context"] = doc_context
 
-        # ── Étape 3 : Parse unifié (LlamaIndex) ───────────────────
-        extension = os.path.splitext(file_name)[1].lower()
-        extracted_chunks = []
+        extension = file_path.suffix.lower()
+        extracted_chunks: List[Tuple[str, Dict[str, Any]]] = []
 
         if extension == ".csv":
-            extracted_chunks = convert_csv.load_csv_data(file_path)
+            extracted_chunks = convert_csv.load_csv_data(str(file_path))
         elif extension == ".md":
-            extracted_chunks = convert_markdown.parse_markdown(file_path)
+            extracted_chunks = convert_markdown.parse_markdown(str(file_path))
         elif extension == ".txt":
-            extracted_chunks = convert_text.process_text_file(file_path)
+            extracted_chunks = convert_text.process_text_file(str(file_path))
         elif extension == ".json":
-            extracted_chunks = convert_json.parse_json(file_path)
+            extracted_chunks = convert_json.parse_json(str(file_path))
         elif extension == ".pdf":
-            extracted_chunks = convert_pdf.process_pdf_file(file_path)
+            extracted_chunks = convert_pdf.process_pdf_file(str(file_path))
         else:
-            print(f"  🔄 Format complexe détecté. Appel à Unstructured.io...")
-            extracted_chunks = convert_unstructured.process_with_unstructured(file_path)
+            print("  🔄 Complex format detected. Calling Unstructured.io...")
+            extracted_chunks = convert_unstructured.process_with_unstructured(str(file_path))
 
-        # ── Étape 4 : Vectorisation et insertion ──────────────────
         if extracted_chunks:
             for text_chunk, specific_metadata in extracted_chunks:
-                # Fusion des métadonnées (le spécifique écrase le global si conflit)
                 merged_metadata = {**base_metadata, **specific_metadata}
                 db_manager.add_document(text_chunk, metadata=merged_metadata)
 
             total_chunks += len(extracted_chunks)
-            print(f"  ✅ {len(extracted_chunks)} chunks insérés")
+            print(f"  ✅ {len(extracted_chunks)} chunks inserted")
         else:
-            print(f"  ⚠️  Aucun texte extrait de {file_name}")
+            print(f"  ⚠️ No text extracted from {file_path.name}")
 
-    # ── Résumé final ──────────────────────────────────────────────
     print("\n" + "─" * 60)
-    print(f"✅ Ingestion terminée !")
-    print(f"   Fichiers acceptés : {total_accepted}")
-    print(f"   Fichiers rejetés  : {total_rejected}")
-    print(f"   Total chunks      : {total_chunks}")
+    print("✅ Ingestion complete!")
+    print(f"   Accepted files: {total_accepted}")
+    print(f"   Rejected files: {total_rejected}")
+    print(f"   Total chunks:   {total_chunks}")
 
 
 if __name__ == "__main__":
     seed_database()
-
-# N'oublie pas la commande SQL pour vider et adapter ta table si tu passes sur intfloat/multilingual-e5-base :
-# ALTER TABLE documents ALTER COLUMN vecteur TYPE vector(768);
-# TRUNCATE TABLE documents RESTART IDENTITY;
