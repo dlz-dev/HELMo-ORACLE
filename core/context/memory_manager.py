@@ -1,82 +1,41 @@
 """
-Implements a SummaryBuffer memory strategy compatible with LangGraph's
-create_react_agent — without using LangChain's ConversationSummaryBufferMemory
-(which is designed for classic chains, not agents).
+Implements a SummaryBuffer memory strategy compatible with custom agents.
 
-How it works:
-─────────────────────────────────────────────────────────────────────────────
-  Full history (all messages in session)
-       │
-       ▼
-  ┌────────────────────────────────────┐
-  │  SUMMARY (condensed older turns)  │  ← injected into system prompt
-  ├────────────────────────────────────┤
-  │  RECENT MESSAGES (intact)         │  ← passed verbatim to the agent
-  │  last N messages ≤ max_tokens     │
-  └────────────────────────────────────┘
-
-When the recent window exceeds `max_recent_tokens`, the oldest recent messages
-are summarized and merged into the running summary via an LLM call.
-─────────────────────────────────────────────────────────────────────────────
+Maintains a sliding window of recent messages up to a maximum token count.
+When the window overflows, older messages are summarized and injected into
+the system prompt alongside the remaining intact recent messages.
 """
 
 from __future__ import annotations
 
-from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import HumanMessage
+from typing import Any, Dict, List, Tuple
+
+from llama_index.core.llms import LLM
+from core.utils.utils import _SUMMARY_PROMPT
 
 
-# Approximate token count (1 token ≈ 3 chars for French/mixed content — conservative)
-# Using 3 instead of 4 to avoid underestimating context size and hitting API 400 errors.
 def _estimate_tokens(text: str) -> int:
+    """Provides a conservative token count estimate (1 token ≈ 3 chars)."""
     return max(1, len(text) // 3)
 
 
-def _messages_tokens(messages: list[dict]) -> int:
+def _messages_tokens(messages: List[Dict[str, Any]]) -> int:
+    """Calculates the total estimated token count for a list of messages."""
     return sum(_estimate_tokens(m.get("content", "")) for m in messages)
 
 
-# ─────────────────────────────────────────────────────────────────
-# Summarization
-# ─────────────────────────────────────────────────────────────────
-
-_SUMMARY_PROMPT = """You are summarizing a conversation between a user and an AI Oracle specialized in the Dofus game.
-
-Your task: write a CONCISE summary (5-10 sentences max) of the conversation below.
-Focus on:
-- The user's main topics and questions
-- Key information the Oracle provided
-- Any preferences or context the user mentioned (character class, level, goals...)
-
-This summary will be injected into future conversations so the Oracle remembers the context.
-Write in the same language as the conversation. Be factual, not narrative.
-
-Existing summary (if any):
-{existing_summary}
-
-New messages to integrate:
-{new_messages}
-
-Write the updated summary now:"""
+def _format_messages_for_summary(messages: List[Dict[str, Any]]) -> str:
+    """Formats a list of message dictionaries into a readable string transcript."""
+    return "\n".join(
+        f"{'User' if m['role'] == 'user' else 'Oracle'}: {m['content']}"
+        for m in messages
+    )
 
 
-def _format_messages_for_summary(messages: list[dict]) -> str:
-    lines = []
-    for m in messages:
-        role = "User" if m["role"] == "user" else "Oracle"
-        lines.append(f"{role}: {m['content']}")
-    return "\n".join(lines)
-
-
-def summarize_messages(
-        messages_to_summarize: list[dict],
-        existing_summary: str,
-        llm: BaseChatModel,
-) -> str:
+def summarize_messages(messages_to_summarize: List[Dict[str, Any]], existing_summary: str, llm: LLM) -> str:
     """
-    Calls the LLM to produce an updated summary merging existing_summary
-    with the newly overflowing messages.
-    Returns the new summary string.
+    Calls the LlamaIndex LLM to produce an updated summary combining the
+    existing summary with newly overflowing messages.
     """
     prompt_text = _SUMMARY_PROMPT.format(
         existing_summary=existing_summary or "(none yet)",
@@ -84,98 +43,64 @@ def summarize_messages(
     )
 
     try:
-        response = llm.invoke([HumanMessage(content=prompt_text)])
-        return response.content.strip()
+        response = llm.complete(prompt_text)
+        return response.text.strip()
     except Exception as e:
-        # Summarization failure is non-blocking — return old summary
-        print(f"⚠️ Memory summarization failed: {e}")
+        print(f"Memory summarization failed: {e}")
         return existing_summary
 
 
-# ─────────────────────────────────────────────────────────────────
-# MemoryManager
-# ─────────────────────────────────────────────────────────────────
-
 class MemoryManager:
     """
-    Manages the summary-buffer memory strategy for a session.
-
-    Args:
-        max_recent_tokens:  Token budget for recent messages passed to the agent.
-                            When exceeded, oldest messages are summarized.
-                            Default: 1200 tokens — safe ceiling accounting for
-                            system prompt + tool results overhead (~2000+ tokens).
-        min_recent_messages: Always keep at least this many recent messages intact,
-                             regardless of token count. Prevents over-summarization.
+    Manages the summary-buffer memory strategy for an active session.
     """
 
-    def __init__(
-            self,
-            max_recent_tokens: int = 1200,
-            min_recent_messages: int = 4,
-    ):
+    def __init__(self, max_recent_tokens: int = 1200, min_recent_messages: int = 4) -> None:
         self.max_recent_tokens = max_recent_tokens
         self.min_recent_messages = min_recent_messages
 
-    def needs_summarization(self, messages: list[dict], current_summary: str) -> bool:
-        """
-        Returns True if the recent messages exceed the token budget.
-
-        Uses a conservative check: messages tokens + estimated overhead for
-        system prompt and tool results (which are not in the messages list
-        but DO count against the model's context window).
-        """
+    def needs_summarization(self, messages: List[Dict[str, Any]], current_summary: str) -> bool:
+        """Checks if the recent messages exceed the allowed token budget."""
         recent = self._get_recent_window(messages)
         messages_tokens = _messages_tokens(recent)
-        summary_tokens  = _estimate_tokens(current_summary) if current_summary else 0
-        # Overhead: system prompt (~500t) + tool results per turn (~300t avg)
+        summary_tokens = _estimate_tokens(current_summary) if current_summary else 0
+        
         overhead = 500 + (300 * max(1, len(recent) // 2))
         total_estimated = messages_tokens + summary_tokens + overhead
+        
         return total_estimated > self.max_recent_tokens
 
-    def _get_recent_window(self, messages: list[dict]) -> list[dict]:
-        """
-        Returns the recent messages that fit within the token budget,
-        always keeping at least min_recent_messages.
-        """
+    def _get_recent_window(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Filters the recent messages that fit within the token budget."""
         if len(messages) <= self.min_recent_messages:
             return messages
 
-        # Walk backwards from the end, accumulate until budget exceeded
-        recent = []
+        recent: List[Dict[str, Any]] = []
         tokens = 0
+        
         for msg in reversed(messages):
             msg_tokens = _estimate_tokens(msg.get("content", ""))
-            if tokens + msg_tokens > self.max_recent_tokens and len(recent) >= self.min_recent_messages:
+            if (tokens + msg_tokens > self.max_recent_tokens and len(recent) >= self.min_recent_messages):
                 break
             recent.insert(0, msg)
             tokens += msg_tokens
 
         return recent
 
-    def compress(
-            self,
-            session: dict,
-            llm: BaseChatModel,
-    ) -> dict:
+    def compress(self, session: Dict[str, Any], llm: LLM) -> Dict[str, Any]:
         """
-        Compresses the session memory:
-        1. Identifies messages that overflow the recent window.
-        2. Calls the LLM to summarize them into session["summary"].
-        3. Removes the summarized messages from session["messages"].
-
-        Returns the updated session dict.
+        Compresses session memory by summarizing overflowing messages.
+        Updates the session dictionary in place and returns it.
         """
         messages = session.get("messages", [])
         recent = self._get_recent_window(messages)
 
-        # Messages that will be summarized = everything NOT in recent
         to_summarize = messages[: len(messages) - len(recent)]
 
         if not to_summarize:
-            return session  # Nothing to compress
+            return session
 
-        print(f"🧠 Compressing {len(to_summarize)} messages into summary...")
+        print(f"Compressing {len(to_summarize)} messages into summary...")
 
         new_summary = summarize_messages(
             messages_to_summarize=to_summarize,
@@ -184,26 +109,21 @@ class MemoryManager:
         )
 
         session["summary"] = new_summary
-        session["messages"] = recent  # Keep only recent messages
+        session["messages"] = recent
         return session
 
     def build_agent_input(
-            self,
-            session: dict,
-            base_system_prompt: str,
-    ) -> tuple[str, list[tuple[str, str]]]:
+        self,
+        session: Dict[str, Any],
+        base_system_prompt: str,
+    ) -> Tuple[str, List[Tuple[str, str]]]:
         """
-        Prepares the inputs for create_react_agent:
-
-        Returns:
-            enriched_prompt : system prompt enriched with the memory summary
-            history         : list of (role, content) tuples for recent messages
+        Prepares the enriched system prompt and recent history tuples.
         """
         summary = session.get("summary", "")
         messages = session.get("messages", [])
         recent = self._get_recent_window(messages)
 
-        # Enrich system prompt with summary if it exists
         if summary:
             enriched_prompt = (
                 f"{base_system_prompt}\n\n"
@@ -216,7 +136,6 @@ class MemoryManager:
         else:
             enriched_prompt = base_system_prompt
 
-        # Build history tuples from recent messages only
         history = [
             ("user" if m["role"] == "user" else "assistant", m["content"])
             for m in recent

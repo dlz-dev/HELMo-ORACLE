@@ -1,17 +1,28 @@
-import os
-import yaml
+"""
+Utility module for the RAG pipeline.
+
+Handles path resolutions, configuration loading, and stores core prompts 
+used for data extraction and LLM context generation.
+"""
+
 import sys
+from pathlib import Path
+from typing import Any, Dict
 
-_AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
-_CORE_DIR = os.path.dirname(_AGENT_DIR)
-_BASE_DIR = os.path.dirname(_CORE_DIR)
-_STORAGE_DIR = os.path.join(_BASE_DIR, "storage", "sessions")
-_CONFIG_PATH = os.path.join(_BASE_DIR, "config", "config.yaml")
-_PIPELINE_DIR = os.path.dirname(os.path.abspath(__file__))
-_PROMPT_PATH = os.path.join(_BASE_DIR, "config", "prompt.txt")
+import yaml
 
-if _BASE_DIR not in sys.path:
-    sys.path.insert(0, _BASE_DIR)
+_CURRENT_DIR = Path(__file__).resolve().parent
+_CORE_DIR = _CURRENT_DIR.parent
+_BASE_DIR = _CORE_DIR.parent
+
+_STORAGE_DIR = _BASE_DIR / "storage" / "sessions"
+_CONFIG_PATH = _BASE_DIR / "config" / "config.yaml"
+_PIPELINE_DIR = _CURRENT_DIR
+_PROMPT_PATH = _BASE_DIR / "config" / "prompt.txt"
+
+# Ensure the base directory is in the system path for module imports
+if str(_BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(_BASE_DIR))
 
 _CONTEXT_PROMPT = """
 Tu analyses un document provenant des archives du jeu Dofus (MMORPG).
@@ -29,7 +40,8 @@ Document (extrait des 3000 premiers caractères) :
 Réponds avec UNIQUEMENT la description, sans introduction ni ponctuation finale.
 """
 
-_GUARDIAN_PROMPT = """Tu es le Gardien des Archives du jeu Dofus (MMORPG fantasy d'Ankama).
+_GUARDIAN_PROMPT = """
+Tu es le Gardien des Archives du jeu Dofus (MMORPG fantasy d'Ankama).
 Ta mission : déterminer si le contenu ci-dessous fait partie de l'univers Dofus ou d'un MMORPG fantasy.
 
 RÈGLE IMPORTANTE : Le contenu peut se présenter sous n'importe quel format :
@@ -56,25 +68,55 @@ Contenu à analyser :
 {sample_text}
 ---
 
-Réponds STRICTEMENT par OUI (contenu Dofus/MMORPG) ou NON (hors-sujet), sans aucune explication."""
+Réponds STRICTEMENT par OUI (contenu Dofus/MMORPG) ou NON (hors-sujet), sans aucune explication.
+"""
 
-def _load_config() -> dict:
-    if _BASE_DIR not in sys.path:
-        sys.path.insert(0, _BASE_DIR)
+_SUMMARY_PROMPT = """
+You are summarizing a conversation between a user and an AI Oracle specialized in the Dofus game.
+
+Your task: write a CONCISE summary (5-10 sentences max) of the conversation below.
+Focus on:
+- The user's main topics and questions
+- Key information the Oracle provided
+- Any preferences or context the user mentioned (character class, level, goals...)
+
+This summary will be injected into future conversations so the Oracle remembers the context.
+Write in the same language as the conversation. Be factual, not narrative.
+
+Existing summary (if any):
+{existing_summary}
+
+New messages to integrate:
+{new_messages}
+
+Write the updated summary now:
+"""
+
+
+def _load_config() -> Dict[str, Any]:
+    """Loads the YAML configuration file.
+
+    Returns:
+        Dict[str, Any]: The parsed configuration dictionary.
+    """
     with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 def load_api_key() -> str:
-    """
-    Rétro-compatibilité pour ingestion.py qui appelle encore load_api_key().
-    Retourne la clé du provider par défaut du Gardien (ou Groq en fallback).
+    """Retrieves the API key based on the configured LLM provider.
+
+    Provides backward compatibility for scripts calling this directly. 
+    It defaults to the Guardian's provider (falling back to Groq) and 
+    supports legacy configuration structures.
+
+    Returns:
+        str: The extracted API key, or an empty string if not found.
     """
     config = _load_config()
 
-    # Nouvelle structure multi-provider
+    # New multi-provider structure
     if "llm" in config:
         provider = config.get("guardian", {}).get("provider", "groq")
-        return config["llm"].get(provider, {}).get("api_key", "")
+        return config.get("llm", {}).get(provider, {}).get("api_key", "")
 
-    # Ancienne structure
     return config["api"]["api_key"]
