@@ -2,7 +2,7 @@ import os
 from typing import Optional
 
 from providers import get_llm
-from core.utils.utils import _load_config, _GUARDIAN_PROMPT
+from core.utils.utils import load_config, _GUARDIAN_PROMPT
 
 
 def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> bool:
@@ -49,7 +49,7 @@ def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> bool:
 
     # Load configuration and initialize the LLM
     try:
-        config = _load_config()
+        config = load_config()
         guardian_cfg = config.get("guardian", {})
         provider_key = guardian_cfg.get("provider", "groq")
         model = guardian_cfg.get("model", "llama-3.1-8b-instant")

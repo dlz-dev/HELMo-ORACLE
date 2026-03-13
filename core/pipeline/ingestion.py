@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Tuple
 from converters import convert_csv, convert_markdown, convert_text, convert_json, convert_pdf, convert_unstructured
 from core.agent.guardian import is_valid_lore_file
 from core.database.vector_manager import VectorManager
-from core.utils.utils import _CONTEXT_PROMPT, _load_config, load_api_key
+from core.utils.utils import _CONTEXT_PROMPT, load_config, load_api_key
 from providers import get_llm
 
 
@@ -56,7 +56,7 @@ def seed_database() -> None:
     quarantine_folder = current_dir.parent.parent / "data" / "quarantine"
     quarantine_folder.mkdir(parents=True, exist_ok=True)
 
-    config = _load_config()
+    config = load_config()
 
     guardian_cfg = config.get("guardian", {})
     ctx_provider = guardian_cfg.get("provider", "groq")
