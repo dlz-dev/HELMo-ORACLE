@@ -5,10 +5,13 @@ Handles path resolutions, configuration loading, and stores core prompts
 used for data extraction and LLM context generation.
 """
 
+import re
 import sys
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict
 
+import streamlit as st
 import yaml
 
 _CURRENT_DIR = Path(__file__).resolve().parent
@@ -92,8 +95,8 @@ New messages to integrate:
 Write the updated summary now:
 """
 
-
-def _load_config() -> Dict[str, Any]:
+@lru_cache(maxsize=1)
+def load_config() -> Dict[str, Any]:
     """Loads the YAML configuration file.
 
     Returns:
@@ -101,6 +104,18 @@ def _load_config() -> Dict[str, Any]:
     """
     with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
+
+@lru_cache(maxsize=1)
+def load_base_prompt() -> str:
+    """Loads the base system prompt from the prompt file or Streamlit secrets.
+    
+    Returns:
+        str: The raw string content of the system prompt.
+    """
+    if _PROMPT_PATH.exists():
+        with open(_PROMPT_PATH, "r", encoding="utf-8") as f:
+            return f.read()
+    return st.secrets["prompts"]["system_prompt"]
 
 def load_api_key() -> str:
     """Retrieves the API key based on the configured LLM provider.
@@ -112,7 +127,7 @@ def load_api_key() -> str:
     Returns:
         str: The extracted API key, or an empty string if not found.
     """
-    config = _load_config()
+    config = load_config()
 
     # New multi-provider structure
     if "llm" in config:
@@ -120,3 +135,21 @@ def load_api_key() -> str:
         return config.get("llm", {}).get(provider, {}).get("api_key", "")
 
     return config["api"]["api_key"]
+
+def format_response(text: str) -> str:
+    """Cleans up the LLM response formatting.
+    
+    Removes leading thought-process tags, strips excessive whitespace, 
+    and limits consecutive line breaks.
+
+    Args:
+        text (str): The raw text output from the LLM.
+
+    Returns:
+        str: The cleaned and formatted text.
+    """
+    text = re.sub(r"^(Analyse|Analysis|Context)\s*:?", "", text, flags=re.IGNORECASE | re.MULTILINE)
+    text = text.strip()
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    
+    return text

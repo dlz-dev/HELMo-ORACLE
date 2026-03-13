@@ -15,10 +15,10 @@ import psycopg
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from pgvector.psycopg import register_vector
 
-from core.utils.utils import _load_config
+from core.utils.utils import load_config
 
 # Load configuration once at module level
-config = _load_config()
+config = load_config()
 
 _SEARCH_CFG: Dict[str, Any] = config.get("search", {})
 _K_SEMANTIC: int = _SEARCH_CFG.get("k_semantic", 10)

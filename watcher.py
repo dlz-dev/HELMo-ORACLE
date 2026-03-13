@@ -11,7 +11,7 @@ from core.agent.guardian import is_valid_lore_file
 from core.database.vector_manager import VectorManager
 from converters import convert_csv, convert_json, convert_text
 from converters.convert_unstructured import process_with_unstructured
-from core.utils.utils import _load_config, load_api_key
+from core.utils.utils import load_config, load_api_key
 
 class LoreWatcherHandler(FileSystemEventHandler):
     """
@@ -22,7 +22,7 @@ class LoreWatcherHandler(FileSystemEventHandler):
     def __init__(self) -> None:
         super().__init__()
 
-        config: Dict[str, Any] = _load_config()
+        config: Dict[str, Any] = load_config()
         guardian_cfg: Dict[str, Any] = config.get("guardian", {})
 
         model_name: str = guardian_cfg.get("model", "llama-3.1-8b-instant")
