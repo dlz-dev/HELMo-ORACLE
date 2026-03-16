@@ -2,13 +2,12 @@
 LangGraph tool — searches the knowledge base and exposes raw results
 with RRF confidence scores for Chain-of-Thought (CoT) display in the UI.
 
-Results are stored in st.session_state["_cot_results"] so they survive
-Streamlit's execution model without relying on a mutable Python global.
+Results are stored in st.session_state["_cot_results"] (Streamlit mode) or
+in the optional cot_storage list (API mode).
 """
 
-from typing import Callable, Any
+from typing import Callable, Any, Optional
 from langchain_core.tools import tool
-import streamlit as st
 
 from core.database.vector_manager import VectorManager
 
@@ -18,13 +17,15 @@ CONFIDENCE_THRESHOLD_HIGH: float = 0.025
 CONFIDENCE_THRESHOLD_MEDIUM: float = 0.010
 
 
-def get_search_tool(vm: VectorManager, k_final: int = 5) -> Callable:
+def get_search_tool(vm: VectorManager, k_final: int = 5, cot_storage: Optional[list] = None) -> Callable:
     """
     Factory function returning a LangGraph tool bound to the shared VectorManager.
 
     Args:
         vm (VectorManager): Shared VectorManager singleton instance.
         k_final (int): Number of results to retrieve (controlled via UI).
+        cot_storage (Optional[list]): If provided, CoT results are stored here (API mode).
+            If None, results are stored in st.session_state (Streamlit mode).
 
     Returns:
         Callable: The initialized LangGraph tool.
@@ -43,7 +44,14 @@ def get_search_tool(vm: VectorManager, k_final: int = 5) -> Callable:
         Returns:
             str: Formatted XML string containing the retrieved excerpts.
         """
-        st.session_state["_cot_results"] = []
+        if cot_storage is not None:
+            cot_storage.clear()
+        else:
+            try:
+                import streamlit as st
+                st.session_state["_cot_results"] = []
+            except Exception:
+                pass
 
         query_vector = vm.embeddings_model.get_query_embedding(query)
         results = vm.search_hybrid(query=query, query_vector=query_vector, k_final=k_final)
@@ -73,7 +81,14 @@ def get_search_tool(vm: VectorManager, k_final: int = 5) -> Callable:
             })
             context_lines.append(f"[Source: {source}]\nExcerpt: {content}")
 
-        st.session_state["_cot_results"] = cot_entries
+        if cot_storage is not None:
+            cot_storage.extend(cot_entries)
+        else:
+            try:
+                import streamlit as st
+                st.session_state["_cot_results"] = cot_entries
+            except Exception:
+                pass
 
         # Use standard Python string joining instead of chr(10)
         return f"<archives_sacrees>\n{'\n'.join(context_lines)}\n</archives_sacrees>"
