@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  oracle-backend:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      # Fichiers de configuration (à créer depuis les .example)
+      - ./config/config.yaml:/app/config/config.yaml:ro
+      - ./config/prompt.txt:/app/config/prompt.txt:ro
+      # Persistance des sessions et des données
+      - ./storage:/app/storage
+      - ./data:/app/data
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
