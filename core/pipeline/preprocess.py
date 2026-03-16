@@ -38,7 +38,7 @@ class QuestionProcessor:
             c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn"
         )
         text = text.translate(str.maketrans("", "", string.punctuation))
-        return text.strip()
+        return " ".join(text.split())
 
     def vectorize_text(self, text: str) -> List[float]:
         """

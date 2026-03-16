@@ -28,7 +28,7 @@ class PIIManager:
 
         self.patterns: Dict[str, str] = {
             "[EMAIL]": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
-            "[PHONE]": r"(?:\+?\d{1,3})?[-.\s]?\(?\d{2,4}\)?[-.\s]?\d{2,4}[-.\s]?\d{2,4}",
+            "[PHONE]": r"\b(?:\+?\d{1,3})?[-.]?\(?\d{2,4}\)?[-.\s]?\d{2,4}[-.\s]?\d{2,4}\b",
             "[IP_ADDR]": r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b",
         }
 
@@ -92,4 +92,4 @@ class PIIManager:
             pattern = rf"\b{escaped_original}\b"
             masked_text = re.sub(pattern, mask, masked_text)
 
-        return masked_text
+        return " ".join(masked_text.split())
