@@ -157,6 +157,7 @@ Lancer le backend :
 
 ```bash
 python api.py
+# python -m uvicorn api:app --reload --port 8000 → même chose mais avec rechargement auto
 # → http://localhost:8000
 # → http://localhost:8000/docs  (Swagger UI)
 ```

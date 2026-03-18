@@ -11,7 +11,8 @@ from __future__ import annotations
 from typing import Any, Dict, List, Tuple
 
 from llama_index.core.llms import LLM
-from core.utils.utils import _SUMMARY_PROMPT
+
+from ..utils.utils import _SUMMARY_PROMPT
 
 
 def _estimate_tokens(text: str) -> int:
@@ -64,10 +65,10 @@ class MemoryManager:
         recent = self._get_recent_window(messages)
         messages_tokens = _messages_tokens(recent)
         summary_tokens = _estimate_tokens(current_summary) if current_summary else 0
-        
+
         overhead = 500 + (300 * max(1, len(recent) // 2))
         total_estimated = messages_tokens + summary_tokens + overhead
-        
+
         return total_estimated > self.max_recent_tokens
 
     def _get_recent_window(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -77,7 +78,7 @@ class MemoryManager:
 
         recent: List[Dict[str, Any]] = []
         tokens = 0
-        
+
         for msg in reversed(messages):
             msg_tokens = _estimate_tokens(msg.get("content", ""))
             if (tokens + msg_tokens > self.max_recent_tokens and len(recent) >= self.min_recent_messages):
@@ -113,9 +114,9 @@ class MemoryManager:
         return session
 
     def build_agent_input(
-        self,
-        session: Dict[str, Any],
-        base_system_prompt: str,
+            self,
+            session: Dict[str, Any],
+            base_system_prompt: str,
     ) -> Tuple[str, List[Tuple[str, str]]]:
         """
         Prepares the enriched system prompt and recent history tuples.
