@@ -13,29 +13,21 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-import streamlit as st
-from core.utils.utils import BASE_DIR, STORAGE_DIR
+from core.utils.utils import STORAGE_DIR
 
 # Constants
 LOCAL_USER_ID = "local_dev"
 
 
 def _is_cloud() -> bool:
-    """Detects if the application is running on Streamlit Cloud."""
-    config_path = os.path.join(BASE_DIR, "config", "config.yaml")
-    return not os.path.exists(config_path)
+    """Detects if running in production (env var ENV=production)."""
+    return os.environ.get("ENV", "local") == "production"
 
 
 def get_current_user_id() -> str:
     """Retrieves the current user's identifier based on the environment."""
     if _is_cloud():
-        try:
-            user = st.experimental_user
-            if user and user.email:
-                return user.email.lower().strip()
-        except Exception:
-            pass
-        return "anonymous"
+        return os.environ.get("USER_ID", "anonymous")
     return LOCAL_USER_ID
 
 
@@ -80,7 +72,7 @@ class _LocalBackend:
         for fname in os.listdir(self._user_dir):
             if not fname.endswith(".json"):
                 continue
-            
+
             try:
                 with open(os.path.join(self._user_dir, fname), "r", encoding="utf-8") as f:
                     data = json.load(f)
@@ -93,7 +85,7 @@ class _LocalBackend:
                     })
             except (json.JSONDecodeError, KeyError):
                 continue
-                
+
         return sorted(sessions, key=lambda s: s["updated_at"], reverse=True)
 
     def delete(self, session_id: str) -> None:
@@ -108,8 +100,10 @@ class _SupabaseBackend:
 
     def __init__(self, user_id: str) -> None:
         from supabase import create_client
-        url = st.secrets["database"]["supabase_url"]
-        key = st.secrets["database"]["supabase_anon_key"]
+        url = os.environ.get("SUPABASE_URL", "")
+        key = os.environ.get("SUPABASE_ANON_KEY", "")
+        if not url or not key:
+            raise RuntimeError("SUPABASE_URL and SUPABASE_ANON_KEY must be set in environment.")
         self._client = create_client(url, key)
         self._user_id = user_id
 

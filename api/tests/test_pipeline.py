@@ -4,7 +4,7 @@ from pathlib import Path
 
 from core.pipeline.pii_manager import PIIManager
 from core.pipeline.preprocess import QuestionProcessor
-from core.pipeline.ingestion import generate_document_context, seed_database
+from core.pipeline import generate_document_context, seed_database
 
 
 class TestPIIManager(unittest.TestCase):

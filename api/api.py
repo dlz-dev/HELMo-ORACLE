@@ -69,12 +69,12 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/providers")
+@app.get("providers")
 def list_providers():
     return {"providers": PROVIDER_LABELS}
 
 
-@app.get("/providers/{provider}/models")
+@app.get("api/providers/{provider}/models")
 def list_models(provider: str):
     try:
         return {"models": get_available_models(provider, config)}
