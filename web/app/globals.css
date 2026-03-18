@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Google Fonts — Cinzel pour le logo uniquement ─────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap');
+
+/* ── Variables CSS — Light mode (défaut) ────────────────────────── */
+:root {
+  --font-cinzel: 'Cinzel', serif;
+
+  --bg:          #ffffff;
+  --bg-subtle:   #f8f9fa;
+  --bg-muted:    #f1f3f5;
+  --border:      #e5e7eb;
+  --border-subtle: #f1f3f5;
+
+  --text:        #0f1117;
+  --text-muted:  #6b7280;
+  --text-subtle: #9ca3af;
+
+  --gold:        #C9A84C;
+  --gold-light:  #E2C06A;
+  --gold-glow:   rgba(201, 168, 76, 0.15);
+
+  --surface:     #ffffff;
+  --surface-alt: #f8f9fa;
+
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg:   0 8px 32px rgba(0,0,0,0.10);
+}
+
+/* ── Dark mode ──────────────────────────────────────────────────── */
+.dark {
+  --bg:          #0A0C10;
+  --bg-subtle:   #10141C;
+  --bg-muted:    #161B26;
+
+  --border:      #1E2533;
+  --border-subtle: #161B26;
+
+  --text:        #F0F2F5;
+  --text-muted:  #8892A4;
+  --text-subtle: #4B5563;
+
+  --gold:        #C9A84C;
+  --gold-light:  #E2C06A;
+  --gold-glow:   rgba(201, 168, 76, 0.12);
+
+  --surface:     #10141C;
+  --surface-alt: #161B26;
+
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg:   0 8px 32px rgba(0,0,0,0.5);
+}
+
+/* ── Base ───────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ── Scrollbar custom (subtile) ─────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-subtle);
+}
+
+/* ── Utilities classes ──────────────────────────────────────────── */
+@layer utilities {
+  .bg-surface     { background-color: var(--surface); }
+  .bg-surface-alt { background-color: var(--surface-alt); }
+  .bg-page        { background-color: var(--bg); }
+  .bg-subtle      { background-color: var(--bg-subtle); }
+  .bg-muted-page  { background-color: var(--bg-muted); }
+
+  .text-main      { color: var(--text); }
+  .text-muted-fg  { color: var(--text-muted); }
+  .text-subtle-fg { color: var(--text-subtle); }
+
+  .border-default { border-color: var(--border); }
+  .border-subtle  { border-color: var(--border-subtle); }
+
+  .shadow-card    { box-shadow: var(--shadow-md); }
+
+  .text-gold      { color: var(--gold); }
+  .border-gold    { border-color: var(--gold); }
+  .bg-gold-glow   { background-color: var(--gold-glow); }
+
+  /* Logo Oracle — Cinzel uniquement */
+  .font-oracle {
+    font-family: var(--font-cinzel), serif;
+    letter-spacing: 0.08em;
+  }
+
+  /* Séparateur doré */
+  .gold-line {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.4;
+  }
+
+  /* Shimmer sur texte (loader) */
+  .text-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--text-subtle) 25%,
+      var(--text-muted) 50%,
+      var(--text-subtle) 75%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 2.5s linear infinite;
+  }
+}
