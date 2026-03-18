@@ -223,12 +223,12 @@ async def _generate_stream(req: StreamChatRequest) -> AsyncGenerator[str, None]:
     # Extract last user message
     user_msgs = [m for m in req.messages if m.role == "user"]
     if not user_msgs:
-        yield f"3:{_json.dumps(chr(39)+'Aucun message utilisateur'+chr(39))}\n"
+        yield f"3:{_json.dumps('Aucun message utilisateur')}\n"
         return
     last_message = user_msgs[-1].content
     masked_message = pii.mask_text(last_message)
 
-    # Load or create session
+    # Load or create session — UNE session par conversation
     if req.session_id:
         session = sm.load(req.session_id) or sm.new_session(provider=req.provider, model=model)
     else:
@@ -236,11 +236,8 @@ async def _generate_stream(req: StreamChatRequest) -> AsyncGenerator[str, None]:
 
     session_id = session["session_id"]
 
-    # Envoie le vrai session_id au frontend dès le début du stream
-    yield f"8:{{\"sessionId\":\"{session_id}\"}}"
-
-    # Append user message
-    session["messages"] = [{"role": m.role, "content": m.content} for m in req.messages]
+    # Ajoute uniquement le nouveau message utilisateur (ne pas écraser l'historique)
+    session.setdefault("messages", []).append({"role": "user", "content": masked_message})
     sm.save(session)
 
     # Build LLM
@@ -273,17 +270,11 @@ async def _generate_stream(req: StreamChatRequest) -> AsyncGenerator[str, None]:
     if not lc_history or not isinstance(lc_history[-1], HM) or lc_history[-1].content != masked_message:
         lc_history.append(HM(content=masked_message))
 
-    print(f"[AGENT] Invoking with {len(lc_history)} messages, last: {masked_message[:60]}")
-
     # Run and stream
     full_response = ""
     try:
         result = agent.invoke({"messages": lc_history})
-        all_messages = result["messages"]
-        print(f"[AGENT] Got {len(all_messages)} messages back")
-        for i, msg in enumerate(all_messages):
-            print(f"[AGENT] msg[{i}] type={type(msg).__name__} tool_calls={getattr(msg, 'tool_calls', [])} content={str(msg.content)[:80]}")
-        response_text = format_response(all_messages[-1].content)
+        response_text = format_response(result["messages"][-1].content)
 
         # Stream token by token (Vercel AI SDK data stream format)
         for char in response_text:
@@ -318,19 +309,48 @@ async def chat_stream(req: StreamChatRequest):
     Route streaming compatible Vercel AI SDK.
     Utilise le data stream protocol : 0:token 3:error d:finish
     """
-    # On passe req.session_id s'il existe, sinon le backend en créera un nouveau
-    # Le vrai session_id sera transmis via le stream (event type 8)
-    session_id = req.session_id or ""
-
     return StreamingResponse(
         _generate_stream(req),
         media_type="text/plain; charset=utf-8",
         headers={
-            "X-Session-Id": session_id,
+            "X-Session-Id": req.session_id or "",
             "X-Vercel-AI-Data-Stream": "v1",
             "Cache-Control": "no-cache",
         },
     )
+
+
+# ─── Test provider ────────────────────────────────────────────────────────────
+
+class TestRequest(BaseModel):
+    provider: str
+    model: str
+    message: str
+    temperature: float = 0.0
+
+@app.post("/test")
+def test_provider(req: TestRequest):
+    """Vérifie qu'un provider/modèle répond correctement."""
+    try:
+        llm = get_llm(
+            provider_key=req.provider,
+            model=req.model,
+            config={**config, "llm": {**config.get("llm", {}), "temperature": req.temperature}},
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erreur d'initialisation : {e}")
+
+    from langchain_core.messages import HumanMessage
+    try:
+        result = llm.invoke([HumanMessage(content=req.message)])
+        return {
+            "provider": req.provider,
+            "model": req.model,
+            "response": result.content,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur LLM : {e}")
+
 
 # ─── Entry point ──────────────────────────────────────────────────────────────
 

@@ -2,15 +2,16 @@
 
 import { useChat } from "ai/react";
 import { useEffect, useRef } from "react";
+import React from "react";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { Sparkles } from "lucide-react";
 
 const STARTER_PROMPTS = [
-  "Qui es-tu et que peux-tu faire pour moi ?",
-  "Quels sont les horaires du secrétariat des étudiants ?",
-  "Donne-moi un conseil pour réussir ma session d'examens.",
-  "Peux-tu me faire un résumé du cours de 'Développement Web' ?",
+  "Je suis tout nouveau sur Dofus. Par où commencer et quelle classe choisir ?",
+  "Explique-moi les mécaniques de combat : PA, PM, portée, défis de combat.",
+  "Comment fonctionne un donjon ? Comment se préparer et quoi apporter ?",
+  "Quelles sont les meilleures façons de gagner des kamas quand on débute ?",
 ];
 
 interface Props {
@@ -20,6 +21,20 @@ interface Props {
 
 export function ChatWindow({ sessionId, onSessionCreated }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Lit la config depuis localStorage (sauvegardée depuis l'admin)
+  const getOracleConfig = () => {
+    if (typeof window === "undefined") return {};
+    return {
+      provider:    localStorage.getItem("oracle_provider")    || "groq",
+      model:       localStorage.getItem("oracle_model")       || "llama-3.3-70b-versatile",
+      temperature: parseFloat(localStorage.getItem("oracle_temperature") || "0"),
+      k_final:     parseInt(localStorage.getItem("oracle_k_final")       || "5"),
+    };
+  };
+
+  const currentSessionRef = React.useRef<string | null>(sessionId);
+  useEffect(() => { currentSessionRef.current = sessionId; }, [sessionId]);
 
   const {
     messages,
@@ -32,15 +47,13 @@ export function ChatWindow({ sessionId, onSessionCreated }: Props) {
   } = useChat({
     id: sessionId || "new_session",
     api: "/api/chat",
-    body: { session_id: sessionId },
+    body: { session_id: sessionId, ...getOracleConfig() },
     onResponse: (res) => {
-      // Récupère le session_id depuis le header si pas encore de session
       const newId = res.headers.get("X-Session-Id");
-      if (newId && newId.length > 10 && !sessionId) onSessionCreated(newId);
-    },
-    onFinish: () => {
-      // Recharge la liste des sessions après chaque réponse
-      if (!sessionId) return;
+      if (newId && newId.length > 10 && !currentSessionRef.current) {
+        currentSessionRef.current = newId;
+        onSessionCreated(newId);
+      }
     },
   });
 
