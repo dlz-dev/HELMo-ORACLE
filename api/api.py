@@ -22,7 +22,6 @@ from core.pipeline.pii_manager import PIIManager
 from providers import get_llm, get_available_models, PROVIDER_LABELS
 from core.utils.utils import load_config, load_base_prompt, format_response
 
-# ─── Singletons (loaded once at startup) ─────────────────────────────────────
 
 config = load_config()
 BASE_SYSTEM_PROMPT = load_base_prompt()
@@ -69,12 +68,11 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("providers")
 def list_providers():
     return {"providers": PROVIDER_LABELS}
 
 
-@app.get("api/providers/{provider}/models")
+@app.get("/providers/{provider}/models")
 def list_models(provider: str):
     try:
         return {"models": get_available_models(provider, config)}
@@ -133,7 +131,7 @@ def chat(req: ChatRequest):
 
     # Mask PII before storing and sending to LLM
     masked_message = pii.mask_text(req.message)
-    session.setdefault("messages", []).append({"role": "user", "content": masked_message})
+    session["messages"] = [{"role": m.role, "content": m.content} for m in req.messages]
     sm.save(session)
 
     # Build LLM
@@ -148,13 +146,26 @@ def chat(req: ChatRequest):
 
     # Build agent — cot_storage collects CoT results for this request
     cot_storage: list = []
-    enriched_prompt, history = mm.build_agent_input(session, BASE_SYSTEM_PROMPT)
+    enriched_prompt, history_tuples = mm.build_agent_input(session, BASE_SYSTEM_PROMPT)
     search_tool = get_search_tool(vm, k_final=req.k_final, cot_storage=cot_storage)
     agent = create_react_agent(llm, [search_tool], prompt=enriched_prompt)
 
+    # Convertir les tuples en objets LangChain messages
+    from langchain_core.messages import HumanMessage as HM, AIMessage as AM
+    lc_history = []
+    for role, content in history_tuples:
+        if role == "user":
+            lc_history.append(HM(content=content))
+        else:
+            lc_history.append(AM(content=content))
+
+    # S'assurer que le dernier message est bien la question actuelle
+    if not lc_history or not isinstance(lc_history[-1], HM) or lc_history[-1].content != masked_message:
+        lc_history.append(HM(content=masked_message))
+
     # Run agent
     try:
-        result = agent.invoke({"messages": history})
+        result = agent.invoke({"messages": lc_history})
         response = format_response(result["messages"][-1].content)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -185,6 +196,141 @@ def chat(req: ChatRequest):
 def list_archives():
     return {"sources": vm.list_sources()}
 
+
+# ─── Streaming chat (Vercel AI SDK compatible) ────────────────────────────────
+
+import json as _json
+from fastapi.responses import StreamingResponse
+from typing import AsyncGenerator
+
+class _SDKMessage(BaseModel):
+    role: str
+    content: str
+
+class StreamChatRequest(BaseModel):
+    messages: list[_SDKMessage] = []
+    session_id: Optional[str] = None
+    provider: str = config.get("llm", {}).get("default_provider", "groq")
+    model: Optional[str] = None
+    temperature: float = float(config.get("llm", {}).get("temperature", 0.0))
+    k_final: int = config.get("search", {}).get("k_final", 5)
+
+
+async def _generate_stream(req: StreamChatRequest) -> AsyncGenerator[str, None]:
+    """Génère la réponse en streaming au format Vercel AI SDK (data stream protocol)."""
+    model = req.model or config.get("llm", {}).get("default_model", "")
+
+    # Extract last user message
+    user_msgs = [m for m in req.messages if m.role == "user"]
+    if not user_msgs:
+        yield f"3:{_json.dumps(chr(39)+'Aucun message utilisateur'+chr(39))}\n"
+        return
+    last_message = user_msgs[-1].content
+    masked_message = pii.mask_text(last_message)
+
+    # Load or create session
+    if req.session_id:
+        session = sm.load(req.session_id) or sm.new_session(provider=req.provider, model=model)
+    else:
+        session = sm.new_session(provider=req.provider, model=model)
+
+    session_id = session["session_id"]
+
+    # Envoie le vrai session_id au frontend dès le début du stream
+    yield f"8:{{\"sessionId\":\"{session_id}\"}}"
+
+    # Append user message
+    session["messages"] = [{"role": m.role, "content": m.content} for m in req.messages]
+    sm.save(session)
+
+    # Build LLM
+    try:
+        llm = get_llm(
+            provider_key=req.provider,
+            model=model,
+            config={**config, "llm": {**config.get("llm", {}), "temperature": req.temperature}},
+        )
+    except Exception as e:
+        yield f"3:{_json.dumps(str(e))}\n"
+        return
+
+    # Build agent
+    cot_storage: list = []
+    enriched_prompt, history_tuples = mm.build_agent_input(session, BASE_SYSTEM_PROMPT)
+    search_tool = get_search_tool(vm, k_final=req.k_final, cot_storage=cot_storage)
+    agent = create_react_agent(llm, [search_tool], prompt=enriched_prompt)
+
+    # Convertir les tuples en objets LangChain messages
+    from langchain_core.messages import HumanMessage as HM, AIMessage as AM
+    lc_history = []
+    for role, content in history_tuples:
+        if role == "user":
+            lc_history.append(HM(content=content))
+        else:
+            lc_history.append(AM(content=content))
+
+    # S'assurer que le dernier message est bien la question actuelle
+    if not lc_history or not isinstance(lc_history[-1], HM) or lc_history[-1].content != masked_message:
+        lc_history.append(HM(content=masked_message))
+
+    print(f"[AGENT] Invoking with {len(lc_history)} messages, last: {masked_message[:60]}")
+
+    # Run and stream
+    full_response = ""
+    try:
+        result = agent.invoke({"messages": lc_history})
+        all_messages = result["messages"]
+        print(f"[AGENT] Got {len(all_messages)} messages back")
+        for i, msg in enumerate(all_messages):
+            print(f"[AGENT] msg[{i}] type={type(msg).__name__} tool_calls={getattr(msg, 'tool_calls', [])} content={str(msg.content)[:80]}")
+        response_text = format_response(all_messages[-1].content)
+
+        # Stream token by token (Vercel AI SDK data stream format)
+        for char in response_text:
+            full_response += char
+            yield f"0:{_json.dumps(char)}\n"
+
+    except Exception as e:
+        yield f"3:{_json.dumps(str(e))}\n"
+        return
+
+    # Persist assistant reply
+    session["messages"].append({
+        "role": "assistant",
+        "content": full_response,
+        "_cot": cot_storage,
+    })
+
+    if mm.needs_summarization(session["messages"], session.get("summary", "")):
+        session = mm.compress(session, llm)
+
+    session["provider"] = req.provider
+    session["model"] = model
+    sm.save(session)
+
+    # Fin du stream — Vercel AI SDK attend ce format
+    yield f"d:{_json.dumps({'finishReason': 'stop', 'usage': {'promptTokens': 0, 'completionTokens': 0}})}\n"
+
+
+@app.post("/api/chat")
+async def chat_stream(req: StreamChatRequest):
+    """
+    Route streaming compatible Vercel AI SDK.
+    Utilise le data stream protocol : 0:token 3:error d:finish
+    """
+    # On passe req.session_id s'il existe, sinon le backend en créera un nouveau
+    # Le vrai session_id sera transmis via le stream (event type 8)
+    session_id = req.session_id or ""
+
+    return StreamingResponse(
+        _generate_stream(req),
+        media_type="text/plain; charset=utf-8",
+        headers={
+            "X-Session-Id": session_id,
+            "X-Vercel-AI-Data-Stream": "v1",
+            "Cache-Control": "no-cache",
+        },
+    )
 
 # ─── Entry point ──────────────────────────────────────────────────────────────
 

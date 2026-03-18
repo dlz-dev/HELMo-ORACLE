@@ -1,0 +1,400 @@
+"use client";
+
+import { useState } from "react";
+import {
+  Lock, Unlock, Eye, EyeOff,
+  Play, CheckCircle, XCircle, Loader2,
+  ChevronDown, ChevronUp,
+} from "lucide-react";
+import { clsx } from "clsx";
+import { triggerIngest } from "@/lib/api";
+import type { IngestStatus } from "@/lib/api";
+
+// ─── Types ────────────────────────────────────────────────────────
+interface AdminConfig {
+  provider:     string;
+  model:        string;
+  temperature:  number;
+  k_final:      number;
+}
+
+const PROVIDERS = ["groq", "openai", "anthropic", "gemini", "ollama"] as const;
+
+const PROVIDER_MODELS: Record<string, string[]> = {
+  groq:      ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "gemma2-9b-it"],
+  openai:    ["gpt-4o", "gpt-4o-mini"],
+  anthropic: ["claude-sonnet-4-5", "claude-haiku-4-5"],
+  gemini:    ["gemini-2.0-flash", "gemini-1.5-pro"],
+  ollama:    ["llama3.1", "mistral", "gemma3:12b"],
+};
+
+// ─── Section wrapper ──────────────────────────────────────────────
+function Section({
+  title,
+  children,
+  defaultOpen = true,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border border-default rounded-xl overflow-hidden bg-surface animate-fade-up">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-5 py-4
+                   hover:bg-subtle transition-colors duration-150 text-left"
+      >
+        <span className="text-sm font-medium text-main">{title}</span>
+        {open ? <ChevronUp size={14} className="text-muted-fg" /> : <ChevronDown size={14} className="text-muted-fg" />}
+      </button>
+      {open && <div className="px-5 pb-5 border-t border-default space-y-4 pt-4">{children}</div>}
+    </div>
+  );
+}
+
+// ─── Input field ──────────────────────────────────────────────────
+function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-muted-fg uppercase tracking-wide">{label}</label>
+      {children}
+      {hint && <p className="text-xs text-subtle-fg">{hint}</p>}
+    </div>
+  );
+}
+
+const inputClass = `w-full px-3 py-2 rounded-lg border border-default bg-surface-alt text-sm text-main
+  placeholder:text-subtle-fg focus:outline-none focus:border-gold/50 transition-colors duration-150`;
+
+// ─── Composant principal ──────────────────────────────────────────
+export function AdminPanel() {
+  // Auth
+  const [unlocked,     setUnlocked]     = useState(false);
+  const [password,     setPassword]     = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [authError,    setAuthError]    = useState(false);
+
+  // Config
+  const [config, setConfig] = useState<AdminConfig>({
+    provider:       "groq",
+    model:          "llama-3.3-70b-versatile",
+    temperature:    0,
+    k_final:        5,
+  });
+
+  // Ingestion
+  const [folderPath,   setFolderPath]   = useState("");
+  const [ingestState,  setIngestState]  = useState<IngestStatus["last_status"]>("idle");
+  const [ingestMsg,    setIngestMsg]    = useState("");
+
+  // Test Provider
+  const [testMessage,  setTestMessage]  = useState("Dis-moi qui tu es en une phrase.");
+  const [testState,    setTestState]    = useState<"idle" | "running" | "success" | "error">("idle");
+  const [testOutput,   setTestOutput]   = useState("");
+
+  // API keys (masquées)
+  const [apiKeys, setApiKeys] = useState<Record<string, string>>({
+    groq: "", openai: "", anthropic: "", gemini: "",
+  });
+
+  const handleLogin = () => {
+    const expected = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? "oracle";
+    if (password === expected) {
+      setUnlocked(true);
+      setAuthError(false);
+    } else {
+      setAuthError(true);
+    }
+  };
+
+  const handleTriggerIngest = async () => {
+    setIngestState("running");
+    setIngestMsg("Démarrage de l'ingestion…");
+    try {
+      await triggerIngest(folderPath);
+
+      // Poll /api/admin/ingest/status toutes les 2s jusqu'à la fin
+      const poll = setInterval(async () => {
+        try {
+          const res = await fetch("/api/admin/ingest/status");
+          const status = await res.json();
+          setIngestMsg(status.last_message || "En cours…");
+          if (!status.running) {
+            clearInterval(poll);
+            if (status.last_status === "success") {
+              setIngestState("success");
+              setIngestMsg("Ingestion terminée avec succès ✓");
+            } else if (status.last_status === "error") {
+              setIngestState("error");
+              setIngestMsg(status.last_message || "Erreur lors de l'ingestion.");
+            }
+          }
+        } catch {
+          clearInterval(poll);
+          setIngestState("error");
+          setIngestMsg("Impossible de récupérer le statut.");
+        }
+      }, 2000);
+
+    } catch (e: any) {
+      setIngestState("error");
+      setIngestMsg(e.message);
+    }
+  };
+
+  const handleTestProvider = async () => {
+    if (!testMessage.trim()) {
+      setTestOutput("❌ Veuillez entrer un message de test");
+      setTestState("error");
+      return;
+    }
+
+    setTestState("running");
+    setTestOutput("⏳ Test en cours…");
+
+    try {
+      const res = await fetch("/api/admin/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: config.provider,
+          model: config.model,
+          message: testMessage,
+          temperature: config.temperature,
+          k_final: 1,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setTestState("error");
+        setTestOutput(`❌ Erreur: ${data.error || data.detail || "Erreur inconnue"}`);
+        return;
+      }
+
+      setTestState("success");
+      setTestOutput(`✅ SUCCÈS!\n\nProvider: ${data.provider}\nModèle: ${data.model}\n\nRéponse:\n${data.response}`);
+    } catch (e: any) {
+      setTestState("error");
+      setTestOutput(`❌ Erreur de connexion:\n${e.message}`);
+    }
+  };
+
+  // ── Écran de connexion ────────────────────────────────────────
+  if (!unlocked) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] animate-fade-in">
+        <div className="w-full max-w-sm space-y-4">
+          <div className="text-center mb-6">
+            <Lock size={28} className="mx-auto text-gold mb-3" />
+            <p className="text-sm text-muted-fg">Accès réservé aux administrateurs</p>
+          </div>
+
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              placeholder="Mot de passe admin"
+              className={clsx(inputClass, "pr-10", authError && "border-red-400/50")}
+            />
+            <button
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle-fg hover:text-main"
+            >
+              {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          </div>
+
+          {authError && (
+            <p className="text-xs text-red-400 text-center animate-fade-in">
+              Mot de passe incorrect
+            </p>
+          )}
+
+          <button
+            onClick={handleLogin}
+            className="w-full py-2.5 rounded-lg bg-gold text-white text-sm font-medium
+                       hover:bg-gold-light transition-colors duration-150"
+          >
+            Accéder
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Panneau admin ─────────────────────────────────────────────
+  return (
+    <div className="space-y-4">
+
+      {/* Header déverrouillé */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2 text-sm text-green-400">
+          <Unlock size={13} />
+          <span>Session admin active</span>
+        </div>
+        <button
+          onClick={() => setUnlocked(false)}
+          className="text-xs text-muted-fg hover:text-main transition-colors"
+        >
+          Se déconnecter
+        </button>
+      </div>
+
+      {/* Modèle IA */}
+      <Section title="Modèle IA" defaultOpen>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Provider">
+            <select
+              value={config.provider}
+              onChange={(e) =>
+                setConfig((c) => ({
+                  ...c,
+                  provider: e.target.value,
+                  model: PROVIDER_MODELS[e.target.value]?.[0] ?? "",
+                }))
+              }
+              className={inputClass}
+            >
+              {PROVIDERS.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="Modèle">
+            <select
+              value={config.model}
+              onChange={(e) => setConfig((c) => ({ ...c, model: e.target.value }))}
+              className={inputClass}
+            >
+              {(PROVIDER_MODELS[config.provider] ?? []).map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </Field>
+        </div>
+
+        <Field label={`Température — ${config.temperature}`} hint="0 = déterministe · 1 = créatif">
+          <input
+            type="range"
+            min={0} max={1} step={0.05}
+            value={config.temperature}
+            onChange={(e) => setConfig((c) => ({ ...c, temperature: parseFloat(e.target.value) }))}
+            className="w-full accent-gold"
+          />
+        </Field>
+
+        <Field label={`K final (chunks RAG) — ${config.k_final}`} hint="Nombre de chunks retournés par la recherche">
+          <input
+            type="range"
+            min={1} max={15} step={1}
+            value={config.k_final}
+            onChange={(e) => setConfig((c) => ({ ...c, k_final: parseInt(e.target.value) }))}
+            className="w-full accent-gold"
+          />
+        </Field>
+      </Section>
+
+      {/* API Keys */}
+      <Section title="Clés API" defaultOpen={false}>
+        {Object.keys(apiKeys).map((provider) => (
+          <Field key={provider} label={provider}>
+            <input
+              type="password"
+              value={apiKeys[provider]}
+              onChange={(e) => setApiKeys((k) => ({ ...k, [provider]: e.target.value }))}
+              placeholder={`Clé ${provider}…`}
+              className={inputClass}
+            />
+          </Field>
+        ))}
+      </Section>
+
+      {/* Test du Provider */}
+      <Section title="Test du Provider" defaultOpen={false}>
+        <Field label="Message de test" hint="Testez la configuration actuelle">
+          <textarea
+            value={testMessage}
+            onChange={(e) => setTestMessage(e.target.value)}
+            placeholder="Entrez un message de test…"
+            className={clsx(inputClass, "resize-none h-20")}
+          />
+        </Field>
+
+        <button
+          onClick={handleTestProvider}
+          disabled={testState === "running"}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gold text-white text-sm
+                     font-medium hover:bg-gold-light disabled:opacity-40 disabled:cursor-not-allowed
+                     transition-all duration-150"
+        >
+          {testState === "running"
+            ? <><Loader2 size={13} className="animate-spin" /> Test en cours…</>
+            : <>🧪 Tester le provider</>
+          }
+        </button>
+
+        {testState !== "idle" && (
+          <div className={clsx(
+            "mt-3 p-3 rounded-lg text-xs font-mono whitespace-pre-wrap break-words",
+            testState === "success" && "bg-green-400/10 text-green-300 border border-green-400/30",
+            testState === "error"   && "bg-red-400/10 text-red-300 border border-red-400/30",
+            testState === "running" && "bg-blue-400/10 text-blue-300 border border-blue-400/30",
+          )}>
+            {testOutput}
+          </div>
+        )}
+      </Section>
+
+      {/* Ingestion */}
+      <Section title="Ingestion" defaultOpen>
+        <Field label="Chemin du dossier" hint="Chemin absolu sur le serveur contenant les fichiers lore_*">
+          <input
+            type="text"
+            value={folderPath}
+            onChange={(e) => setFolderPath(e.target.value)}
+            placeholder="/chemin/vers/oracle-api/data/files"
+            className={inputClass}
+          />
+        </Field>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleTriggerIngest}
+            disabled={ingestState === "running" || !folderPath.trim()}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gold text-white text-sm
+                       font-medium hover:bg-gold-light disabled:opacity-40 disabled:cursor-not-allowed
+                       transition-all duration-150"
+          >
+            {ingestState === "running"
+              ? <><Loader2 size={13} className="animate-spin" /> En cours…</>
+              : <><Play size={13} /> Lancer l'ingestion</>
+            }
+          </button>
+
+          {/* Statut */}
+          {ingestState !== "idle" && (
+            <div className={clsx(
+              "flex items-center gap-1.5 text-sm animate-fade-in",
+              ingestState === "success" && "text-green-400",
+              ingestState === "error"   && "text-red-400",
+              ingestState === "running" && "text-muted-fg",
+            )}>
+              {ingestState === "success" && <CheckCircle size={13} />}
+              {ingestState === "error"   && <XCircle size={13} />}
+              {ingestState === "running" && <Loader2 size={13} className="animate-spin" />}
+              <span className="text-xs">{ingestMsg}</span>
+            </div>
+          )}
+        </div>
+      </Section>
+
+    </div>
+  );
+}
