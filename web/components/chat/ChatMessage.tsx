@@ -2,6 +2,7 @@
 
 import { clsx } from "clsx";
 import { User, Sparkles } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 interface Props {
   role:      "user" | "assistant";
@@ -58,7 +59,12 @@ export function ChatMessage({ role, content, index, isLast, isLoading }: Props) 
             ))}
           </div>
         ) : (
-          <p className="whitespace-pre-wrap">{content}</p>
+          <div className="prose prose-sm dark:prose-invert max-w-none
+            prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-headings:my-2
+            prose-strong:text-main prose-code:text-gold prose-code:bg-subtle
+            prose-code:px-1 prose-code:rounded prose-code:text-xs">
+            <ReactMarkdown>{content}</ReactMarkdown>
+          </div>
         )}
       </div>
     </div>
