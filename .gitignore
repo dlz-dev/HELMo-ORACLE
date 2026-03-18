@@ -22,3 +22,4 @@ api/data/new_files/
 api/data/quarantine/
 api/data/quarantaine/
 api/storage
+web/.env.local
