@@ -5,13 +5,16 @@ Exposes the RAG pipeline as a REST API so a separate frontend
 (e.g. deployed on Vercel) can call it over HTTP.
 """
 
+# ─── Logging ──────────────────────────────────────────────────────────────────
+import logging
+from pathlib import Path as _Path
 from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from langgraph.prebuilt import create_react_agent
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from pydantic import BaseModel
 
 from core.agent.tools_oracle import get_search_tool
@@ -19,15 +22,33 @@ from core.context.memory_manager import MemoryManager
 from core.context.session_manager import SessionManager
 from core.database.vector_manager import VectorManager
 from core.pipeline.pii_manager import PIIManager
-from providers import get_llm, get_available_models, PROVIDER_LABELS
 from core.utils.utils import load_config, load_base_prompt, format_response
+from providers import get_llm, get_available_models, PROVIDER_LABELS
 
+_LOG_DIR = _Path(__file__).parent / "logs"
+_LOG_DIR.mkdir(exist_ok=True)
+_LOG_FILE = _LOG_DIR / "oracle.log"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)-8s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler(_LOG_FILE, encoding="utf-8"),
+        logging.StreamHandler(),  # garde aussi les logs dans le terminal
+    ],
+)
+logger = logging.getLogger("oracle")
 
 config = load_config()
 BASE_SYSTEM_PROMPT = load_base_prompt()
 
+logger.info("━" * 50)
+logger.info("Oracle API démarrage...")
 _embeddings = HuggingFaceEmbedding(model_name="intfloat/multilingual-e5-base")
+logger.info("Modèle embeddings chargé : intfloat/multilingual-e5-base")
 vm = VectorManager(embeddings_model=_embeddings)
+logger.info("VectorManager connecté à Supabase")
 sm = SessionManager()
 mm = MemoryManager(
     max_recent_tokens=config.get("memory", {}).get("max_recent_tokens", 1200),
@@ -41,10 +62,11 @@ app = FastAPI(title="HELMo Oracle API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # restreindre au domaine Vercel en production si souhaité
+    allow_origins=["*"],  # restreindre au domaine Vercel en production si souhaité
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -203,9 +225,11 @@ import json as _json
 from fastapi.responses import StreamingResponse
 from typing import AsyncGenerator
 
+
 class _SDKMessage(BaseModel):
     role: str
     content: str
+
 
 class StreamChatRequest(BaseModel):
     messages: list[_SDKMessage] = []
@@ -285,6 +309,13 @@ async def _generate_stream(req: StreamChatRequest) -> AsyncGenerator[str, None]:
         yield f"3:{_json.dumps(str(e))}\n"
         return
 
+    logger.info(
+        "CHAT | provider=%s model=%s session=%s sources=%d tokens~%d",
+        req.provider, model, session_id[:8],
+        len(cot_storage),
+        len(full_response) // 4,
+    )
+
     # Persist assistant reply
     session["messages"].append({
         "role": "assistant",
@@ -320,6 +351,83 @@ async def chat_stream(req: StreamChatRequest):
     )
 
 
+# ─── Health check complet ─────────────────────────────────────────────────────
+
+@app.get("/health/full")
+async def health_full():
+    """
+    Vérifie l'état de tous les composants du système.
+    Teste : base de données, embeddings, et chaque clé API configurée.
+    """
+    import os
+    import time
+    results = {}
+
+    # ── Base de données ───────────────────────────────────────────
+    try:
+        start = time.time()
+        with vm.conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM documents")
+            count = cur.fetchone()[0]
+        results["database"] = {
+            "status": "ok",
+            "documents": count,
+            "latency_ms": round((time.time() - start) * 1000),
+        }
+    except Exception as e:
+        results["database"] = {"status": "error", "error": str(e)}
+
+    # ── Modèle embeddings ─────────────────────────────────────────
+    try:
+        start = time.time()
+        vm.embeddings_model.get_text_embedding("test")
+        results["embeddings"] = {
+            "status": "ok",
+            "model": "intfloat/multilingual-e5-base",
+            "latency_ms": round((time.time() - start) * 1000),
+        }
+    except Exception as e:
+        results["embeddings"] = {"status": "error", "error": str(e)}
+
+    # ── Clés API (teste uniquement celles configurées) ────────────
+    providers_to_check = {
+        "groq": ("GROQ_API_KEY", "langchain_groq", "ChatGroq", {"model": "llama-3.1-8b-instant"}),
+        "openai": ("OPENAI_API_KEY", "langchain_openai", "ChatOpenAI", {"model": "gpt-4o-mini"}),
+        "anthropic": ("ANTHROPIC_API_KEY", "langchain_anthropic", "ChatAnthropic", {"model": "claude-haiku-4-5"}),
+        "gemini": ("GOOGLE_API_KEY", "langchain_google_genai", "ChatGoogleGenerativeAI", {"model": "gemini-2.0-flash"}),
+    }
+
+    from langchain_core.messages import HumanMessage as HM
+
+    for provider_name, (env_var, module, cls_name, kwargs) in providers_to_check.items():
+        api_key = os.environ.get(env_var, "")
+        if not api_key:
+            results[provider_name] = {"status": "not_configured"}
+            continue
+        try:
+            start = time.time()
+            mod = __import__(module, fromlist=[cls_name])
+            cls = getattr(mod, cls_name)
+            llm = cls(api_key=api_key, temperature=0, **kwargs)
+            llm.invoke([HM(content="Reply with one word: ok")])
+            results[provider_name] = {
+                "status": "ok",
+                "latency_ms": round((time.time() - start) * 1000),
+            }
+        except Exception as e:
+            results[provider_name] = {"status": "error", "error": str(e)[:120]}
+
+    # ── Résumé global ─────────────────────────────────────────────
+    has_error = any(
+        v.get("status") == "error"
+        for v in results.values()
+    )
+    return {
+        "status": "degraded" if has_error else "ok",
+        "checks": results,
+    }
+
+
 # ─── Test provider ────────────────────────────────────────────────────────────
 
 class TestRequest(BaseModel):
@@ -327,6 +435,7 @@ class TestRequest(BaseModel):
     model: str
     message: str
     temperature: float = 0.0
+
 
 @app.post("/test")
 def test_provider(req: TestRequest):
@@ -350,6 +459,36 @@ def test_provider(req: TestRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur LLM : {e}")
+
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+
+@app.get("/logs")
+def get_logs(lines: int = 100):
+    """Retourne les N dernières lignes du fichier de log."""
+    try:
+        if not _LOG_FILE.exists():
+            return {"logs": [], "total": 0}
+        with open(_LOG_FILE, "r", encoding="utf-8") as f:
+            all_lines = f.readlines()
+        recent = all_lines[-lines:]
+        return {
+            "logs": [l.rstrip() for l in recent],
+            "total": len(all_lines),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/logs")
+def clear_logs():
+    """Vide le fichier de log."""
+    try:
+        open(_LOG_FILE, "w").close()
+        logger.info("Logs effacés par l'administrateur")
+        return {"cleared": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ─── Entry point ──────────────────────────────────────────────────────────────

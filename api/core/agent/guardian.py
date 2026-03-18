@@ -1,8 +1,12 @@
 import os
 from typing import Optional
 
-from providers import get_llm
-from core.utils.utils import load_config, _GUARDIAN_PROMPT
+from ..utils.utils import load_config, _GUARDIAN_PROMPT
+
+# Import delayed to avoid circular dependency
+def get_llm_for_guardian():
+    from ...providers import get_llm
+    return get_llm
 
 
 def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> bool:
@@ -53,6 +57,7 @@ def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> bool:
         guardian_cfg = config.get("guardian", {})
         provider_key = guardian_cfg.get("provider", "groq")
         model = guardian_cfg.get("model", "llama-3.1-8b-instant")
+        get_llm = get_llm_for_guardian()
         llm = get_llm(provider_key=provider_key, model=model, config=config)
     except Exception as e:
         raise RuntimeError(

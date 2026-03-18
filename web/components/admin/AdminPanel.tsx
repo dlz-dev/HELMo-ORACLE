@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Lock, Unlock, Eye, EyeOff,
   Play, CheckCircle, XCircle, Loader2,
@@ -19,6 +19,8 @@ const PROVIDER_MODELS: Record<string, string[]> = {
     "openai/gpt-oss-120b",
     "openai/gpt-oss-20b",
     "qwen/qwen3-32b",
+    "llama-3.1-8b-instant",
+    "gemma2-9b-it",
     "deepseek-r1-distill-llama-70b",
   ],
   openai:    ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"],
@@ -92,6 +94,16 @@ export function AdminPanel() {
   const [testState,  setTestState]  = useState<"idle" | "running" | "success" | "error">("idle");
   const [testOutput, setTestOutput] = useState("");
 
+  // Health check
+  const [healthData,  setHealthData]  = useState<any>(null);
+  const [healthState, setHealthState] = useState<"idle" | "running" | "done">("idle");
+
+  // Logs
+  const [logs,        setLogs]        = useState<string[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
   // Ingestion
   const [folderPath,  setFolderPath]  = useState("");
   const [ingestState, setIngestState] = useState<IngestStatus["last_status"]>("idle");
@@ -150,6 +162,44 @@ export function AdminPanel() {
     } catch (e: any) {
       setTestState("error");
       setTestOutput(`❌ ${e.message}`);
+    }
+  };
+
+  const fetchLogs = useCallback(async () => {
+    setLogsLoading(true);
+    try {
+      const res = await fetch("/api/admin/logs?lines=150");
+      const data = await res.json();
+      setLogs(data.logs || []);
+      setTimeout(() => logsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    } catch { } finally {
+      setLogsLoading(false);
+    }
+  }, []);
+
+  const clearLogs = async () => {
+    await fetch("/api/admin/logs", { method: "DELETE" });
+    setLogs([]);
+  };
+
+  // Auto-refresh logs toutes les 3s si activé
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const id = setInterval(fetchLogs, 3000);
+    return () => clearInterval(id);
+  }, [autoRefresh, fetchLogs]);
+
+  const handleHealthCheck = async () => {
+    setHealthState("running");
+    setHealthData(null);
+    try {
+      const res = await fetch("/api/admin/health");
+      const data = await res.json();
+      setHealthData(data);
+    } catch (e: any) {
+      setHealthData({ status: "error", checks: { backend: { status: "error", error: e.message } } });
+    } finally {
+      setHealthState("done");
     }
   };
 
@@ -291,6 +341,84 @@ export function AdminPanel() {
             testState === "error"   && "bg-red-400/10 text-red-300 border border-red-400/30",
             testState === "running" && "bg-blue-400/10 text-blue-300 border border-blue-400/30",
           )}>{testOutput}</div>
+        )}
+      </Section>
+
+      {/* Logs */}
+      <Section title="Logs système" defaultOpen={false}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={fetchLogs} disabled={logsLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold text-white text-xs font-medium hover:bg-gold-light disabled:opacity-40 transition-colors">
+            {logsLoading ? <><Loader2 size={11} className="animate-spin" /> Chargement…</> : "🔄 Actualiser"}
+          </button>
+          <button onClick={() => setAutoRefresh(v => !v)}
+            className={clsx("px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
+              autoRefresh ? "bg-green-400/20 border-green-400/40 text-green-300" : "border-default text-muted-fg hover:text-main")}>
+            {autoRefresh ? "⏸ Auto-refresh ON" : "▶ Auto-refresh OFF"}
+          </button>
+          <button onClick={clearLogs}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-400/30 text-red-400 hover:bg-red-400/10 transition-colors ml-auto">
+            🗑 Vider les logs
+          </button>
+        </div>
+
+        <div className="bg-[#0a0c10] rounded-lg border border-default overflow-auto h-64 p-3 font-mono text-xs">
+          {logs.length === 0 ? (
+            <p className="text-muted-fg">Aucun log — cliquez sur Actualiser</p>
+          ) : (
+            logs.map((line, i) => (
+              <div key={i} className={clsx("leading-5",
+                line.includes("ERROR")   && "text-red-400",
+                line.includes("WARNING") && "text-amber-400",
+                line.includes("INFO")    && "text-green-300",
+                !line.includes("ERROR") && !line.includes("WARNING") && !line.includes("INFO") && "text-muted-fg",
+              )}>
+                {line}
+              </div>
+            ))
+          )}
+          <div ref={logsEndRef} />
+        </div>
+      </Section>
+
+      {/* Health Check */}
+      <Section title="Health Check" defaultOpen={false}>
+        <button onClick={handleHealthCheck} disabled={healthState === "running"}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-gold text-white text-sm font-medium hover:bg-gold-light disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150">
+          {healthState === "running"
+            ? <><Loader2 size={13} className="animate-spin" /> Vérification en cours…</>
+            : <>🔍 Vérifier l'état du système</>}
+        </button>
+
+        {healthData && (
+          <div className="space-y-2 mt-2">
+            {Object.entries(healthData.checks || {}).map(([key, val]: [string, any]) => (
+              <div key={key} className={clsx(
+                "flex items-center justify-between px-3 py-2 rounded-lg text-xs border",
+                val.status === "ok"             && "bg-green-400/10 border-green-400/30 text-green-300",
+                val.status === "error"          && "bg-red-400/10 border-red-400/30 text-red-300",
+                val.status === "not_configured" && "bg-subtle border-default text-muted-fg",
+              )}>
+                <div className="flex items-center gap-2">
+                  <span>
+                    {val.status === "ok"             && "✅"}
+                    {val.status === "error"          && "❌"}
+                    {val.status === "not_configured" && "⚪"}
+                  </span>
+                  <span className="font-medium capitalize">{key}</span>
+                  {val.documents !== undefined && (
+                    <span className="opacity-70">{val.documents} documents</span>
+                  )}
+                  {val.model && <span className="opacity-70">{val.model}</span>}
+                </div>
+                <div className="text-right">
+                  {val.latency_ms && <span className="opacity-70">{val.latency_ms}ms</span>}
+                  {val.error && <span className="max-w-[200px] truncate" title={val.error}>{val.error}</span>}
+                  {val.status === "not_configured" && <span>Non configuré</span>}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </Section>
 

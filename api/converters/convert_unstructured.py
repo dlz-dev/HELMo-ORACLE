@@ -6,7 +6,10 @@ from llama_index.core.node_parser import SentenceSplitter
 from unstructured_client import UnstructuredClient
 from unstructured_client.models import shared, operations
 
-from core.utils.utils import load_config
+# Import delayed to avoid circular dependency issues
+def _get_load_config():
+    from ..core.utils.utils import load_config
+    return load_config
 
 
 def process_with_unstructured(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50) -> List[
@@ -22,6 +25,7 @@ def process_with_unstructured(file_path: str, chunk_size: int = 512, chunk_overl
     Returns:
         List[Tuple[str, Dict[str, Any]]]: A list of tuples (text, metadata).
     """
+    load_config = _get_load_config()
     config = load_config()
     unst_cfg = config.get("llm", {}).get("unstructured", {})
     api_key = unst_cfg.get("api_key")
