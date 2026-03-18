@@ -4,7 +4,7 @@ import os
 import shutil
 
 from core.context.memory_manager import MemoryManager
-from core.context.session_manager import SessionManager, _make_title
+from core.context import SessionManager, _make_title
 
 
 class TestMemoryManager(unittest.TestCase):

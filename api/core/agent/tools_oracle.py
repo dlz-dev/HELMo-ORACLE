@@ -2,11 +2,12 @@
 LangGraph tool — searches the knowledge base and exposes raw results
 with RRF confidence scores for Chain-of-Thought (CoT) display in the UI.
 
-Results are stored in st.session_state["_cot_results"] (Streamlit mode) or
+Results are stored in the cot_storage list passed to get_search_tool(), or
 in the optional cot_storage list (API mode).
 """
 
 from typing import Callable, Any, Optional
+
 from langchain_core.tools import tool
 
 from core.database.vector_manager import VectorManager
@@ -25,7 +26,7 @@ def get_search_tool(vm: VectorManager, k_final: int = 5, cot_storage: Optional[l
         vm (VectorManager): Shared VectorManager singleton instance.
         k_final (int): Number of results to retrieve (controlled via UI).
         cot_storage (Optional[list]): If provided, CoT results are stored here (API mode).
-            If None, results are stored in st.session_state (Streamlit mode).
+            If None, CoT results are discarded.
 
     Returns:
         Callable: The initialized LangGraph tool.
@@ -46,12 +47,6 @@ def get_search_tool(vm: VectorManager, k_final: int = 5, cot_storage: Optional[l
         """
         if cot_storage is not None:
             cot_storage.clear()
-        else:
-            try:
-                import streamlit as st
-                st.session_state["_cot_results"] = []
-            except Exception:
-                pass
 
         query_vector = vm.embeddings_model.get_query_embedding(query)
         results = vm.search_hybrid(query=query, query_vector=query_vector, k_final=k_final)
@@ -83,12 +78,6 @@ def get_search_tool(vm: VectorManager, k_final: int = 5, cot_storage: Optional[l
 
         if cot_storage is not None:
             cot_storage.extend(cot_entries)
-        else:
-            try:
-                import streamlit as st
-                st.session_state["_cot_results"] = cot_entries
-            except Exception:
-                pass
 
         # Use standard Python string joining instead of chr(10)
         return f"<archives_sacrees>\n{'\n'.join(context_lines)}\n</archives_sacrees>"

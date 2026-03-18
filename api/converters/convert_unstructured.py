@@ -1,22 +1,24 @@
 import os
 from typing import List, Tuple, Dict, Any
 
-from unstructured_client import UnstructuredClient
-from unstructured_client.models import shared, operations
 from llama_index.core import Document
 from llama_index.core.node_parser import SentenceSplitter
+from unstructured_client import UnstructuredClient
+from unstructured_client.models import shared, operations
+
 from core.utils.utils import load_config
 
 
-def process_with_unstructured(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50) -> List[Tuple[str, Dict[str, Any]]]:
+def process_with_unstructured(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50) -> List[
+    Tuple[str, Dict[str, Any]]]:
     """
     Processes a complex file via the Unstructured API and chunks it with LlamaIndex.
-    
+
     Args:
         file_path (str): The path to the file.
         chunk_size (int): The maximum chunk size.
         chunk_overlap (int): The overlap between chunks.
-        
+
     Returns:
         List[Tuple[str, Dict[str, Any]]]: A list of tuples (text, metadata).
     """
@@ -26,7 +28,7 @@ def process_with_unstructured(file_path: str, chunk_size: int = 512, chunk_overl
     server_url = unst_cfg.get("server_url")
 
     if not api_key or not server_url:
-        print("ERROR: Missing API Key or Server URL in config.yaml for Unstructured.")
+        print("ERROR: UNSTRUCTURED_API_KEY is not set in environment.")
         return []
 
     client = UnstructuredClient(api_key_auth=api_key, server_url=server_url)
@@ -57,7 +59,7 @@ def process_with_unstructured(file_path: str, chunk_size: int = 512, chunk_overl
                 "type": str(el.get("type", "")),
                 "method": "unstructured"
             }
-            
+
             if "page_number" in raw_meta:
                 metadata["page_number"] = str(raw_meta["page_number"])
 
