@@ -219,6 +219,40 @@ def list_archives():
     return {"sources": vm.list_sources()}
 
 
+# ─── Ingestion ────────────────────────────────────────────────────────────────
+
+import threading as _threading
+
+_ingest_status = {"running": False, "last_status": "idle", "last_message": ""}
+
+
+def _run_ingestion():
+    global _ingest_status
+    try:
+        from core.pipeline.ingestion import seed_database
+        _ingest_status = {"running": True, "last_status": "running", "last_message": "Ingestion en cours…"}
+        seed_database()
+        _ingest_status = {"running": False, "last_status": "success", "last_message": "Ingestion terminée avec succès."}
+        logger.info("INGEST | Terminée avec succès")
+    except Exception as e:
+        _ingest_status = {"running": False, "last_status": "error", "last_message": str(e)}
+        logger.error("INGEST | Erreur : %s", e)
+
+
+@app.post("/ingest")
+def trigger_ingest():
+    if _ingest_status.get("running"):
+        return {"started": False, "detail": "Une ingestion est déjà en cours."}
+    t = _threading.Thread(target=_run_ingestion, daemon=True)
+    t.start()
+    return {"started": True}
+
+
+@app.get("/ingest/status")
+def ingest_status():
+    return _ingest_status
+
+
 # ─── Streaming chat (Vercel AI SDK compatible) ────────────────────────────────
 
 import json as _json
