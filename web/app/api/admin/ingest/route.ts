@@ -1,24 +1,13 @@
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const { folder_path } = body;
-
-  if (!folder_path) {
-    return NextResponse.json({ error: "Folder path is required" }, { status: 400 });
-  }
-
-  const backendUrl = process.env.ORACLE_API_URL || "http://127.0.0.1:8000";
-  const apiKey = process.env.API_SECRET_KEY || "";
+  const formData = await request.formData();
+  const backendUrl = process.env.BACKEND_API_URL || "http://127.0.0.1:8000";
 
   try {
     const res = await fetch(`${backendUrl}/ingest`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Api-Key": apiKey,
-      },
-      body: JSON.stringify({ folder_path }),
+      body: formData,
     });
 
     const text = await res.text();

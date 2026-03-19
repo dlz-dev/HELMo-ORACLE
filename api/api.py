@@ -222,30 +222,89 @@ def list_archives():
 # ─── Ingestion ────────────────────────────────────────────────────────────────
 
 import threading as _threading
+from fastapi import UploadFile, File
 
 _ingest_status = {"running": False, "last_status": "idle", "last_message": ""}
 
 
-def _run_ingestion():
+def _run_ingestion(file_paths):
     global _ingest_status
+    from pathlib import Path
+    from core.agent.guardian import is_valid_lore_file
+    from core.database.vector_manager import VectorManager
+    from core.utils.utils import ARCHIVE_DIR, QUARANTINE_DIR
+    from converters import convert_csv, convert_markdown, convert_text, convert_json, convert_pdf
+    from converters.convert_unstructured import process_with_unstructured
+    import shutil
+
+    total = len(file_paths)
     try:
-        from core.pipeline.ingestion import seed_database
-        _ingest_status = {"running": True, "last_status": "running", "last_message": "Ingestion en cours…"}
-        seed_database()
-        _ingest_status = {"running": False, "last_status": "success", "last_message": "Ingestion terminée avec succès."}
-        logger.info("INGEST | Terminée avec succès")
+        for i, fp in enumerate(file_paths):
+            fp = Path(fp)
+            _ingest_status["last_message"] = f"Fichier {i+1}/{total} — Validation de {fp.name}…"
+
+            # 1. Guardian
+            if not is_valid_lore_file(str(fp)):
+                shutil.move(str(fp), str(QUARANTINE_DIR / fp.name))
+                logger.warning("INGEST | Rejeté : %s", fp.name)
+                continue
+
+            # 2. Conversion
+            _ingest_status["last_message"] = f"Fichier {i+1}/{total} — Conversion de {fp.name}…"
+            ext = fp.suffix.lower()
+            if ext == ".csv":
+                chunks = convert_csv.load_csv_data(str(fp))
+            elif ext == ".md":
+                chunks = convert_markdown.parse_markdown(str(fp))
+            elif ext == ".txt":
+                chunks = convert_text.process_text_file(str(fp))
+            elif ext == ".json":
+                chunks = convert_json.parse_json(str(fp))
+            elif ext == ".pdf":
+                chunks = convert_pdf.process_pdf_file(str(fp))
+            else:
+                chunks = process_with_unstructured(str(fp))
+
+            # 3. Vectorisation
+            _ingest_status["last_message"] = f"Fichier {i+1}/{total} — Vectorisation de {fp.name}…"
+            db = VectorManager(embeddings_model=_embeddings)
+            for text, meta in chunks:
+                db.add_document(text, metadata={"source": fp.name, **meta})
+
+            # 4. Archive
+            shutil.move(str(fp), str(ARCHIVE_DIR / fp.name))
+            logger.info("INGEST | OK — %s (%d chunks)", fp.name, len(chunks))
+
+        _ingest_status = {"running": False, "last_status": "success", "last_message": f"{total} fichier(s) ingéré(s) avec succès."}
+
     except Exception as e:
         _ingest_status = {"running": False, "last_status": "error", "last_message": str(e)}
         logger.error("INGEST | Erreur : %s", e)
 
 
 @app.post("/ingest")
-def trigger_ingest():
+async def trigger_ingest(files: list[UploadFile] = File(...)):
     if _ingest_status.get("running"):
         return {"started": False, "detail": "Une ingestion est déjà en cours."}
-    t = _threading.Thread(target=_run_ingestion, daemon=True)
+
+    from core.utils.utils import NEW_FILES_DIR, ARCHIVE_DIR, QUARANTINE_DIR
+    NEW_FILES_DIR.mkdir(parents=True, exist_ok=True)
+    ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+    QUARANTINE_DIR.mkdir(parents=True, exist_ok=True)
+
+    saved_paths = []
+    for file in files:
+        dest = NEW_FILES_DIR / file.filename
+        contents = await file.read()
+        with open(dest, "wb") as f:
+            f.write(contents)
+        saved_paths.append(dest)
+        logger.info("INGEST | Fichier reçu : %s", file.filename)
+
+    _ingest_status["running"] = True
+    t = _threading.Thread(target=_run_ingestion, args=[saved_paths], daemon=True)
     t.start()
-    return {"started": True}
+    return {"started": True, "files": [f.filename for f in files]}
 
 
 @app.get("/ingest/status")
