@@ -1,9 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* ── Google Fonts — Cinzel pour le logo uniquement ─────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap');
 
 /* ── Variables CSS — Light mode (défaut) ────────────────────────── */
 :root {
