@@ -7,7 +7,7 @@ import {
   ChevronDown, ChevronUp, Save,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { triggerIngest } from "@/lib/api";
+import type {} from "@/lib/api";
 import type { IngestStatus } from "@/lib/api";
 
 // ─── Modèles par provider (Groq mis à jour avril 2025) ────────────
@@ -105,7 +105,7 @@ export function AdminPanel() {
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   // Ingestion
-  const [folderPath,  setFolderPath]  = useState("");
+  const [files,       setFiles]       = useState<FileList | null>(null);
   const [ingestState, setIngestState] = useState<IngestStatus["last_status"]>("idle");
   const [ingestMsg,   setIngestMsg]   = useState("");
 
@@ -204,19 +204,23 @@ export function AdminPanel() {
   };
 
   const handleTriggerIngest = async () => {
+    if (!files || files.length === 0) return;
     setIngestState("running");
-    setIngestMsg("Démarrage…");
+    setIngestMsg("Envoi des fichiers…");
     try {
-      await triggerIngest(folderPath);
+      const formData = new FormData();
+      Array.from(files).forEach(f => formData.append("files", f));
+      const res = await fetch("/api/admin/ingest", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Erreur lors de l'envoi");
       const poll = setInterval(async () => {
         try {
-          const res = await fetch("/api/admin/ingest/status");
-          const status = await res.json();
+          const r = await fetch("/api/admin/ingest/status");
+          const status = await r.json();
           setIngestMsg(status.last_message || "En cours…");
           if (!status.running) {
             clearInterval(poll);
             setIngestState(status.last_status === "success" ? "success" : "error");
-            setIngestMsg(status.last_status === "success" ? "Terminée avec succès ✓" : status.last_message);
+            setIngestMsg(status.last_message);
           }
         } catch { clearInterval(poll); setIngestState("error"); }
       }, 2000);
@@ -424,13 +428,22 @@ export function AdminPanel() {
 
       {/* Ingestion */}
       <Section title="Ingestion">
-        <Field label="Chemin du dossier" hint="Chemin absolu contenant les fichiers lore_*">
-          <input type="text" value={folderPath} onChange={e => setFolderPath(e.target.value)}
-            placeholder="C:\chemin\vers\api\data\files" className={inputClass} />
+        <Field label="Sélectionner un dossier" hint="Navigue jusqu'au dossier contenant tes fichiers lore_*">
+          <input
+            type="file"
+            // @ts-ignore
+            webkitdirectory=""
+            multiple
+            onChange={e => setFiles(e.target.files)}
+            className={inputClass}
+          />
         </Field>
+        {files && files.length > 0 && (
+          <p className="text-xs text-muted-fg">{files.length} fichier(s) sélectionné(s)</p>
+        )}
         <div className="flex items-center gap-3">
           <button onClick={handleTriggerIngest}
-            disabled={ingestState === "running" || !folderPath.trim()}
+            disabled={ingestState === "running" || !files || files.length === 0}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gold text-white text-sm font-medium hover:bg-gold-light disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150">
             {ingestState === "running"
               ? <><Loader2 size={13} className="animate-spin" /> En cours…</>
