@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const backendUrl = process.env.ORACLE_API_URL || "http://127.0.0.1:8000";
+  const backendUrl = process.env.BACKEND_API_URL || "http://127.0.0.1:8000";
   const apiKey = process.env.API_SECRET_KEY || "";
 
   try {
