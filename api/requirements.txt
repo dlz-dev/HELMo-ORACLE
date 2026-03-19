@@ -21,3 +21,4 @@ supabase==2.28.2
 unstructured_client==0.42.10
 watchdog==6.0.0
 python-dotenv
+python-multipart
