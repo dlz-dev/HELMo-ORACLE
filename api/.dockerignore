@@ -1,0 +1,15 @@
+../.venv/
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
+api/tests/
+*.md
+.python-version
+frontend/
+api/storage/sessions/
+api/data/new_files/*
+api/data/quarantine/*
+api/config/config.yaml
+api/config/prompt.txt
