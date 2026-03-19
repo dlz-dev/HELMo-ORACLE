@@ -2,16 +2,14 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const backendUrl = process.env.BACKEND_API_URL || "http://127.0.0.1:8000";
-  const contentType = request.headers.get("content-type") || "";
 
   try {
+    const formData = await request.formData();
+
     const res = await fetch(`${backendUrl}/ingest`, {
       method: "POST",
-      headers: { "Content-Type": contentType },
-      body: request.body,
-      // @ts-ignore
-      duplex: "half",
-    } as RequestInit);
+      body: formData,
+    });
 
     const text = await res.text();
     if (!text) {
