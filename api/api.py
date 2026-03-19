@@ -294,7 +294,7 @@ async def trigger_ingest(files: list[UploadFile] = File(...)):
 
     saved_paths = []
     for file in files:
-        dest = NEW_FILES_DIR / file.filename
+        dest = NEW_FILES_DIR / _Path(file.filename).name
         contents = await file.read()
         with open(dest, "wb") as f:
             f.write(contents)
