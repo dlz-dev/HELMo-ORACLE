@@ -1,8 +1,8 @@
 .streamlit/
-config/config.yaml
-.env
+api/config/config.yaml
+api/.env
 .envrc
-config/prompt.txt
+api/config/prompt.txt
 .venv/
 venv/
 env/
@@ -17,7 +17,10 @@ __pycache__/
 build/
 dist/
 *.egg-info/
-data/files/
-data/quarantine/
-data/quarantaine/
-storage
+api/data/files/
+api/data/new_files/
+api/data/quarantine/
+api/data/quarantaine/
+api/storage
+web/.env.local
+api/logs
