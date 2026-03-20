@@ -1,7 +1,8 @@
 import unittest
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
 from pathlib import Path
 import core.utils.utils as utils
+
 
 class TestUtils(unittest.TestCase):
 
@@ -17,18 +18,14 @@ class TestUtils(unittest.TestCase):
         expected = "Voici le contenu.\n\nTrop d'espaces."
         self.assertEqual(utils.format_response(raw_text), expected)
 
-    @patch("builtins.open", new_callable=mock_open, read_data="search:\n  k_final: 42")
-    @patch("yaml.safe_load")
-    def test_load_config(self, mock_yaml, mock_file):
-        """Vérifie le chargement du fichier YAML."""
-        mock_yaml.return_value = {"search": {"k_final": 5}}
-
+    def test_load_config(self):
+        """Vérifie que load_config retourne bien un dict avec les clés attendues."""
         utils.load_config.cache_clear()
         config = utils.load_config()
-
-        self.assertEqual(config["search"]["k_final"], 5)
-        # On vérifie que le chemin utilisé est bien celui défini dans utils
-        mock_file.assert_called_with(utils.CONFIG_PATH, "r", encoding="utf-8")
+        self.assertIn("database", config)
+        self.assertIn("llm", config)
+        self.assertIn("guardian", config)
+        self.assertIn("search", config)
 
     @patch("core.utils.utils.load_config")
     def test_load_api_key_new_structure(self, mock_cfg):
@@ -43,11 +40,14 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(key, "sk-12345")
 
     @patch("core.utils.utils.load_config")
-    def test_load_api_key_legacy_structure(self, mock_cfg):
-        """Teste la compatibilité avec l'ancienne structure d'API key."""
-        mock_cfg.return_value = {"api_key": "legacy-key-678"}
+    def test_load_api_key_missing_returns_empty(self, mock_cfg):
+        """Vérifie que load_api_key retourne une chaîne vide si la clé est absente."""
+        mock_cfg.return_value = {
+            "guardian": {"provider": "groq"},
+            "llm": {"groq": {}}
+        }
         key = utils.load_api_key()
-        self.assertEqual(key, "legacy-key-678")
+        self.assertEqual(key, "")
 
     def test_prompts_presence(self):
         """Vérifie que les prompts internes sont bien définis."""
