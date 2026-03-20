@@ -6,12 +6,12 @@ import json
 from unittest.mock import patch, MagicMock
 from llama_index.core import Document
 
-from ..converters.convert_json import parse_json
-from ..converters.convert_csv import load_csv_data
-from ..converters.convert_markdown import parse_markdown
-from ..converters.convert_text import process_text_file
-from ..converters.convert_pdf import process_pdf_file
-from ..converters.convert_unstructured import process_with_unstructured
+from converters.convert_json import parse_json
+from converters.convert_csv import load_csv_data
+from converters.convert_markdown import parse_markdown
+from converters.convert_text import process_text_file
+from converters.convert_pdf import process_pdf_file
+from converters.convert_unstructured import process_with_unstructured
 
 
 def create_temp_file(content: str, suffix: str) -> str:
@@ -299,13 +299,13 @@ class TestProcessPdfFile(unittest.TestCase):
 
 class TestProcessWithUnstructured(unittest.TestCase):
 
-    @patch('converters.convert_unstructured.load_config')
+    @patch('converters.convert_unstructured._get_load_config')
     @patch('converters.convert_unstructured.UnstructuredClient')
     @patch('builtins.open', new_callable=unittest.mock.mock_open, read_data=b"dummy binary data")
     def test_process_with_unstructured_nominal(self, mock_file, MockClient, mock_load_config):
         """Teste l'appel Unstructured en simulant la configuration, le client API et le fichier."""
         # 1. Simuler la configuration
-        mock_load_config.return_value = {
+        mock_load_config.return_value = lambda: {
             "llm": {
                 "unstructured": {"api_key": "cle_secrete_fictive", "server_url": "http://api.fictive.com"}
             }
@@ -340,11 +340,11 @@ class TestProcessWithUnstructured(unittest.TestCase):
         mock_client_instance.general.partition.assert_called_once()
         mock_load_config.assert_called_once()
 
-    @patch('converters.convert_unstructured.load_config')
+    @patch('converters.convert_unstructured._get_load_config')
     def test_missing_config_returns_empty(self, mock_load_config):
         """Teste le comportement si les clés d'API sont absentes du config.yaml."""
         # Simulation d'une configuration vide
-        mock_load_config.return_value = {}
+        mock_load_config.return_value = lambda: {}
 
         result = process_with_unstructured("document.docx")
 

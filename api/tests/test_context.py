@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 import os
 import shutil
 
-from ..core.context.memory_manager import MemoryManager
-from ..core.context import SessionManager, _make_title
+from core.context.memory_manager import MemoryManager
+from core.context import SessionManager, _make_title
 
 
 class TestMemoryManager(unittest.TestCase):
@@ -15,7 +15,7 @@ class TestMemoryManager(unittest.TestCase):
         self.mock_llm.complete.return_value.text = "Résumé de test"
 
     def test_estimate_tokens(self):
-        from ..core.context.memory_manager import _estimate_tokens
+        from core.context.memory_manager import _estimate_tokens
         self.assertEqual(_estimate_tokens("ABCDEFGHIJKL"), 4)
         self.assertEqual(_estimate_tokens(""), 1)
 

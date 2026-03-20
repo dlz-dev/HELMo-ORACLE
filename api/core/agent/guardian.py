@@ -3,6 +3,7 @@ from typing import Optional
 
 from ..utils.utils import load_config, _GUARDIAN_PROMPT
 
+
 # Import delayed to avoid circular dependency
 def get_llm_for_guardian():
     from ...providers import get_llm
@@ -13,8 +14,8 @@ def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> bool:
     """
     Validates a file using the LLM configured in config.yaml under [guardian].
 
-    The `api_key` parameter is maintained for backward compatibility with 
-    legacy ingestion scripts but is no longer used directly; the key is 
+    The `api_key` parameter is maintained for backward compatibility with
+    legacy ingestion scripts but is no longer used directly; the key is
     read from the configuration via `get_llm()`.
 
     Args:
@@ -22,7 +23,7 @@ def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> bool:
         api_key (Optional[str]): Legacy parameter, currently unused.
 
     Returns:
-        bool: True if the file is accepted by the Guardian or is a known 
+        bool: True if the file is accepted by the Guardian or is a known
               binary format, False otherwise.
 
     Raises:
@@ -71,9 +72,9 @@ def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> bool:
     try:
         response = llm.invoke(prompt)
         answer = response.content.strip().upper()
-        
+
         # Note: We keep "OUI" since _GUARDIAN_PROMPT instructs the LLM in French
-        verdict = "OUI" in answer 
+        verdict = "OUI" in answer
 
         status = "✅ ACCEPTED" if verdict else "❌ REJECTED"
         print(f"  🛡️  Guardian [{fname}] via {provider_key}/{model} → '{response.content.strip()}' → {status}")

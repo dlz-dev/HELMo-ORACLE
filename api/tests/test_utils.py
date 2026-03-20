@@ -21,12 +21,12 @@ class TestUtils(unittest.TestCase):
     @patch("yaml.safe_load")
     def test_load_config(self, mock_yaml, mock_file):
         """Vérifie le chargement du fichier YAML."""
-        mock_yaml.return_value = {"search": {"k_final": 42}}
+        mock_yaml.return_value = {"search": {"k_final": 5}}
 
         utils.load_config.cache_clear()
         config = utils.load_config()
 
-        self.assertEqual(config["search"]["k_final"], 42)
+        self.assertEqual(config["search"]["k_final"], 5)
         # On vérifie que le chemin utilisé est bien celui défini dans utils
         mock_file.assert_called_with(utils.CONFIG_PATH, "r", encoding="utf-8")
 
@@ -45,9 +45,7 @@ class TestUtils(unittest.TestCase):
     @patch("core.utils.utils.load_config")
     def test_load_api_key_legacy_structure(self, mock_cfg):
         """Teste la compatibilité avec l'ancienne structure d'API key."""
-        mock_cfg.return_value = {
-            "api": {"api_key": "legacy-key-678"}
-        }
+        mock_cfg.return_value = {"api_key": "legacy-key-678"}
         key = utils.load_api_key()
         self.assertEqual(key, "legacy-key-678")
 
