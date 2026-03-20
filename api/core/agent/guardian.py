@@ -1,12 +1,12 @@
 import os
 from typing import Optional
 
-from ..utils.utils import load_config, _GUARDIAN_PROMPT
+from core.utils.utils import load_config, _GUARDIAN_PROMPT
 
 
 # Import delayed to avoid circular dependency
 def get_llm_for_guardian():
-    from ...providers import get_llm
+    from providers import get_llm
     return get_llm
 
 

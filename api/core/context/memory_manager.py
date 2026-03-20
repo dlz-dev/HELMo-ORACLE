@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Tuple
 
 from llama_index.core.llms import LLM
 
-from ..utils.utils import _SUMMARY_PROMPT
+from core.utils.utils import _SUMMARY_PROMPT
 
 
 def _estimate_tokens(text: str) -> int:
