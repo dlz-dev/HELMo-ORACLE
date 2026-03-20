@@ -124,7 +124,7 @@ class TestIngestionPipeline(unittest.TestCase):
             seed_database()
 
         mock_db_instance.add_document.assert_called_once_with(
-            "Contenu chunk", {"page": 1}
+            "Contenu chunk", metadata={"source": "lore_iroise.txt", "page": 1}
         )
         mock_valid.assert_called_once()
         mock_conv.assert_called_once()
