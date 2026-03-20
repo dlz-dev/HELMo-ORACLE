@@ -85,6 +85,45 @@ class RenameRequest(BaseModel):
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
 
+# ─── Shared agent logic ───────────────────────────────────────────────────────
+
+def _build_lc_history(history_tuples, masked_message):
+    """Convertit les tuples (role, content) en messages LangChain."""
+    from langchain_core.messages import HumanMessage as HM, AIMessage as AM
+    lc_history = []
+    for role, content in history_tuples:
+        lc_history.append(HM(content=content) if role == "user" else AM(content=content))
+    if not lc_history or not isinstance(lc_history[-1], HM) or lc_history[-1].content != masked_message:
+        lc_history.append(HM(content=masked_message))
+    return lc_history
+
+
+def _run_agent(session: dict, masked_message: str, provider: str, model: str,
+               temperature: float, k_final: int) -> tuple[str, list]:
+    """
+    Construit et exécute l'agent LangGraph.
+    Partagé entre la route /chat (sync) et /api/chat (stream).
+
+    Returns:
+        (response_text, cot_storage)
+    Raises:
+        Exception si le LLM ou l'agent échoue.
+    """
+    llm = get_llm(
+        provider_key=provider,
+        model=model,
+        config={**config, "llm": {**config.get("llm", {}), "temperature": temperature}},
+    )
+    cot_storage: list = []
+    enriched_prompt, history_tuples = mm.build_agent_input(session, BASE_SYSTEM_PROMPT)
+    search_tool = get_search_tool(vm, k_final=k_final, cot_storage=cot_storage)
+    agent = create_react_agent(llm, [search_tool], prompt=enriched_prompt)
+    lc_history = _build_lc_history(history_tuples, masked_message)
+    result = agent.invoke({"messages": lc_history})
+    response_text = format_response(result["messages"][-1].content)
+    return response_text, cot_storage
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -140,7 +179,7 @@ def rename_session(session_id: str, body: RenameRequest):
 
 @app.post("/chat")
 def chat(req: ChatRequest):
-    # Load or create session
+    """Route synchrone — conservée pour compatibilité. Préférer /api/chat (streaming)."""
     if req.session_id:
         session = sm.load(req.session_id)
         if not session:
@@ -148,70 +187,33 @@ def chat(req: ChatRequest):
     else:
         session = sm.new_session(provider=req.provider, model=req.model or "")
 
-    # Resolve model (fallback to config default)
     model = req.model or config.get("llm", {}).get("default_model", "")
-
-    # Mask PII before storing and sending to LLM
     masked_message = pii.mask_text(req.message)
-    session["messages"] = [{"role": m.role, "content": m.content} for m in req.messages]
+    session.setdefault("messages", []).append({"role": "user", "content": masked_message})
     sm.save(session)
 
-    # Build LLM
     try:
-        llm = get_llm(
-            provider_key=req.provider,
+        response, cot_storage = _run_agent(
+            session=session,
+            masked_message=masked_message,
+            provider=req.provider,
             model=model,
-            config={**config, "llm": {**config.get("llm", {}), "temperature": req.temperature}},
+            temperature=req.temperature,
+            k_final=req.k_final,
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"LLM init error: {e}")
-
-    # Build agent — cot_storage collects CoT results for this request
-    cot_storage: list = []
-    enriched_prompt, history_tuples = mm.build_agent_input(session, BASE_SYSTEM_PROMPT)
-    search_tool = get_search_tool(vm, k_final=req.k_final, cot_storage=cot_storage)
-    agent = create_react_agent(llm, [search_tool], prompt=enriched_prompt)
-
-    # Convertir les tuples en objets LangChain messages
-    from langchain_core.messages import HumanMessage as HM, AIMessage as AM
-    lc_history = []
-    for role, content in history_tuples:
-        if role == "user":
-            lc_history.append(HM(content=content))
-        else:
-            lc_history.append(AM(content=content))
-
-    # S'assurer que le dernier message est bien la question actuelle
-    if not lc_history or not isinstance(lc_history[-1], HM) or lc_history[-1].content != masked_message:
-        lc_history.append(HM(content=masked_message))
-
-    # Run agent
-    try:
-        result = agent.invoke({"messages": lc_history})
-        response = format_response(result["messages"][-1].content)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Persist assistant reply
-    session["messages"].append({
-        "role": "assistant",
-        "content": response,
-        "_cot": cot_storage,
-    })
-
-    # Compress memory if needed
+    session["messages"].append({"role": "assistant", "content": response, "_cot": cot_storage})
     if mm.needs_summarization(session["messages"], session.get("summary", "")):
-        session = mm.compress(session, llm)
-
+        session = mm.compress(session, get_llm(
+            provider_key=req.provider, model=model,
+            config={**config, "llm": {**config.get("llm", {}), "temperature": req.temperature}},
+        ))
     session["provider"] = req.provider
     session["model"] = model
     sm.save(session)
-
-    return {
-        "session_id": session["session_id"],
-        "response": response,
-        "cot_results": cot_storage,
-    }
+    return {"session_id": session["session_id"], "response": response, "cot_results": cot_storage}
 
 
 @app.get("/archives")
@@ -357,50 +359,25 @@ async def _generate_stream(req: StreamChatRequest) -> AsyncGenerator[str, None]:
     session.setdefault("messages", []).append({"role": "user", "content": masked_message})
     sm.save(session)
 
-    # Build LLM
+    # Build agent via fonction partagée
     try:
-        llm = get_llm(
-            provider_key=req.provider,
+        response_text, cot_storage = _run_agent(
+            session=session,
+            masked_message=masked_message,
+            provider=req.provider,
             model=model,
-            config={**config, "llm": {**config.get("llm", {}), "temperature": req.temperature}},
+            temperature=req.temperature,
+            k_final=req.k_final,
         )
     except Exception as e:
         yield f"3:{_json.dumps(str(e))}\n"
         return
 
-    # Build agent
-    cot_storage: list = []
-    enriched_prompt, history_tuples = mm.build_agent_input(session, BASE_SYSTEM_PROMPT)
-    search_tool = get_search_tool(vm, k_final=req.k_final, cot_storage=cot_storage)
-    agent = create_react_agent(llm, [search_tool], prompt=enriched_prompt)
-
-    # Convertir les tuples en objets LangChain messages
-    from langchain_core.messages import HumanMessage as HM, AIMessage as AM
-    lc_history = []
-    for role, content in history_tuples:
-        if role == "user":
-            lc_history.append(HM(content=content))
-        else:
-            lc_history.append(AM(content=content))
-
-    # S'assurer que le dernier message est bien la question actuelle
-    if not lc_history or not isinstance(lc_history[-1], HM) or lc_history[-1].content != masked_message:
-        lc_history.append(HM(content=masked_message))
-
-    # Run and stream
+    # Stream token by token (Vercel AI SDK data stream format)
     full_response = ""
-    try:
-        result = agent.invoke({"messages": lc_history})
-        response_text = format_response(result["messages"][-1].content)
-
-        # Stream token by token (Vercel AI SDK data stream format)
-        for char in response_text:
-            full_response += char
-            yield f"0:{_json.dumps(char)}\n"
-
-    except Exception as e:
-        yield f"3:{_json.dumps(str(e))}\n"
-        return
+    for char in response_text:
+        full_response += char
+        yield f"0:{_json.dumps(char)}\n"
 
     logger.info(
         "CHAT | provider=%s model=%s session=%s sources=%d tokens~%d",
@@ -417,7 +394,11 @@ async def _generate_stream(req: StreamChatRequest) -> AsyncGenerator[str, None]:
     })
 
     if mm.needs_summarization(session["messages"], session.get("summary", "")):
-        session = mm.compress(session, llm)
+        _llm_for_compress = get_llm(
+            provider_key=req.provider, model=model,
+            config={**config, "llm": {**config.get("llm", {}), "temperature": req.temperature}},
+        )
+        session = mm.compress(session, _llm_for_compress)
 
     session["provider"] = req.provider
     session["model"] = model
@@ -587,4 +568,5 @@ def clear_logs():
 # ─── Entry point ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    # host="0.0.0.0" est requis en production pour écouter sur toutes les interfaces réseau
     uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=False)

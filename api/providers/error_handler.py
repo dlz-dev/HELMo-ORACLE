@@ -13,7 +13,7 @@ from enum import Enum
 
 class ErrorType(Enum):
     QUOTA_EXCEEDED = "quota_exceeded"
-    INVALID_API_KEY = "invalid_api_key"
+    INVALID_KEY = "invalid_api_key"
     MODEL_UNAVAILABLE = "model_unavailable"
     RATE_LIMITED = "rate_limited"
     CONNECTION_ERROR = "connection_error"
@@ -30,7 +30,7 @@ _USER_MESSAGES: dict[ErrorType, dict[str, str]] = {
         "message": "You've used up all your available credits for this service.",
         "suggestion": "Wait for your quota to reset, or switch to another provider.",
     },
-    ErrorType.INVALID_API_KEY: {
+    ErrorType.INVALID_KEY: {
         "icon": "🔑",
         "title": "Invalid API key",
         "message": "The Oracle cannot authenticate with this provider.",
@@ -125,7 +125,7 @@ def _classify(error: Exception, provider: str) -> ErrorType:
             return ErrorType.MODEL_UNAVAILABLE
 
     if any(k in msg for k in ["invalid api key", "invalid_api_key", "incorrect api key", "authentication", "unauthorized", "401", "api key"]):
-        return ErrorType.INVALID_API_KEY
+        return ErrorType.INVALID_KEY
 
     if any(k in msg for k in ["quota", "insufficient_quota", "billing", "exceeded your current quota", "credit", "402", "payment"]):
         return ErrorType.QUOTA_EXCEEDED
@@ -146,7 +146,7 @@ def _classify(error: Exception, provider: str) -> ErrorType:
         return ErrorType.CONNECTION_ERROR
 
     if "authenticationerror" in cls_name:
-        return ErrorType.INVALID_API_KEY
+        return ErrorType.INVALID_KEY
     if "ratelimiterror" in cls_name:
         return ErrorType.RATE_LIMITED
     if "notfounderror" in cls_name:

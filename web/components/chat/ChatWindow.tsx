@@ -26,15 +26,19 @@ export function ChatWindow({ sessionId, onSessionCreated }: Props) {
   const getOracleConfig = () => {
     if (typeof window === "undefined") return {};
     return {
-      provider:    localStorage.getItem("oracle_provider")    || "groq",
-      model:       localStorage.getItem("oracle_model")       || "llama-3.3-70b-versatile",
-      temperature: parseFloat(localStorage.getItem("oracle_temperature") || "0"),
-      k_final:     parseInt(localStorage.getItem("oracle_k_final")       || "5"),
+      provider: localStorage.getItem("oracle_provider") || "groq",
+      model: localStorage.getItem("oracle_model") || "llama-3.3-70b-versatile",
+      temperature: parseFloat(
+        localStorage.getItem("oracle_temperature") || "0",
+      ),
+      k_final: parseInt(localStorage.getItem("oracle_k_final") || "5"),
     };
   };
 
   const currentSessionRef = React.useRef<string | null>(sessionId);
-  useEffect(() => { currentSessionRef.current = sessionId; }, [sessionId]);
+  useEffect(() => {
+    currentSessionRef.current = sessionId;
+  }, [sessionId]);
 
   const {
     messages,
@@ -66,13 +70,15 @@ export function ChatWindow({ sessionId, onSessionCreated }: Props) {
       .then((r) => r.json())
       .then((data) => {
         if (data.messages) {
-          setMessages(data.messages.map((m: any, i: number) => ({
-            ...m,
-            id: m.id || `loaded-${i}`,
-          })));
+          setMessages(
+            data.messages.map((m: any, i: number) => ({
+              ...m,
+              id: m.id || `loaded-${i}`,
+            })),
+          );
         }
       })
-      .catch(console.error); // Ajout d'une gestion d'erreur basique
+      .catch((err) => console.error("Erreur chargement session:", err));
   }, [sessionId, setMessages]);
 
   useEffect(() => {
@@ -92,11 +98,14 @@ export function ChatWindow({ sessionId, onSessionCreated }: Props) {
                 <button
                   key={prompt}
                   // CORRECTION : Utilisation de append() au lieu de tricher avec un événement DOM
-                  onClick={() => append({ role: 'user', content: prompt })}
+                  onClick={() => append({ role: "user", content: prompt })}
                   className="group flex items-start gap-2.5 px-4 py-3 rounded-lg text-left border border-default bg-surface hover:border-gold/30 hover:bg-gold-glow transition-all duration-150 animate-fade-up"
                   style={{ animationDelay: `${i * 60}ms` }}
                 >
-                  <Sparkles size={13} className="mt-0.5 flex-shrink-0 text-gold opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <Sparkles
+                    size={13}
+                    className="mt-0.5 flex-shrink-0 text-gold opacity-60 group-hover:opacity-100 transition-opacity"
+                  />
                   <span className="text-sm text-muted-fg group-hover:text-main transition-colors leading-snug">
                     {prompt}
                   </span>
@@ -123,10 +132,16 @@ export function ChatWindow({ sessionId, onSessionCreated }: Props) {
                   <span className="text-gold text-xs">◈</span>
                 </div>
                 <div className="px-4 py-2.5 rounded-2xl rounded-tl-sm border border-default bg-surface text-sm text-muted-fg flex items-center gap-2">
-                  <span className="text-xs">L'Oracle consulte les archives</span>
+                  <span className="text-xs">
+                    L'Oracle consulte les archives
+                  </span>
                   <span className="flex gap-1">
-                    {[0,1,2].map(i => (
-                      <span key={i} className="w-1 h-1 rounded-full bg-gold/60 animate-bounce" style={{animationDelay: `${i*150}ms`}} />
+                    {[0, 1, 2].map((i) => (
+                      <span
+                        key={`dot-${i}`}
+                        className="w-1 h-1 rounded-full bg-gold/60 animate-bounce"
+                        style={{ animationDelay: `${i * 150}ms` }}
+                      />
                     ))}
                   </span>
                 </div>
@@ -139,7 +154,12 @@ export function ChatWindow({ sessionId, onSessionCreated }: Props) {
 
       <div className="border-t border-default bg-surface/50 backdrop-blur-sm">
         <div className="max-w-3xl mx-auto px-4 py-3">
-          <ChatInput value={input} onChange={handleInputChange} onSubmit={handleSubmit} isLoading={isLoading} />
+          <ChatInput
+            value={input}
+            onChange={handleInputChange}
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+          />
         </div>
       </div>
     </div>

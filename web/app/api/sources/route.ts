@@ -9,13 +9,19 @@ export async function GET() {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ error: "Erreur backend" }, { status: res.status });
+      return NextResponse.json(
+        { error: "Erreur backend" },
+        { status: res.status },
+      );
     }
 
     const data = await res.json();
     // Le backend retourne { sources: [...] }
     return NextResponse.json({ sources: data.sources ?? [] });
   } catch (error) {
-    return NextResponse.json({ error: "Impossible de charger les sources" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Impossible de charger les sources" },
+      { status: 500 },
+    );
   }
 }

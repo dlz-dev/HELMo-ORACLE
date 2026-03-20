@@ -2,9 +2,9 @@ import unittest
 from unittest.mock import patch, MagicMock, mock_open
 from pathlib import Path
 
-from core.pipeline.pii_manager import PIIManager
-from core.pipeline.preprocess import QuestionProcessor
-from core.pipeline import generate_document_context, seed_database
+from ..core.pipeline.pii_manager import PIIManager
+from ..core.pipeline.preprocess import QuestionProcessor
+from ..core.pipeline import generate_document_context, seed_database
 
 
 class TestPIIManager(unittest.TestCase):
@@ -33,6 +33,7 @@ class TestPIIManager(unittest.TestCase):
         text = "Contact: test@gmail.com, Tel: 0612345678, IP: 192.168.1.1"
         expected = "Contact: [EMAIL], Tel: [PHONE], IP: [IP_ADDR]"
         self.assertEqual(manager.mask_text(text), expected)
+        mock_load.assert_called_once()
 
     @patch("core.pipeline.pii_manager.spacy.load")
     def test_mask_ner_entities(self, mock_load):
@@ -46,6 +47,7 @@ class TestPIIManager(unittest.TestCase):
         text = "Yugo de Amakna travaille chez Ankama."
         expected = "[PERSON] de [LOCATION] travaille chez [ORG]."
         self.assertEqual(manager.mask_text(text), expected)
+        mock_load.assert_called_once()
 
     @patch("core.pipeline.pii_manager.spacy.load")
     def test_mask_without_spaces(self, mock_load):  # Ajout de mock_load ici
@@ -77,6 +79,7 @@ class TestQuestionProcessor(unittest.TestCase):
         self.mock_model.get_query_embedding.return_value = [0.1, 0.2, 0.3]
         result = self.processor.vectorize_text("test")
         self.assertEqual(result, [0.1, 0.2, 0.3])
+        self.mock_model.get_query_embedding.assert_called_once_with("test")
 
     def test_preprocess_without_spaces(self):
         """Vérifie le comportement si les mots sont séparés par de la ponctuation sans espaces."""
@@ -96,6 +99,7 @@ class TestIngestionPipeline(unittest.TestCase):
         with patch("builtins.open", m_open):
             ctx = generate_document_context(Path("lore_test.txt"), mock_llm)
         self.assertEqual(ctx, "Résumé du lore")
+        mock_llm.invoke.assert_called_once()
 
     @patch("core.pipeline.ingestion.Path.iterdir")
     @patch("core.pipeline.ingestion.is_valid_lore_file", return_value=True)
@@ -117,7 +121,11 @@ class TestIngestionPipeline(unittest.TestCase):
         with patch("core.pipeline.ingestion.get_llm", return_value=None):
             seed_database()
 
-        self.assertTrue(mock_db_instance.add_document.called)
+        mock_db_instance.add_document.assert_called_once_with(
+            "Contenu chunk", {"page": 1}
+        )
+        mock_valid.assert_called_once()
+        mock_conv.assert_called_once()
 
 
 if __name__ == "__main__":
