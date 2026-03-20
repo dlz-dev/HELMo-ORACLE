@@ -104,7 +104,7 @@ class TestIngestionPipeline(unittest.TestCase):
 
     @patch('pathlib.Path.iterdir')
     @patch('core.agent.guardian.is_valid_lore_file', return_value=True)
-    @patch('core.database.vector_manager.VectorManager')
+    @patch('core.pipeline.ingestion.VectorManager')
     @patch('converters.convert_text.process_text_file')
     @patch('core.utils.utils.load_config', return_value={})
     @patch('core.utils.utils.load_api_key', return_value="key")
