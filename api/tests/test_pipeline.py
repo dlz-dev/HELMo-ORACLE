@@ -91,7 +91,7 @@ class TestQuestionProcessor(unittest.TestCase):
 class TestIngestionPipeline(unittest.TestCase):
     """Tests pour le pipeline d'ingestion de lore."""
 
-    @patch("core.pipeline.ingestion._import_providers")
+    @patch("core.pipeline.ingestion._import_providers", return_value=lambda provider_key, **kwargs: MagicMock())
     def test_generate_document_context_success(self, mock_import_providers):
         mock_llm = MagicMock()
         mock_llm.invoke.return_value.content = "Résumé du lore"
@@ -103,7 +103,7 @@ class TestIngestionPipeline(unittest.TestCase):
         mock_llm.invoke.assert_called_once()
 
     @patch('pathlib.Path.iterdir')
-    @patch('core.agent.guardian.is_valid_lore_file', return_value=True)
+    @patch('core.pipeline.ingestion.is_valid_lore_file', return_value=True)
     @patch('core.pipeline.ingestion.VectorManager')
     @patch('converters.convert_text.process_text_file')
     @patch('core.utils.utils.load_config', return_value={})
