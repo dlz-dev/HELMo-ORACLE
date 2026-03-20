@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import MagicMock, patch, mock_open
 
-from ..core.agent.tools_oracle import get_search_tool, CONFIDENCE_THRESHOLD_HIGH
-from ..core.agent.guardian import is_valid_lore_file
+from core.agent.tools_oracle import get_search_tool, CONFIDENCE_THRESHOLD_HIGH
+from core.agent.guardian import is_valid_lore_file
 
 
 class TestOracleTool(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestOracleTool(unittest.TestCase):
 
     def test_search_medium_confidence(self):
         """Vérifie le calcul de confiance 'medium'."""
-        from ..core.agent.tools_oracle import CONFIDENCE_THRESHOLD_MEDIUM
+        from core.agent.tools_oracle import CONFIDENCE_THRESHOLD_MEDIUM
         self.mock_vm.search_hybrid.return_value = [
             ("Contenu partiel", CONFIDENCE_THRESHOLD_MEDIUM + 0.001, {"source": "lore.txt"})
         ]
@@ -84,7 +84,7 @@ class TestGuardian(unittest.TestCase):
         mock_splitext.assert_called_once_with("test.pdf")
 
     @patch('core.agent.guardian.load_config')
-    @patch('core.agent.guardian.get_llm')
+    @patch('providers.get_llm')
     def test_guardian_rejection(self, mock_get_llm, mock_load_config):
         """Vérifie le rejet d'un fichier si le LLM ne valide pas le contenu."""
         mock_load_config.return_value = {"guardian": {"provider": "test", "model": "test"}}
@@ -101,7 +101,7 @@ class TestGuardian(unittest.TestCase):
         mock_llm.invoke.assert_called_once()
 
     @patch('core.agent.guardian.load_config')
-    @patch('core.agent.guardian.get_llm')
+    @patch('providers.get_llm')
     def test_guardian_acceptance(self, mock_get_llm, mock_load_config):
         """Vérifie l'acceptation d'un fichier valide."""
         mock_load_config.return_value = {"guardian": {"provider": "test", "model": "test"}}

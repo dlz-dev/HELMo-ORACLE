@@ -2,9 +2,9 @@ import unittest
 from unittest.mock import patch, MagicMock, mock_open
 from pathlib import Path
 
-from ..core.pipeline.pii_manager import PIIManager
-from ..core.pipeline.preprocess import QuestionProcessor
-from ..core.pipeline import generate_document_context, seed_database
+from core.pipeline.pii_manager import PIIManager
+from core.pipeline.preprocess import QuestionProcessor
+from core.pipeline import generate_document_context, seed_database
 
 
 class TestPIIManager(unittest.TestCase):
@@ -91,22 +91,23 @@ class TestQuestionProcessor(unittest.TestCase):
 class TestIngestionPipeline(unittest.TestCase):
     """Tests pour le pipeline d'ingestion de lore."""
 
-    @patch("core.pipeline.ingestion.get_llm")
-    def test_generate_document_context_success(self, mock_get_llm):
+    @patch("core.pipeline.ingestion._import_providers")
+    def test_generate_document_context_success(self, mock_import_providers):
         mock_llm = MagicMock()
         mock_llm.invoke.return_value.content = "Résumé du lore"
+        mock_import_providers.return_value = lambda: mock_llm
         m_open = mock_open(read_data="Il était une fois...")
         with patch("builtins.open", m_open):
             ctx = generate_document_context(Path("lore_test.txt"), mock_llm)
         self.assertEqual(ctx, "Résumé du lore")
         mock_llm.invoke.assert_called_once()
 
-    @patch("core.pipeline.ingestion.Path.iterdir")
-    @patch("core.pipeline.ingestion.is_valid_lore_file", return_value=True)
-    @patch("core.pipeline.ingestion.VectorManager")
-    @patch("core.pipeline.ingestion.convert_text.process_text_file")
-    @patch("core.pipeline.ingestion.load_config", return_value={})
-    @patch("core.pipeline.ingestion.load_api_key", return_value="key")
+    @patch('pathlib.Path.iterdir')
+    @patch('core.agent.guardian.is_valid_lore_file', return_value=True)
+    @patch('core.database.vector_manager.VectorManager')
+    @patch('converters.convert_text.process_text_file')
+    @patch('core.utils.utils.load_config', return_value={})
+    @patch('core.utils.utils.load_api_key', return_value="key")
     def test_seed_database_flow(self, mock_key, mock_cfg, mock_conv, mock_db, mock_valid, mock_iter):
         fake_file = MagicMock(spec=Path)
         fake_file.name = "lore_iroise.txt"
@@ -118,7 +119,8 @@ class TestIngestionPipeline(unittest.TestCase):
         mock_db_instance = MagicMock()
         mock_db.return_value = mock_db_instance
 
-        with patch("core.pipeline.ingestion.get_llm", return_value=None):
+        with patch("core.pipeline.ingestion._import_providers", return_value=lambda: None), \
+             patch('shutil.move'):
             seed_database()
 
         mock_db_instance.add_document.assert_called_once_with(

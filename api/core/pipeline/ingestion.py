@@ -17,7 +17,7 @@ logger = logging.getLogger("oracle")
 
 # Import converters - moved to function-level to avoid circular imports
 def _import_converters():
-    from ...converters import convert_csv, convert_markdown, convert_text, convert_json, convert_pdf, convert_unstructured
+    from ..converters import convert_csv, convert_markdown, convert_text, convert_json, convert_pdf, convert_unstructured
     return convert_csv, convert_markdown, convert_text, convert_json, convert_pdf, convert_unstructured
 
 from ..agent.guardian import is_valid_lore_file
