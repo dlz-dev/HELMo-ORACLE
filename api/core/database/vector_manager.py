@@ -16,7 +16,7 @@ from psycopg import sql
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from pgvector.psycopg import register_vector
 
-from ..utils.utils import FTS_LANG, K_BM25, K_FINAL, K_SEMANTIC, RRF_K, load_config
+from core.utils.utils import FTS_LANG, K_BM25, K_FINAL, K_SEMANTIC, RRF_K, load_config
 
 
 

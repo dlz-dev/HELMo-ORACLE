@@ -13,7 +13,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from ..utils.utils import STORAGE_DIR
+from core.utils.utils import STORAGE_DIR
 
 # Constants
 LOCAL_USER_ID = "local_dev"
