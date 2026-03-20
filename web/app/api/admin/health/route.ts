@@ -8,8 +8,11 @@ export async function GET() {
     return NextResponse.json(data);
   } catch {
     return NextResponse.json(
-      { status: "error", checks: { backend: { status: "error", error: "Backend inaccessible" } } },
-      { status: 500 }
+      {
+        status: "error",
+        checks: { backend: { status: "error", error: "Backend inaccessible" } },
+      },
+      { status: 500 },
     );
   }
 }

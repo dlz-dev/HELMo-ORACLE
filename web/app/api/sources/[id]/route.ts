@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // DELETE /api/sources/[id]
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   const backendUrl = process.env.BACKEND_API_URL || "http://127.0.0.1:8000";
 
@@ -17,7 +20,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   } catch (error) {
     return NextResponse.json(
       { error: "Impossible de supprimer la source" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

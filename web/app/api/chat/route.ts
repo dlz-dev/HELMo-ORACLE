@@ -13,7 +13,9 @@ export async function POST(req: NextRequest) {
     });
 
     if (!response.ok) {
-      return new Response(JSON.stringify({ error: "Erreur backend" }), { status: response.status });
+      return new Response(JSON.stringify({ error: "Erreur backend" }), {
+        status: response.status,
+      });
     }
 
     return new Response(response.body, {
@@ -26,6 +28,9 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: "Erreur de connexion au backend" }), { status: 500 });
+    return new Response(
+      JSON.stringify({ error: "Erreur de connexion au backend" }),
+      { status: 500 },
+    );
   }
 }

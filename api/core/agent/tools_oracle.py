@@ -48,6 +48,11 @@ def get_search_tool(vm: VectorManager, k_final: int = 5, cot_storage: Optional[l
         if cot_storage is not None:
             cot_storage.clear()
 
+        # Sanitisation : tronque et nettoie la query avant injection dans le pipeline RAG
+        query = query.strip()[:500]
+        if not query:
+            return "<archives_sacrees>\nEmpty query.\n</archives_sacrees>"
+
         query_vector = vm.embeddings_model.get_query_embedding(query)
         results = vm.search_hybrid(query=query, query_vector=query_vector, k_final=k_final)
 

@@ -4,10 +4,10 @@ import { type ChangeEvent, type FormEvent, useRef } from "react";
 import { ArrowUp, Loader2 } from "lucide-react";
 
 interface Props {
-  value:      string;
-  onChange:   (e: ChangeEvent<HTMLTextAreaElement>) => void;
-  onSubmit:   (e: FormEvent<HTMLFormElement>) => void;
-  isLoading:  boolean;
+  value: string;
+  onChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  isLoading: boolean;
 }
 
 export function ChatInput({ value, onChange, onSubmit, isLoading }: Props) {
@@ -36,9 +36,11 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: Props) {
 
   return (
     <form onSubmit={onSubmit} className="relative">
-      <div className="flex items-end gap-2 rounded-xl border border-default bg-surface
+      <div
+        className="flex items-end gap-2 rounded-xl border border-default bg-surface
                       focus-within:border-gold/40 transition-colors duration-150
-                      px-3 py-2">
+                      px-3 py-2"
+      >
         <textarea
           ref={textareaRef}
           value={value}
@@ -60,10 +62,11 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: Props) {
                      hover:bg-gold-light disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Envoyer"
         >
-          {isLoading
-            ? <Loader2 size={13} className="animate-spin" />
-            : <ArrowUp size={13} strokeWidth={2.5} />
-          }
+          {isLoading ? (
+            <Loader2 size={13} className="animate-spin" />
+          ) : (
+            <ArrowUp size={13} strokeWidth={2.5} />
+          )}
         </button>
       </div>
 

@@ -1,57 +1,57 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ── Variables CSS — Light mode (défaut) ────────────────────────── */
 :root {
-  --font-cinzel: 'Cinzel', serif;
+  --font-cinzel: "Cinzel", serif;
 
-  --bg:          #ffffff;
-  --bg-subtle:   #f8f9fa;
-  --bg-muted:    #f1f3f5;
-  --border:      #e5e7eb;
+  --bg: #ffffff;
+  --bg-subtle: #f8f9fa;
+  --bg-muted: #f1f3f5;
+  --border: #e5e7eb;
   --border-subtle: #f1f3f5;
 
-  --text:        #0f1117;
-  --text-muted:  #6b7280;
+  --text: #0f1117;
+  --text-muted: #6b7280;
   --text-subtle: #9ca3af;
 
-  --gold:        #C9A84C;
-  --gold-light:  #E2C06A;
-  --gold-glow:   rgba(201, 168, 76, 0.15);
+  --gold: #c9a84c;
+  --gold-light: #e2c06a;
+  --gold-glow: rgba(201, 168, 76, 0.15);
 
-  --surface:     #ffffff;
+  --surface: #ffffff;
   --surface-alt: #f8f9fa;
 
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.08);
-  --shadow-md:   0 4px 16px rgba(0,0,0,0.08);
-  --shadow-lg:   0 8px 32px rgba(0,0,0,0.10);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 /* ── Dark mode ──────────────────────────────────────────────────── */
 .dark {
-  --bg:          #0A0C10;
-  --bg-subtle:   #10141C;
-  --bg-muted:    #161B26;
+  --bg: #0a0c10;
+  --bg-subtle: #10141c;
+  --bg-muted: #161b26;
 
-  --border:      #1E2533;
-  --border-subtle: #161B26;
+  --border: #1e2533;
+  --border-subtle: #161b26;
 
-  --text:        #F0F2F5;
-  --text-muted:  #8892A4;
-  --text-subtle: #4B5563;
+  --text: #f0f2f5;
+  --text-muted: #8892a4;
+  --text-subtle: #4b5563;
 
-  --gold:        #C9A84C;
-  --gold-light:  #E2C06A;
-  --gold-glow:   rgba(201, 168, 76, 0.12);
+  --gold: #c9a84c;
+  --gold-light: #e2c06a;
+  --gold-glow: rgba(201, 168, 76, 0.12);
 
-  --surface:     #10141C;
-  --surface-alt: #161B26;
+  --surface: #10141c;
+  --surface-alt: #161b26;
 
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md:   0 4px 16px rgba(0,0,0,0.4);
-  --shadow-lg:   0 8px 32px rgba(0,0,0,0.5);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 /* ── Base ───────────────────────────────────────────────────────── */
@@ -67,7 +67,9 @@ html {
 body {
   background-color: var(--bg);
   color: var(--text);
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 /* ── Scrollbar custom (subtile) ─────────────────────────────────── */
@@ -88,24 +90,52 @@ body {
 
 /* ── Utilities classes ──────────────────────────────────────────── */
 @layer utilities {
-  .bg-surface     { background-color: var(--surface); }
-  .bg-surface-alt { background-color: var(--surface-alt); }
-  .bg-page        { background-color: var(--bg); }
-  .bg-subtle      { background-color: var(--bg-subtle); }
-  .bg-muted-page  { background-color: var(--bg-muted); }
+  .bg-surface {
+    background-color: var(--surface);
+  }
+  .bg-surface-alt {
+    background-color: var(--surface-alt);
+  }
+  .bg-page {
+    background-color: var(--bg);
+  }
+  .bg-subtle {
+    background-color: var(--bg-subtle);
+  }
+  .bg-muted-page {
+    background-color: var(--bg-muted);
+  }
 
-  .text-main      { color: var(--text); }
-  .text-muted-fg  { color: var(--text-muted); }
-  .text-subtle-fg { color: var(--text-subtle); }
+  .text-main {
+    color: var(--text);
+  }
+  .text-muted-fg {
+    color: var(--text-muted);
+  }
+  .text-subtle-fg {
+    color: var(--text-subtle);
+  }
 
-  .border-default { border-color: var(--border); }
-  .border-subtle  { border-color: var(--border-subtle); }
+  .border-default {
+    border-color: var(--border);
+  }
+  .border-subtle {
+    border-color: var(--border-subtle);
+  }
 
-  .shadow-card    { box-shadow: var(--shadow-md); }
+  .shadow-card {
+    box-shadow: var(--shadow-md);
+  }
 
-  .text-gold      { color: var(--gold); }
-  .border-gold    { border-color: var(--gold); }
-  .bg-gold-glow   { background-color: var(--gold-glow); }
+  .text-gold {
+    color: var(--gold);
+  }
+  .border-gold {
+    border-color: var(--gold);
+  }
+  .bg-gold-glow {
+    background-color: var(--gold-glow);
+  }
 
   /* Logo Oracle — Cinzel uniquement */
   .font-oracle {

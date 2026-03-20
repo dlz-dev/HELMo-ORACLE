@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   if (!provider || !model || !message) {
     return NextResponse.json(
       { error: "Provider, model, and message are required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     if (!text) {
       return NextResponse.json(
         { error: "Réponse vide du backend" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -47,8 +47,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     return NextResponse.json(
       { error: error?.message || "Erreur de connexion au backend" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

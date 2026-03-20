@@ -11,7 +11,6 @@ export function ChatInterface() {
 
   return (
     <div className="flex w-full h-full overflow-hidden">
-
       {/* Sidebar sessions */}
       <aside
         className={`
@@ -29,23 +28,20 @@ export function ChatInterface() {
 
       {/* Zone principale */}
       <div className="flex-1 flex flex-col min-w-0 relative">
-
         {/* Toggle sidebar */}
         <button
           onClick={() => setSidebarOpen((v) => !v)}
           className="absolute top-3 left-3 z-10 p-1.5 rounded-md text-muted-fg hover:text-main hover:bg-subtle transition-all duration-150"
           aria-label={sidebarOpen ? "Fermer le panneau" : "Ouvrir le panneau"}
         >
-          {sidebarOpen
-            ? <PanelLeftClose size={16} />
-            : <PanelLeftOpen  size={16} />
-          }
+          {sidebarOpen ? (
+            <PanelLeftClose size={16} />
+          ) : (
+            <PanelLeftOpen size={16} />
+          )}
         </button>
 
-        <ChatWindow
-          sessionId={sessionId}
-          onSessionCreated={setSessionId}
-        />
+        <ChatWindow sessionId={sessionId} onSessionCreated={setSessionId} />
       </div>
     </div>
   );

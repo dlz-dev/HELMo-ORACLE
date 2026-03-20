@@ -7,9 +7,9 @@ import { useTheme } from "./ThemeProvider";
 import { clsx } from "clsx";
 
 const NAV_LINKS = [
-  { href: "/",        label: "Oracle",   icon: MessageSquare },
-  { href: "/sources", label: "Sources",  icon: BookOpen      },
-  { href: "/admin",   label: "Admin",    icon: Settings      },
+  { href: "/", label: "Oracle", icon: MessageSquare },
+  { href: "/sources", label: "Sources", icon: BookOpen },
+  { href: "/admin", label: "Admin", icon: Settings },
 ];
 
 export function Navbar() {
@@ -22,7 +22,6 @@ export function Navbar() {
       style={{ boxShadow: "var(--shadow-sm)" }}
     >
       <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between">
-
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
           {/* Rune décorative */}
@@ -49,7 +48,7 @@ export function Navbar() {
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all duration-150",
                   active
                     ? "text-gold bg-gold-glow font-medium"
-                    : "text-muted-fg hover:text-main hover:bg-subtle"
+                    : "text-muted-fg hover:text-main hover:bg-subtle",
                 )}
               >
                 <Icon size={14} strokeWidth={1.8} />
@@ -67,7 +66,6 @@ export function Navbar() {
         >
           {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
         </button>
-
       </div>
 
       {/* Ligne dorée sous la navbar — très subtile */}

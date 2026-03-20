@@ -6,33 +6,37 @@ import { clsx } from "clsx";
 
 interface Session {
   session_id: string;
-  title:      string;
+  title: string;
   updated_at: string;
-  provider:   string;
-  model:      string;
+  provider: string;
+  model: string;
 }
 
 interface Props {
   activeSessionId: string | null;
   onSelectSession: (id: string) => void;
-  onNewSession:    () => void;
+  onNewSession: () => void;
 }
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1)   return "à l'instant";
-  if (m < 60)  return `il y a ${m} min`;
+  if (m < 1) return "à l'instant";
+  if (m < 60) return `il y a ${m} min`;
   const h = Math.floor(m / 60);
-  if (h < 24)  return `il y a ${h}h`;
+  if (h < 24) return `il y a ${h}h`;
   const d = Math.floor(h / 24);
   return `il y a ${d}j`;
 }
 
-export function SessionSidebar({ activeSessionId, onSelectSession, onNewSession }: Props) {
+export function SessionSidebar({
+  activeSessionId,
+  onSelectSession,
+  onNewSession,
+}: Props) {
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [mounted, setMounted]   = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   // Évite les erreurs d'hydratation côté serveur (Next.js)
   useEffect(() => {
@@ -63,7 +67,9 @@ export function SessionSidebar({ activeSessionId, onSelectSession, onNewSession 
     e.stopPropagation(); // Empêche le clic de sélectionner la session
 
     // Ajout d'une confirmation pour éviter les suppressions accidentelles
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette conversation ?")) {
+    if (
+      !window.confirm("Êtes-vous sûr de vouloir supprimer cette conversation ?")
+    ) {
       return;
     }
 
@@ -78,7 +84,6 @@ export function SessionSidebar({ activeSessionId, onSelectSession, onNewSession 
 
   return (
     <div className="flex flex-col h-full">
-
       {/* Header */}
       <div className="p-3 border-b border-default">
         <button
@@ -115,15 +120,19 @@ export function SessionSidebar({ activeSessionId, onSelectSession, onNewSession 
               "animate-fade-up",
               activeSessionId === s.session_id
                 ? "bg-gold-glow border border-gold/20"
-                : "hover:bg-subtle border border-transparent"
+                : "hover:bg-subtle border border-transparent",
             )}
             style={{ animationDelay: `${i * 30}ms` }}
           >
             {/* Titre */}
-            <p className={clsx(
-              "text-sm truncate pr-6 leading-snug",
-              activeSessionId === s.session_id ? "text-main font-medium" : "text-main"
-            )}>
+            <p
+              className={clsx(
+                "text-sm truncate pr-6 leading-snug",
+                activeSessionId === s.session_id
+                  ? "text-main font-medium"
+                  : "text-main",
+              )}
+            >
               {s.title || "Conversation sans titre"}
             </p>
 
@@ -135,7 +144,9 @@ export function SessionSidebar({ activeSessionId, onSelectSession, onNewSession 
                 {mounted ? timeAgo(s.updated_at) : "..."}
               </span>
               {s.provider && (
-                <span className="text-xs text-subtle-fg opacity-60">· {s.provider}</span>
+                <span className="text-xs text-subtle-fg opacity-60">
+                  · {s.provider}
+                </span>
               )}
             </div>
 

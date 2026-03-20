@@ -6,12 +6,12 @@ import json
 from unittest.mock import patch, MagicMock
 from llama_index.core import Document
 
-from converters.convert_json import parse_json
-from converters.convert_csv import load_csv_data
-from converters.convert_markdown import parse_markdown
-from converters.convert_text import process_text_file
-from converters.convert_pdf import process_pdf_file
-from converters.convert_unstructured import process_with_unstructured
+from ..converters.convert_json import parse_json
+from ..converters.convert_csv import load_csv_data
+from ..converters.convert_markdown import parse_markdown
+from ..converters.convert_text import process_text_file
+from ..converters.convert_pdf import process_pdf_file
+from ..converters.convert_unstructured import process_with_unstructured
 
 
 def create_temp_file(content: str, suffix: str) -> str:
@@ -290,9 +290,11 @@ class TestProcessPdfFile(unittest.TestCase):
         text, metadata = result[0]
         self.assertIn("page 1", text)
         self.assertEqual(metadata["source"], file_name)
-        # Vérifie la duplication de la clé demandée dans ton script
         self.assertEqual(metadata["page_number"], "1")
         self.assertEqual(metadata["page_label"], "1")
+        # Vérifie que le reader a bien été instancié et appelé
+        MockReader.assert_called_once()
+        mock_instance.load_data.assert_called_once()
 
 
 class TestProcessWithUnstructured(unittest.TestCase):
@@ -333,6 +335,10 @@ class TestProcessWithUnstructured(unittest.TestCase):
         self.assertEqual(metadata["method"], "unstructured")
         self.assertEqual(metadata["type"], "Title")
         self.assertEqual(metadata["page_number"], "1")
+        # Vérifie que le client a bien été instancié et la partition appelée
+        MockClient.assert_called_once()
+        mock_client_instance.general.partition.assert_called_once()
+        mock_load_config.assert_called_once()
 
     @patch('converters.convert_unstructured.load_config')
     def test_missing_config_returns_empty(self, mock_load_config):
@@ -342,8 +348,9 @@ class TestProcessWithUnstructured(unittest.TestCase):
 
         result = process_with_unstructured("document.docx")
 
-        # Doit renvoyer une liste vide et imprimer une erreur (interceptable mais on teste juste le retour ici)
+        # Doit renvoyer une liste vide si les clés API sont absentes
         self.assertEqual(result, [])
+        mock_load_config.assert_called_once()
 
 if __name__ == '__main__':
     unittest.main()

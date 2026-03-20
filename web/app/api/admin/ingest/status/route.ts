@@ -13,16 +13,24 @@ export async function GET() {
     const text = await res.text();
     if (!text) {
       return NextResponse.json(
-        { running: false, last_status: "error", last_message: "Réponse vide du backend" },
-        { status: 500 }
+        {
+          running: false,
+          last_status: "error",
+          last_message: "Réponse vide du backend",
+        },
+        { status: 500 },
       );
     }
     const data = JSON.parse(text);
     return NextResponse.json(data);
   } catch {
     return NextResponse.json(
-      { running: false, last_status: "error", last_message: "Impossible de joindre le backend" },
-      { status: 500 }
+      {
+        running: false,
+        last_status: "error",
+        last_message: "Impossible de joindre le backend",
+      },
+      { status: 500 },
     );
   }
 }

@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 import os
 import shutil
 
-from core.context.memory_manager import MemoryManager
-from core.context import SessionManager, _make_title
+from ..core.context.memory_manager import MemoryManager
+from ..core.context import SessionManager, _make_title
 
 
 class TestMemoryManager(unittest.TestCase):
@@ -15,7 +15,7 @@ class TestMemoryManager(unittest.TestCase):
         self.mock_llm.complete.return_value.text = "Résumé de test"
 
     def test_estimate_tokens(self):
-        from core.context.memory_manager import _estimate_tokens
+        from ..core.context.memory_manager import _estimate_tokens
         self.assertEqual(_estimate_tokens("ABCDEFGHIJKL"), 4)
         self.assertEqual(_estimate_tokens(""), 1)
 
@@ -42,6 +42,11 @@ class TestMemoryManager(unittest.TestCase):
             self.assertEqual(len(updated_session["messages"]), 2)
             self.assertEqual(updated_session["summary"], "Résumé de test")
             self.assertEqual(updated_session["messages"][0]["content"], "M2")
+            # Vérifie que le LLM a bien été appelé pour générer le résumé
+            self.mock_llm.complete.assert_called_once()
+            call_args = self.mock_llm.complete.call_args[0][0]
+            self.assertIn("M1", call_args)
+            self.assertIn("R1", call_args)
 
     def test_build_agent_input(self):
         session = {
@@ -54,12 +59,14 @@ class TestMemoryManager(unittest.TestCase):
         enriched, history = self.mm.build_agent_input(session, base_prompt)
         self.assertIn("Résumé existant", enriched)
         self.assertIn(base_prompt, enriched)
+        self.assertEqual(len(history), 1)
         self.assertEqual(history[0], ("user", "Hello"))
 
-        # Test sans résumé
+        # Test sans résumé — le prompt enrichi doit être égal au prompt de base
         session["summary"] = ""
-        enriched_no_sum, _ = self.mm.build_agent_input(session, base_prompt)
+        enriched_no_sum, history_no_sum = self.mm.build_agent_input(session, base_prompt)
         self.assertEqual(enriched_no_sum, base_prompt)
+        self.assertEqual(len(history_no_sum), 1)
 
 
 class TestSessionManager(unittest.TestCase):
