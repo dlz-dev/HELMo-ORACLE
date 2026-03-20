@@ -12,7 +12,7 @@
 
 Dans sa version actuelle, l'Oracle est spécialisé sur l'univers du jeu **Dofus** (MMORPG d'Ankama) — les données ont été choisies par l'équipe faute de corpus fourni. L'architecture est conçue pour être générique : n'importe quel corpus de données peut être ingéré pour créer un Oracle sur mesure.
 
-**Équipe** : Tim · Maxime · Arnau
+**Équipe** : Tim · Maxime · Arnaud
 
 ---
 
