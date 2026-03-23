@@ -11,6 +11,7 @@ from pathlib import Path as _Path
 from typing import Optional
 
 import uvicorn
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from langgraph.prebuilt import create_react_agent
@@ -60,7 +61,16 @@ pii = PIIManager()
 
 # ─── App ──────────────────────────────────────────────────────────────────────
 
-app = FastAPI(title="HELMo Oracle API", version="1.0.0")
+_mcp_asgi = _mcp_module.mcp.streamable_http_app()
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    async with _mcp_asgi.router.lifespan_context(app):
+        yield
+
+
+app = FastAPI(title="HELMo Oracle API", version="1.0.0", lifespan=_lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -69,7 +79,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/mcp", _mcp_module.mcp.streamable_http_app())
+app.mount("/mcp", _mcp_asgi)
 
 
 # ─── Schemas ──────────────────────────────────────────────────────────────────
