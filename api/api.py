@@ -24,6 +24,7 @@ from core.database.vector_manager import VectorManager
 from core.pipeline.pii_manager import PIIManager
 from core.utils.utils import load_config, load_base_prompt, format_response
 from providers import get_llm, get_available_models, PROVIDER_LABELS
+import mcp_server as _mcp_module
 
 _LOG_DIR = _Path(__file__).parent / "logs"
 _LOG_DIR.mkdir(exist_ok=True)
@@ -49,6 +50,7 @@ _embeddings = HuggingFaceEmbedding(model_name="intfloat/multilingual-e5-base")
 logger.info("Modèle embeddings chargé : intfloat/multilingual-e5-base")
 vm = VectorManager(embeddings_model=_embeddings)
 logger.info("VectorManager connecté à Supabase")
+_mcp_module.setup(vm)
 sm = SessionManager()
 mm = MemoryManager(
     max_recent_tokens=config.get("memory", {}).get("max_recent_tokens", 1200),
@@ -66,6 +68,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/mcp", _mcp_module.mcp.streamable_http_app())
 
 
 # ─── Schemas ──────────────────────────────────────────────────────────────────
