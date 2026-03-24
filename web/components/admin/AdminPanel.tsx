@@ -194,7 +194,11 @@ export function AdminPanel() {
           if (!status.running) {
             clearInterval(poll);
             setIngestState(
-              status.last_status === "success" ? "success" : "error",
+              status.last_status === "success"
+                ? "success"
+                : status.last_status === "warning"
+                  ? "warning"
+                  : "error",
             );
             setIngestMsg(status.last_message);
           }
