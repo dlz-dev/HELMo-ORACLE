@@ -61,10 +61,12 @@ export function IngestSection({
             className={clsx(
               "flex items-center gap-1.5 text-sm animate-fade-in",
               ingestState === "success" && "text-green-400",
+              ingestState === "warning" && "text-yellow-400",
               ingestState === "error" && "text-red-400",
             )}
           >
             {ingestState === "success" && <CheckCircle size={13} />}
+            {ingestState === "warning" && <XCircle size={13} />}
             {ingestState === "error" && <XCircle size={13} />}
             <span className="text-xs">{ingestMsg}</span>
           </div>
