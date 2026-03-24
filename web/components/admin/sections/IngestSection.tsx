@@ -56,20 +56,16 @@ export function IngestSection({
             </>
           )}
         </button>
-        {ingestState !== "idle" && (
+        {ingestState !== "idle" && ingestState !== "running" && (
           <div
             className={clsx(
               "flex items-center gap-1.5 text-sm animate-fade-in",
               ingestState === "success" && "text-green-400",
               ingestState === "error" && "text-red-400",
-              ingestState === "running" && "text-muted-fg",
             )}
           >
             {ingestState === "success" && <CheckCircle size={13} />}
             {ingestState === "error" && <XCircle size={13} />}
-            {ingestState === "running" && (
-              <Loader2 size={13} className="animate-spin" />
-            )}
             <span className="text-xs">{ingestMsg}</span>
           </div>
         )}
