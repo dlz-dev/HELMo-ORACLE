@@ -118,21 +118,27 @@ class _SupabaseBackend:
 
 class SessionManager:
     """Unified session manager that automatically routes to the correct backend."""
-    def __init__(self) -> None:
-        self.user_id = get_current_user_id() if _is_cloud() else LOCAL_USER_ID
+    def __init__(self, user_id: Optional[str] = None) -> None:
+        # Per-request: explicit user_id provided (from frontend auth)
+        if user_id:
+            effective_user = user_id
+        elif _is_cloud():
+            effective_user = get_current_user_id() or "anonymous_local"
+        else:
+            effective_user = LOCAL_USER_ID
 
-        if _is_cloud() and self.user_id:
+        self.user_id = effective_user
+
+        if _is_cloud():
             try:
-                self._backend = _SupabaseBackend(self.user_id)
+                self._backend = _SupabaseBackend(effective_user)
                 self.backend_name = "supabase"
-                logger.info(f"SessionManager using Supabase backend for user {self.user_id}.")
+                logger.info(f"SessionManager using Supabase backend for user {effective_user}.")
             except Exception as e:
-                logger.error(f"Supabase backend failed for user {self.user_id}, falling back to local. Error: {e}")
-                self._backend = _LocalBackend(self.user_id)
+                logger.error(f"Supabase backend failed for user {effective_user}, falling back to local. Error: {e}")
+                self._backend = _LocalBackend(effective_user)
                 self.backend_name = "local_fallback"
         else:
-            # Handles local dev and anonymous cloud users
-            effective_user = self.user_id or "anonymous_local"
             self._backend = _LocalBackend(effective_user)
             self.backend_name = "local"
             logger.info(f"SessionManager using local backend for user '{effective_user}'.")

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getServerUserId } from "@/lib/server-auth";
 
 const BACKEND = process.env.BACKEND_API_URL || "http://127.0.0.1:8000";
 
@@ -9,7 +10,11 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const res = await fetch(`${BACKEND}/sessions/${id}`, { cache: "no-store" });
+    const userId = await getServerUserId();
+    const url = userId
+      ? `${BACKEND}/sessions/${id}?user_id=${encodeURIComponent(userId)}`
+      : `${BACKEND}/sessions/${id}`;
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok)
       return NextResponse.json(
         { error: "Session non trouvée" },
@@ -29,7 +34,11 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
-    await fetch(`${BACKEND}/sessions/${id}`, { method: "DELETE" });
+    const userId = await getServerUserId();
+    const url = userId
+      ? `${BACKEND}/sessions/${id}?user_id=${encodeURIComponent(userId)}`
+      : `${BACKEND}/sessions/${id}`;
+    await fetch(url, { method: "DELETE" });
     return NextResponse.json({ deleted: id });
   } catch {
     return NextResponse.json({ error: "Erreur backend" }, { status: 500 });
