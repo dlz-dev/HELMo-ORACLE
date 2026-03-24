@@ -8,6 +8,7 @@ export async function POST(request: Request) {
 
     const res = await fetch(`${backendUrl}/ingest`, {
       method: "POST",
+      headers: { "X-Api-Key": process.env.API_SECRET_KEY || "" },
       body: formData,
     });
 
