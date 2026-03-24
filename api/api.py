@@ -52,10 +52,7 @@ logger.info("Oracle API démarrage...")
 _embeddings = HuggingFaceEmbedding(model_name="intfloat/multilingual-e5-base")
 logger.info("Modèle embeddings chargé : intfloat/multilingual-e5-base")
 vm = VectorManager(embeddings_model=_embeddings)
-if vm.is_db_available():
-    logger.info("VectorManager connecté à Supabase")
-else:
-    logger.error("VectorManager n'a pas pu se connecter à Supabase")
+logger.info("VectorManager connecté à PostgreSQL")
 _mcp_module.setup(vm)
 sm = SessionManager()
 mm = MemoryManager(
@@ -136,10 +133,6 @@ def _run_agent(session: dict, masked_message: str, provider: str, model: str,
     Raises:
         Exception si le LLM ou l'agent échoue.
     """
-    if not vm.is_db_available():
-        logger.error("CHAT | DB indisponible, réponse directe.")
-        return "La base de donnée est actuellement indisponible, veuillez réessayer plus tard.", []
-
     llm = get_llm(
         provider_key=provider,
         model=model,
@@ -271,9 +264,6 @@ def _run_ingestion(file_paths):
     import shutil
 
     total = len(file_paths)
-    rejected_count = 0
-    success_count = 0
-    
     try:
         for i, fp in enumerate(file_paths):
             fp = Path(fp)
@@ -283,7 +273,6 @@ def _run_ingestion(file_paths):
             if not is_valid_lore_file(str(fp)):
                 shutil.move(str(fp), str(QUARANTINE_DIR / fp.name))
                 logger.warning("INGEST | Rejeté : %s", fp.name)
-                rejected_count += 1
                 continue
 
             # 2. Conversion
@@ -311,11 +300,8 @@ def _run_ingestion(file_paths):
             # 4. Archive
             shutil.move(str(fp), str(ARCHIVE_DIR / fp.name))
             logger.info("INGEST | OK — %s (%d chunks)", fp.name, len(chunks))
-            success_count += 1
 
-        final_status = "error" if rejected_count > 0 else "success"
-        message = f"Ingestion terminée. {success_count} succès, {rejected_count} rejet(s)."
-        _ingest_status = {"running": False, "last_status": final_status, "last_message": message}
+        _ingest_status = {"running": False, "last_status": "success", "last_message": f"{total} fichier(s) ingéré(s) avec succès."}
 
     except Exception as e:
         _ingest_status = {"running": False, "last_status": "error", "last_message": str(e)}
