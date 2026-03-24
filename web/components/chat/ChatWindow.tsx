@@ -93,11 +93,10 @@ export function ChatWindow({ sessionId, onSessionCreated }: Props) {
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center h-full px-6 animate-fade-in">
             {/* ... En-tête ... */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-xl">
+            <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-xl">
               {STARTER_PROMPTS.map((prompt, i) => (
                 <button
                   key={prompt}
-                  // CORRECTION : Utilisation de append() au lieu de tricher avec un événement DOM
                   onClick={() => append({ role: "user", content: prompt })}
                   className="group flex items-start gap-2.5 px-4 py-3 rounded-lg text-left border border-default bg-surface hover:border-gold/30 hover:bg-gold-glow transition-all duration-150 animate-fade-up"
                   style={{ animationDelay: `${i * 60}ms` }}

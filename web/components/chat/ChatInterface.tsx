@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useMediaQuery } from "react-responsive";
 import { SessionSidebar } from "./SessionSidebar";
 import { ChatWindow } from "./ChatWindow";
 import { PanelLeftOpen, PanelLeftClose } from "lucide-react";
@@ -8,6 +9,12 @@ import { PanelLeftOpen, PanelLeftClose } from "lucide-react";
 export function ChatInterface() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
+
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false);
+    else setSidebarOpen(true);
+  }, [isMobile]);
 
   return (
     <div className="flex w-full h-full overflow-hidden">
@@ -15,14 +22,20 @@ export function ChatInterface() {
       <aside
         className={`
           flex-shrink-0 border-r border-default bg-surface
-          transition-all duration-200 ease-in-out overflow-hidden
+          transition-all duration-300 ease-in-out overflow-y-auto
           ${sidebarOpen ? "w-64" : "w-0"}
         `}
       >
         <SessionSidebar
           activeSessionId={sessionId}
-          onSelectSession={setSessionId}
-          onNewSession={() => setSessionId(null)}
+          onSelectSession={(id) => {
+            setSessionId(id);
+            if (isMobile) setSidebarOpen(false);
+          }}
+          onNewSession={() => {
+            setSessionId(null);
+            if (isMobile) setSidebarOpen(false);
+          }}
         />
       </aside>
 
@@ -31,7 +44,7 @@ export function ChatInterface() {
         {/* Toggle sidebar */}
         <button
           onClick={() => setSidebarOpen((v) => !v)}
-          className="absolute top-3 left-3 z-10 p-1.5 rounded-md text-muted-fg hover:text-main hover:bg-subtle transition-all duration-150"
+          className="absolute top-3 left-3 z-10 p-1.5 rounded-md text-muted-fg hover:text-main hover:bg-subtle transition-all"
           aria-label={sidebarOpen ? "Fermer le panneau" : "Ouvrir le panneau"}
         >
           {sidebarOpen ? (
