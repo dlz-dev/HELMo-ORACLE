@@ -1,164 +1,87 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { Loader2, AlertTriangle, Info, XCircle } from "lucide-react";
+import { useRef } from "react";
+import { Loader2 } from "lucide-react";
 import { clsx } from "clsx";
 import { Section } from "./shared";
 
-// Définition du type pour un enregistrement de log
-interface LogEntry {
-  id: string;
-  created_at: string;
-  level: "INFO" | "WARNING" | "ERROR";
-  source: string;
-  message: string;
-  metadata?: Record<string, any>;
-  profiles?: {
-    first_name: string;
-    last_name: string;
-  } | null;
+interface Props {
+  logs: string[];
+  logsLoading: boolean;
+  autoRefresh: boolean;
+  onFetch: () => void;
+  onToggleAutoRefresh: () => void;
+  onClear: () => void;
 }
 
-// Configuration des badges de niveau
-const levelConfig = {
-  ERROR: {
-    icon: XCircle,
-    color: "text-red-400 bg-red-400/10 border-red-400/20",
-  },
-  WARNING: {
-    icon: AlertTriangle,
-    color: "text-amber-400 bg-amber-400/10 border-amber-400/20",
-  },
-  INFO: {
-    icon: Info,
-    color: "text-sky-400 bg-sky-400/10 border-sky-400/20",
-  },
-};
-
-export function LogsSection() {
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [levelFilter, setLevelFilter] = useState("");
-  const [sourceFilter, setSourceFilter] = useState("");
-
-  // Récupération des données
-  useEffect(() => {
-    const fetchLogs = async () => {
-      setLoading(true);
-      setError(null);
-      const params = new URLSearchParams();
-      if (levelFilter) params.set("level", levelFilter);
-      if (sourceFilter) params.set("source", sourceFilter);
-
-      try {
-        const res = await fetch(`/api/admin/logs?${params.toString()}`);
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Erreur lors de la récupération des logs");
-        }
-        const data = await res.json();
-        setLogs(data.logs || []);
-      } catch (e: any) {
-        setError(e.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLogs();
-  }, [levelFilter, sourceFilter]);
-
-  // Calcul des sources uniques pour le filtre
-  const uniqueSources = useMemo(() => {
-    const sources = new Set(logs.map(log => log.source));
-    return Array.from(sources).sort();
-  }, [logs]);
+export function LogsSection({
+  logs,
+  logsLoading,
+  autoRefresh,
+  onFetch,
+  onToggleAutoRefresh,
+  onClear,
+}: Props) {
+  const logsEndRef = useRef<HTMLDivElement>(null);
 
   return (
-    <Section title="Logs Système" defaultOpen={true}>
-      {/* Filtres */}
-      <div className="flex items-center gap-3 mb-4">
-        <select
-          value={levelFilter}
-          onChange={(e) => setLevelFilter(e.target.value)}
-          className="bg-subtle border border-default rounded-md px-2 py-1 text-xs"
+    <Section title="Logs système" defaultOpen={false}>
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          onClick={onFetch}
+          disabled={logsLoading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold text-white text-xs font-medium hover:bg-gold-light disabled:opacity-40 transition-colors"
         >
-          <option value="">Tous les niveaux</option>
-          <option value="ERROR">Error</option>
-          <option value="WARNING">Warning</option>
-          <option value="INFO">Info</option>
-        </select>
-        <select
-          value={sourceFilter}
-          onChange={(e) => setSourceFilter(e.target.value)}
-          className="bg-subtle border border-default rounded-md px-2 py-1 text-xs"
+          {logsLoading ? (
+            <>
+              <Loader2 size={11} className="animate-spin" /> Chargement…
+            </>
+          ) : (
+            "🔄 Actualiser"
+          )}
+        </button>
+        <button
+          onClick={onToggleAutoRefresh}
+          className={clsx(
+            "px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
+            autoRefresh
+              ? "bg-green-400/20 border-green-400/40 text-green-300"
+              : "border-default text-muted-fg hover:text-main",
+          )}
         >
-          <option value="">Toutes les sources</option>
-          {uniqueSources.map(source => (
-            <option key={source} value={source}>{source}</option>
-          ))}
-        </select>
+          {autoRefresh ? "⏸ Auto-refresh ON" : "▶ Auto-refresh OFF"}
+        </button>
+        <button
+          onClick={onClear}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-400/30 text-red-400 hover:bg-red-400/10 transition-colors ml-auto"
+        >
+          🗑 Vider les logs
+        </button>
       </div>
 
-      {/* Tableau des logs */}
-      <div className="overflow-x-auto border border-default rounded-lg bg-surface">
-        <table className="min-w-full divide-y divide-default text-sm">
-          <thead className="bg-subtle">
-            <tr>
-              <th className="px-4 py-2 text-left font-semibold">Date</th>
-              <th className="px-4 py-2 text-left font-semibold">Niveau</th>
-              <th className="px-4 py-2 text-left font-semibold">Source</th>
-              <th className="px-4 py-2 text-left font-semibold">Utilisateur</th>
-              <th className="px-4 py-2 text-left font-semibold">Message</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-default">
-            {loading ? (
-              <tr>
-                <td colSpan={5} className="p-8 text-center text-muted-fg">
-                  <Loader2 className="mx-auto animate-spin" />
-                </td>
-              </tr>
-            ) : error ? (
-              <tr>
-                <td colSpan={5} className="p-8 text-center text-red-400">{error}</td>
-              </tr>
-            ) : logs.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="p-8 text-center text-muted-fg">Aucun log trouvé.</td>
-              </tr>
-            ) : (
-              logs.map((log) => {
-                const config = levelConfig[log.level] || levelConfig.INFO;
-                const Icon = config.icon;
-                const user = log.profiles ? `${log.profiles.first_name} ${log.profiles.last_name}`.trim() : 'Système';
-
-                return (
-                  <tr key={log.id}>
-                    <td className="px-4 py-2 whitespace-nowrap text-muted-fg">{new Date(log.created_at).toLocaleString()}</td>
-                    <td className="px-4 py-2">
-                      <span className={clsx("flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border", config.color)}>
-                        <Icon size={12} />
-                        {log.level}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 font-mono text-xs">{log.source}</td>
-                    <td className="px-4 py-2 text-muted-fg">{user}</td>
-                    <td className="px-4 py-2">
-                      <p>{log.message}</p>
-                      {log.metadata && (
-                        <pre className="mt-2 p-2 bg-black/20 rounded-md text-xs text-muted-fg overflow-x-auto">
-                          {JSON.stringify(log.metadata, null, 2)}
-                        </pre>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+      <div className="bg-[#0a0c10] rounded-lg border border-default overflow-auto h-64 p-3 font-mono text-xs">
+        {logs.length === 0 ? (
+          <p className="text-muted-fg">Aucun log — cliquez sur Actualiser</p>
+        ) : (
+          logs.map((line, i) => (
+            <div
+              key={`log-${i}`}
+              className={clsx(
+                "leading-5",
+                line.includes("ERROR") && "text-red-400",
+                line.includes("WARNING") && "text-amber-400",
+                line.includes("INFO") && "text-green-300",
+                !line.includes("ERROR") &&
+                  !line.includes("WARNING") &&
+                  !line.includes("INFO") &&
+                  "text-muted-fg",
+              )}
+            >
+              {line}
+            </div>
+          ))
+        )}
+        <div ref={logsEndRef} />
       </div>
     </Section>
   );
