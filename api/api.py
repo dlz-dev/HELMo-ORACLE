@@ -40,6 +40,7 @@ logging.basicConfig(
         logging.FileHandler(_LOG_FILE, encoding="utf-8"),
         logging.StreamHandler(),  # garde aussi les logs dans le terminal
     ],
+    force=True,
 )
 logger = logging.getLogger("oracle")
 
