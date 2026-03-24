@@ -25,3 +25,4 @@ mcp[cli]
 python-multipart==0.0.12
 pytest
 pytest-asyncio
+mcp
