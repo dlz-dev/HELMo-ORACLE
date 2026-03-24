@@ -12,7 +12,7 @@ export async function GET(req: Request) {
 
     const res = await fetch(url.toString(), {
       headers: {
-        "X-API-Key": process.env.ADMIN_PASSWORD ?? "",
+        "X-API-Key": process.env.API_SECRET_KEY ?? "",
       },
     });
 

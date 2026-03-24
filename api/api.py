@@ -5,7 +5,6 @@ Exposes the RAG pipeline as a REST API so a separate frontend
 (e.g. deployed on Vercel) can call it over HTTP.
 """
 
-import asyncio
 import os
 import time
 from contextlib import asynccontextmanager
@@ -27,7 +26,7 @@ from core.context.session_manager import SessionManager
 from core.database.vector_manager import VectorManager
 from core.pipeline.pii_manager import PIIManager
 # Import logger and utils from the corrected logger module
-from core.utils.logger import logger, set_shared_conn, log_to_db
+from core.utils.logger import logger, set_shared_conn, log_to_db_sync
 from core.utils.utils import load_config, load_base_prompt, format_response
 from providers import get_llm, get_available_models, PROVIDER_LABELS
 
@@ -51,6 +50,7 @@ else:
     logger.error("VectorManager n'a PAS pu se connecter à PostgreSQL. Les logs DB et la recherche seront indisponibles.")
 
 _mcp_module.setup(vm)
+_mcp_asgi = _mcp_module.mcp.streamable_http_app()
 sm = SessionManager()
 mm = MemoryManager(
     max_recent_tokens=config.get("memory", {}).get("max_recent_tokens", 1200),
@@ -84,6 +84,7 @@ app.mount("/mcp", _mcp_asgi)
 class ChatRequest(BaseModel):
     session_id: Optional[str] = None
     message: str
+    user_id: Optional[str] = None
     provider: str = config.get("llm", {}).get("default_provider", "groq")
     model: Optional[str] = None
     temperature: float = float(config.get("llm", {}).get("temperature", 0.0))
@@ -91,6 +92,13 @@ class ChatRequest(BaseModel):
 
 class RenameRequest(BaseModel):
     title: str
+
+# --- Per-request Session Manager ---
+def _get_sm(user_id: Optional[str] = None) -> SessionManager:
+    """Returns a per-request SessionManager scoped to the given user_id, or the global instance."""
+    if user_id and _is_valid_uuid(user_id):
+        return SessionManager(user_id=user_id)
+    return sm
 
 # --- Shared Agent Logic ---
 def _is_valid_uuid(val):
@@ -118,11 +126,11 @@ def _run_agent(session: dict, masked_message: str, provider: str, model: str,
     start_retrieval = time.time()
     search_tool = get_search_tool(vm, k_final=k_final, cot_storage=[])
     retrieval_time = time.time() - start_retrieval
-    asyncio.create_task(log_to_db(
+    log_to_db_sync(
         level="INFO", source="RAG_PROFILING",
-        message=f"Context retrieval finished",
+        message="Context retrieval finished",
         metadata={"duration_seconds": retrieval_time}, user_id=log_user_id
-    ))
+    )
 
     llm = get_llm(
         provider_key=provider, model=model,
@@ -136,18 +144,35 @@ def _run_agent(session: dict, masked_message: str, provider: str, model: str,
     result = agent.invoke({"messages": lc_history})
     generation_time = time.time() - start_generation
     response_text = format_response(result["messages"][-1].content)
-    asyncio.create_task(log_to_db(
+    log_to_db_sync(
         level="INFO", source="RAG_PROFILING",
-        message=f"LLM response generated",
+        message="LLM response generated",
         metadata={"duration_seconds": generation_time, "provider": provider, "model": model},
         user_id=log_user_id
-    ))
+    )
     return response_text, []
 
 # --- Routes ---
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    checks = {}
+
+    # Database
+    if vm.is_db_available():
+        try:
+            with vm.conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM documents")
+                count = cur.fetchone()[0]
+            checks["database"] = {"status": "ok", "documents": count}
+        except Exception as e:
+            checks["database"] = {"status": "error", "error": str(e)}
+    else:
+        checks["database"] = {"status": "error", "error": "Connexion indisponible"}
+
+    # Embeddings
+    checks["embeddings"] = {"status": "ok", "model": "intfloat/multilingual-e5-base"}
+
+    return {"status": "ok", "checks": checks}
 
 @app.get("/providers/{provider}/models")
 def list_models(provider: str):
@@ -157,49 +182,53 @@ def list_models(provider: str):
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/sessions")
-def list_sessions():
-    return {"sessions": sm.list_sessions()}
+def list_sessions(user_id: Optional[str] = None):
+    return {"sessions": _get_sm(user_id).list_sessions()}
 
 @app.post("/sessions")
-def create_session(provider: str = "", model: str = ""):
-    session = sm.new_session(provider=provider, model=model)
-    sm.save(session)
+def create_session(provider: str = "", model: str = "", user_id: Optional[str] = None):
+    request_sm = _get_sm(user_id)
+    session = request_sm.new_session(provider=provider, model=model)
+    request_sm.save(session)
     return session
 
 @app.get("/sessions/{session_id}")
-def get_session(session_id: str):
-    session = sm.load(session_id)
+def get_session(session_id: str, user_id: Optional[str] = None):
+    session = _get_sm(user_id).load(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     return session
 
 @app.delete("/sessions/{session_id}")
-def delete_session(session_id: str):
-    sm.delete(session_id)
+def delete_session(session_id: str, user_id: Optional[str] = None):
+    _get_sm(user_id).delete(session_id)
     return {"deleted": session_id}
 
 @app.patch("/sessions/{session_id}/rename")
-def rename_session(session_id: str, body: RenameRequest):
-    session = sm.load(session_id)
+def rename_session(session_id: str, body: RenameRequest, user_id: Optional[str] = None):
+    request_sm = _get_sm(user_id)
+    session = request_sm.load(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     session["title"] = body.title
-    sm.save(session)
+    request_sm.save(session)
     return {"session_id": session_id, "title": body.title}
 
 @app.post("/chat")
 def chat(req: ChatRequest):
+    request_sm = _get_sm(req.user_id)
+
     if req.session_id:
-        session = sm.load(req.session_id)
+        session = request_sm.load(req.session_id)
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
     else:
-        session = sm.new_session(provider=req.provider, model=req.model or "")
+        session = request_sm.new_session(provider=req.provider, model=req.model or "")
 
     model = req.model or config.get("llm", {}).get("default_model", "")
     masked_message = pii.mask_text(req.message)
     session.setdefault("messages", []).append({"role": "user", "content": masked_message})
-    sm.save(session)
+    request_sm.save(session)
 
     try:
         response, cot_storage = _run_agent(
@@ -217,7 +246,7 @@ def chat(req: ChatRequest):
         ))
     session["provider"] = req.provider
     session["model"] = model
-    sm.save(session)
+    request_sm.save(session)
     return {"session_id": session["session_id"], "response": response, "cot_results": cot_storage}
 
 @app.get("/archives")
