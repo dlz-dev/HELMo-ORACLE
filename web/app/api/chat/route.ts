@@ -9,7 +9,8 @@ export async function POST(req: NextRequest) {
 
   // The Vercel AI SDK sends { messages: [...], ...extras }
   // FastAPI expects { message: str, session_id, user_id, ... }
-  const messages: Array<{ role: string; content: string }> = body.messages || [];
+  const messages: Array<{ role: string; content: string }> =
+    body.messages || [];
   const lastUserMessage = messages.filter((m) => m.role === "user").at(-1);
 
   if (!lastUserMessage) {
