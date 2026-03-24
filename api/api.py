@@ -52,7 +52,7 @@ logger.info("Oracle API démarrage...")
 _embeddings = HuggingFaceEmbedding(model_name="intfloat/multilingual-e5-base")
 logger.info("Modèle embeddings chargé : intfloat/multilingual-e5-base")
 vm = VectorManager(embeddings_model=_embeddings)
-logger.info("VectorManager connecté à Supabase")
+logger.info("VectorManager connecté à PostgreSQL")
 _mcp_module.setup(vm)
 sm = SessionManager()
 mm = MemoryManager(
