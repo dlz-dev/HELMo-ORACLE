@@ -1,20 +1,58 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Moon, Sun, BookOpen, MessageSquare, Settings } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  Moon,
+  Sun,
+  BookOpen,
+  MessageSquare,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { clsx } from "clsx";
+import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
 
-const NAV_LINKS = [
+const BASE_NAV_LINKS = [
   { href: "/", label: "Oracle", icon: MessageSquare },
   { href: "/sources", label: "Sources", icon: BookOpen },
-  { href: "/admin", label: "Admin", icon: Settings },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, toggle } = useTheme();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user) {
+        setIsAdmin(false);
+        return;
+      }
+      supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .single()
+        .then(({ data }) => setIsAdmin(data?.role === "admin"));
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const navLinks = isAdmin
+    ? [...BASE_NAV_LINKS, { href: "/admin", label: "Admin", icon: Settings }]
+    : BASE_NAV_LINKS;
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <header
@@ -38,7 +76,7 @@ export function Navbar() {
 
         {/* Navigation centrale */}
         <nav className="hidden sm:flex items-center gap-1">
-          {NAV_LINKS.map(({ href, label, icon: Icon }) => {
+          {navLinks.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
             return (
               <Link
@@ -58,14 +96,23 @@ export function Navbar() {
           })}
         </nav>
 
-        {/* Toggle thème */}
-        <button
-          onClick={toggle}
-          aria-label="Changer de thème"
-          className="p-2 rounded-md text-muted-fg hover:text-main hover:bg-subtle transition-all duration-150"
-        >
-          {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-        </button>
+        {/* Actions droite */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={toggle}
+            aria-label="Changer de thème"
+            className="p-2 rounded-md text-muted-fg hover:text-main hover:bg-subtle transition-all duration-150"
+          >
+            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+          <button
+            onClick={handleLogout}
+            aria-label="Se déconnecter"
+            className="p-2 rounded-md text-muted-fg hover:text-main hover:bg-subtle transition-all duration-150"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Ligne dorée sous la navbar — très subtile */}

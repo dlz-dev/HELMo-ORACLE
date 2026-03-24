@@ -96,7 +96,7 @@ class TestGuardian(unittest.TestCase):
             with patch('core.agent.guardian.os.path.splitext', return_value=('test', '.txt')):
                 result = is_valid_lore_file("test.txt")
 
-        self.assertFalse(result)
+        self.assertFalse(result[0])
         mock_get_llm.assert_called_once()
         mock_llm.invoke.assert_called_once()
 
@@ -113,7 +113,7 @@ class TestGuardian(unittest.TestCase):
             with patch('core.agent.guardian.os.path.splitext', return_value=('lore_test', '.txt')):
                 result = is_valid_lore_file("lore_test.txt")
 
-        self.assertTrue(result)
+        self.assertTrue(result[0])
         mock_llm.invoke.assert_called_once()
 
     def test_read_error_handling(self):
@@ -121,7 +121,7 @@ class TestGuardian(unittest.TestCase):
         with patch('core.agent.guardian.open', side_effect=Exception("Erreur critique")):
             with patch('core.agent.guardian.os.path.splitext', return_value=('erreur', '.txt')):
                 result = is_valid_lore_file("erreur.txt")
-                self.assertFalse(result)
+                self.assertFalse(result[0])
 
 
 if __name__ == '__main__':
