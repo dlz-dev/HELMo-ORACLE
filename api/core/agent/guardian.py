@@ -1,6 +1,6 @@
 import os
-from typing import Optional
-
+import pypdf
+from typing import Optional, Tuple
 from core.utils.utils import load_config, _GUARDIAN_PROMPT
 
 
@@ -10,7 +10,7 @@ def get_llm_for_guardian():
     return get_llm
 
 
-def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> bool:
+def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> tuple[bool, str]:
     """
     Validates a file using the LLM configured in config.yaml under [guardian].
 
@@ -32,25 +32,41 @@ def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> bool:
     fname = os.path.basename(file_path)
     extension = os.path.splitext(fname)[1].lower()
 
-    # Bypass text reading for PDFs (auto-accept for Unstructured conversion)
-    if extension == '.pdf':
-        print(f"  📄 [{fname}] Binary format (PDF) → Auto-Accepted for Unstructured conversion")
-        return True
+    sample_text = ""
 
-    # Attempt to read a sample of the file to evaluate its content
+    # Text reading for PDFs
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            sample_text = f.read(1500)
-    except UnicodeDecodeError:
-        try:
-            with open(file_path, "r", encoding="latin-1") as f:
-                sample_text = f.read(1500)
-        except Exception as e:
-            print(f"  🚫 [{fname}] Read error: {e} → REJECTED (Unreadable file)")
-            return False
+        if extension == ".pdf":
+            reader = pypdf.PdfReader(file_path)
+
+            # We read page by page until we reach 1,500 characters
+            for page in reader.pages:
+                extracted = page.extract_text()
+                if extracted:
+                    sample_text += extracted + "\n"
+
+                if len(sample_text) >= 1500:
+                    break
+
+            sample_text = sample_text[:1500]
+
+            # Security: scanning images without text
+            if not sample_text.strip():
+                print(f"  🚫 [{fname}] PDF vide ou composé uniquement d'images → REJECTED")
+                return False, "PDF illisible (aucun texte extrait)."
+
+        else:
+            # Attempt to read a sample of the file to evaluate its content
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    sample_text = f.read(1500)
+            except UnicodeDecodeError:
+                with open(file_path, "r", encoding="latin-1") as f:
+                    sample_text = f.read(1500)
+
     except Exception as e:
-        print(f"  🚫 [{fname}] Unexpected read error: {e} → REJECTED")
-        return False
+        print(f"  🚫 [{fname}] Erreur de lecture physique du fichier: {e} → REJECTED")
+        return False, f"Fichier illisible: {e}"
 
     # Load configuration and initialize the LLM
     try:
@@ -71,15 +87,19 @@ def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> bool:
 
     try:
         response = llm.invoke(prompt)
-        answer = response.content.strip().upper()
+        answer = response.content.strip()
+        lines = answer.splitlines()
 
         # Note: We keep "OUI" since _GUARDIAN_PROMPT instructs the LLM in French
-        verdict = "OUI" in answer
+        verdict_str = lines[0].strip().upper()
+        verdict = verdict_str.startswith("OUI")
+
+        explication = lines[1].strip() if len(lines) > 1 else "Aucune explication fournie."
 
         status = "✅ ACCEPTED" if verdict else "❌ REJECTED"
         print(f"  🛡️  Guardian [{fname}] via {provider_key}/{model} → '{response.content.strip()}' → {status}")
 
-        return verdict
+        return verdict,explication
     except Exception as e:
         print(f"  🚫 [{fname}] API error during validation: {e} → REJECTED (Not validated)")
-        return False
+        return False, "Erreur API"

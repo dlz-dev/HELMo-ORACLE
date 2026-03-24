@@ -72,14 +72,16 @@ EXEMPLES REJETÉS → répondre NON :
 - Une recette de cuisine réelle
 - Du code source informatique sans rapport avec un jeu
 - Une facture ou document administratif
-- Un texte sur de l'informatique ou des sciences sans lien avec un MMORPG
+- Un texte sur de l'informatique, des sciences ou qui n'a pas de lien avec un MMORPG ou de la fantasy
 
 Contenu à analyser :
 ---
 {sample_text}
 ---
 
-Réponds STRICTEMENT par OUI (contenu Dofus/MMORPG) ou NON (hors-sujet), sans aucune explication.
+Tu dois répondre STRICTEMENT sous ce format, sur deux lignes :
+Ligne 1 : OUI ou NON
+Ligne 2 : Un résumé court (max 20 mots) du pourquoi.
 """
 
 _SUMMARY_PROMPT = """
@@ -135,7 +137,7 @@ def load_config() -> Dict[str, Any]:
         },
         "guardian": {
             "provider": os.environ.get("GUARDIAN_PROVIDER", "groq"),
-            "model": os.environ.get("GUARDIAN_MODEL", "llama-3.1-8b-instant"),
+                "model": os.environ.get("GUARDIAN_MODEL", "llama-3.1-8b-instant"),
         },
         "memory": {
             "max_recent_tokens": int(os.environ.get("MAX_RECENT_TOKENS", "1200")),
