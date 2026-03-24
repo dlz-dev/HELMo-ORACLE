@@ -7,7 +7,7 @@ export interface Source {
 }
 
 export interface IngestStatus {
-  last_status: "idle" | "running" | "success" | "error";
+  last_status: "idle" | "running" | "success" | "error" | "warning";
   last_message: string;
   running: boolean;
 }
