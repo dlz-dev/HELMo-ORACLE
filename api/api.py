@@ -264,15 +264,23 @@ def _run_ingestion(file_paths):
     import shutil
 
     total = len(file_paths)
+    ingested = 0
+    rejected = 0
+    rejected_details: list[str] = []
+
     try:
         for i, fp in enumerate(file_paths):
             fp = Path(fp)
             _ingest_status["last_message"] = f"Fichier {i+1}/{total} — Validation de {fp.name}…"
 
             # 1. Guardian
-            if not is_valid_lore_file(str(fp)):
+            valid, reason = is_valid_lore_file(str(fp))
+            if not valid:
                 shutil.move(str(fp), str(QUARANTINE_DIR / fp.name))
-                logger.warning("INGEST | Rejeté : %s", fp.name)
+                logger.warning("INGEST | Rejeté : %s — %s", fp.name, reason)
+                _ingest_status["last_message"] = f"Fichier {i+1}/{total} — {fp.name} rejeté : {reason}"
+                rejected += 1
+                rejected_details.append(f"{fp.name} : {reason}")
                 continue
 
             # 2. Conversion
@@ -300,8 +308,20 @@ def _run_ingestion(file_paths):
             # 4. Archive
             shutil.move(str(fp), str(ARCHIVE_DIR / fp.name))
             logger.info("INGEST | OK — %s (%d chunks)", fp.name, len(chunks))
+            ingested += 1
 
-        _ingest_status = {"running": False, "last_status": "success", "last_message": f"{total} fichier(s) ingéré(s) avec succès."}
+            # Determine final status based on results
+        if ingested == 0 and rejected > 0:
+            final_status = "error"
+            final_msg = f"{rejected} fichier(s) rejeté(s) par le Guardian"
+        elif rejected > 0:
+            final_status = "warning"
+            final_msg = f"{ingested} ingéré(s), {rejected} rejeté(s)"
+        else:
+            final_status = "success"
+            final_msg = f"{ingested} fichier(s) ingéré(s) avec succès."
+
+        _ingest_status = {"running": False, "last_status": final_status, "last_message": final_msg}
 
     except Exception as e:
         _ingest_status = {"running": False, "last_status": "error", "last_message": str(e)}

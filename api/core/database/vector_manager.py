@@ -28,30 +28,48 @@ class VectorManager:
         config = load_config()
         db_config = config.get("database", {})
 
-        if "connection_string" in db_config:
-            self.conn = psycopg.connect(db_config["connection_string"], autocommit=True)
-        else:
-            self.conn = psycopg.connect(
-                host=db_config.get("host"),
-                dbname=db_config.get("dbname"),
-                user=db_config.get("user"),
-                password=db_config.get("password"),
-                port=int(db_config.get("port", 5432)),
-                sslmode="require",
-                autocommit=True,
-            )
-
-        register_vector(self.conn)
+        try:
+            if "connection_string" in db_config:
+                self.conn = psycopg.connect(db_config["connection_string"], autocommit=True)
+            else:
+                self.conn = psycopg.connect(
+                    host=db_config.get("host"),
+                    dbname=db_config.get("dbname"),
+                    user=db_config.get("user"),
+                    password=db_config.get("password"),
+                    port=int(db_config.get("port", 5432)),
+                    sslmode="require",
+                    autocommit=True,
+                )
+            register_vector(self.conn)
+            self.db_available = True
+        except psycopg.OperationalError:
+            self.db_available = False
+            self.conn = None
 
         self.embeddings_model = embeddings_model or HuggingFaceEmbedding(
             model_name="intfloat/multilingual-e5-base"
         )
+
+    def is_db_available(self) -> bool:
+        """Checks if the database connection is active."""
+        if not self.db_available or self.conn is None:
+            return False
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT 1")
+            return True
+        except psycopg.Error:
+            return False
 
     def add_document(self, text: str, metadata: Optional[Dict[str, Any]] = None) -> None:
         """
         Generates an embedding and saves the text with metadata and ingestion timestamp.
         The fts_vector column is populated automatically by the database trigger.
         """
+        if not self.is_db_available():
+            raise ConnectionError("Database is not available.")
+            
         metadata = metadata or {}
         text_to_embed = text
 
@@ -84,6 +102,9 @@ class VectorManager:
         Returns:
             List of tuples containing (content, distance, metadata).
         """
+        if not self.is_db_available():
+            return []
+            
         with self.conn.cursor() as cur:
             cur.execute(
                 """
@@ -107,6 +128,9 @@ class VectorManager:
         Returns:
             List of tuples containing (content, rank_score, metadata).
         """
+        if not self.is_db_available():
+            return []
+            
         try:
             with self.conn.cursor() as cur:
                 query_sql = sql.SQL(
@@ -141,6 +165,9 @@ class VectorManager:
         Returns:
             List of tuples containing (content, rrf_score, metadata) ordered by best score.
         """
+        if not self.is_db_available():
+            return []
+            
         semantic_results = self.search_semantic(query_vector, k=K_SEMANTIC)
         bm25_results = self.search_bm25(query, k=K_BM25)
 
@@ -169,6 +196,9 @@ class VectorManager:
         Returns:
             List of dictionaries containing source metrics and metadata.
         """
+        if not self.is_db_available():
+            return []
+
         try:
             with self.conn.cursor() as cur:
                 cur.execute(
