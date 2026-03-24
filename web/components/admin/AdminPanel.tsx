@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { Lock, Unlock, Eye, EyeOff } from "lucide-react";
 import { clsx } from "clsx";
 import type { IngestStatus } from "@/lib/api";
@@ -15,7 +14,6 @@ import { HealthSection } from "./sections/HealthSection";
 import { IngestSection } from "./sections/IngestSection";
 
 export function AdminPanel() {
-  const router = useRouter();
   // ── Auth ─────────────────────────────────────────────────────────
   const [unlocked, setUnlocked] = useState(false);
   const [password, setPassword] = useState("");
@@ -107,7 +105,6 @@ export function AdminPanel() {
       if (res.ok) {
         setUnlocked(true);
         setAuthError(false);
-        router.push("/");
       } else setAuthError(true);
     } catch {
       setAuthError(true);
