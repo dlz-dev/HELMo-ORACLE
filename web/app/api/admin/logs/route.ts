@@ -23,7 +23,7 @@ export async function GET(req: Request) {
   } catch (error: any) {
     return NextResponse.json(
       { error: "Erreur récupération logs", details: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
