@@ -3,8 +3,8 @@ Ingestion pipeline for lore files into the vector database.
 
 Pipeline steps per file:
   1. GUARD    — Validates that the file is Dofus/MMORPG lore.
-  2. CONTEXT  — An LLM generates a global description of the document.
-  3. PARSE    — Converts the file based on its extension via LlamaIndex.
+  2. PARSE    — Converts the file based on its extension via LlamaIndex.
+  3. CONTEXT  — An LLM generates a global description from the extracted text.
   4. VECTORIZE— Each contextualized chunk is vectorized and saved to the DB.
 """
 
@@ -30,20 +30,34 @@ def _import_providers():
     return get_llm
 
 
-def generate_document_context(file_path: Path, llm: Any) -> str:
+def generate_document_context(
+    file_path: Path,
+    llm: Any,
+    extracted_chunks: List[Tuple[str, Dict]] = None
+) -> str:
     """
     Generates a contextual description of the entire document using an LLM.
 
+    Uses already-extracted chunks as the text sample when available (covers
+    binary formats like .docx, .pptx handled by Unstructured). Falls back to
+    a raw text read for simple formats (.txt, .md, .json, .csv).
+
     Args:
-        file_path (Path): The path to the file to read.
+        file_path (Path): The path to the file (used for fallback read).
         llm (Any): The language model instance used for generation.
+        extracted_chunks: Already-extracted (text, metadata) pairs, if available.
 
     Returns:
         str: The generated context, or an empty string if it fails.
     """
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            sample = f.read(3000)
+        if extracted_chunks:
+            # Build sample from extracted text — works for ALL formats including binary
+            sample = " ".join(text for text, _ in extracted_chunks)[:3000]
+        else:
+            # Fallback: raw read for simple text formats
+            with open(file_path, "r", encoding="utf-8") as f:
+                sample = f.read(3000)
     except Exception:
         return ""
 
@@ -53,13 +67,13 @@ def generate_document_context(file_path: Path, llm: Any) -> str:
         print(f"    📝 Context generated: {context[:80]}...")
         return context
     except Exception as e:
-        print(f"    ⚠️ Context generation failed ({e}) — vectorizing without context")
+        logger.warning("INGEST | Context generation failed: %s", e)
         return ""
 
 
 def seed_database() -> None:
     """
-    Main pipeline to read files, validate them, generate context, chunk, and insert 
+    Main pipeline to read files, validate them, generate context, chunk, and insert
     them into the vector database.
     """
     input_folder = ARCHIVE_DIR
@@ -110,15 +124,10 @@ def seed_database() -> None:
             continue
 
         total_accepted += 1
-        doc_context = ""
-        
-        if context_llm is not None:
-            doc_context = generate_document_context(file_path, context_llm)
 
-        base_metadata: Dict[str, Any] = {"source": file_path.name}
-        if doc_context:
-            base_metadata["global_context"] = doc_context
-
+        # ── Étape 1 : Extraction ──────────────────────────────────────────────
+        # On extrait d'abord pour que generate_document_context puisse utiliser
+        # le texte réel, y compris pour les formats binaires (Unstructured).
         extension = file_path.suffix.lower()
         extracted_chunks: List[Tuple[str, Dict[str, Any]]] = []
 
@@ -138,6 +147,17 @@ def seed_database() -> None:
             print("  🔄 Complex format detected. Calling Unstructured.io...")
             extracted_chunks = convert_unstructured.process_with_unstructured(str(file_path))
 
+        # ── Étape 2 : Contexte global ─────────────────────────────────────────
+        # Utilise les chunks extraits comme base — fonctionne pour tous les formats.
+        doc_context = ""
+        if context_llm is not None:
+            doc_context = generate_document_context(file_path, context_llm, extracted_chunks)
+
+        base_metadata: Dict[str, Any] = {"source": file_path.name}
+        if doc_context:
+            base_metadata["global_context"] = doc_context
+
+        # ── Étape 3 : Vectorisation ───────────────────────────────────────────
         if extracted_chunks:
             for text_chunk, specific_metadata in extracted_chunks:
                 merged_metadata = {**base_metadata, **specific_metadata}
@@ -151,8 +171,6 @@ def seed_database() -> None:
     print("\n" + "─" * 60)
     logger.info("INGEST | ✓ Complete")
     logger.info("INGEST | Accepted=%d Rejected=%d Chunks=%d", total_accepted, total_rejected, total_chunks)
-    
-    
 
 
 if __name__ == "__main__":

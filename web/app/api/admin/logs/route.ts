@@ -20,7 +20,10 @@ export async function GET(req: Request) {
 
 export async function DELETE() {
   try {
-    await fetch(`${BACKEND}/logs`, { method: "DELETE", headers: { "X-Api-Key": API_KEY } });
+    await fetch(`${BACKEND}/logs`, {
+      method: "DELETE",
+      headers: { "X-Api-Key": API_KEY },
+    });
     return NextResponse.json({ cleared: true });
   } catch {
     return NextResponse.json({ error: "Erreur backend" }, { status: 500 });
