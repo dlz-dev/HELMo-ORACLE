@@ -10,9 +10,10 @@ import logging
 from pathlib import Path as _Path
 from typing import Optional
 
+import os
 import uvicorn
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from langgraph.prebuilt import create_react_agent
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
@@ -58,6 +59,14 @@ mm = MemoryManager(
     min_recent_messages=config.get("memory", {}).get("min_recent_messages", 4),
 )
 pii = PIIManager()
+
+# ─── Auth ─────────────────────────────────────────────────────────────────────
+
+_ADMIN_API_KEY = os.getenv("API_SECRET_KEY", "")
+
+def _require_api_key(x_api_key: str = Header(...)):
+    if not _ADMIN_API_KEY or x_api_key != _ADMIN_API_KEY:
+        raise HTTPException(status_code=401, detail="Clé API invalide")
 
 # ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -298,7 +307,7 @@ def _run_ingestion(file_paths):
         logger.error("INGEST | Erreur : %s", e)
 
 
-@app.post("/ingest")
+@app.post("/ingest", dependencies=[Depends(_require_api_key)])
 async def trigger_ingest(files: list[UploadFile] = File(...)):
     if _ingest_status.get("running"):
         return {"started": False, "detail": "Une ingestion est déjà en cours."}
@@ -551,7 +560,7 @@ def test_provider(req: TestRequest):
 
 # ─── Logs ─────────────────────────────────────────────────────────────────────
 
-@app.get("/logs")
+@app.get("/logs", dependencies=[Depends(_require_api_key)])
 def get_logs(lines: int = 100):
     """Retourne les N dernières lignes du fichier de log."""
     try:
@@ -568,7 +577,7 @@ def get_logs(lines: int = 100):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/logs")
+@app.delete("/logs", dependencies=[Depends(_require_api_key)])
 def clear_logs():
     """Vide le fichier de log."""
     try:
