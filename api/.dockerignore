@@ -11,12 +11,5 @@ frontend/
 api/storage/sessions/
 api/data/new_files/*
 api/data/quarantine/*
+api/config/config.yaml
 api/config/prompt.txt
-.venv/
-tests/
-storage/sessions/
-data/new_files/*
-data/quarantine/*
-logs/
-config/prompt.txt
-.env

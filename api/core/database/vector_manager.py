@@ -1,9 +1,13 @@
 """
 Manages vector operations and hybrid search against the PostgreSQL/Supabase database.
+
+Search strategy:
+  - Semantic search (cosine distance): finds conceptually similar content.
+  - BM25 / FTS (tsvector): finds exact keyword matches.
+  - Hybrid fusion (RRF): merges both result lists optimally.
 """
 
 import json
-import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -14,8 +18,7 @@ from pgvector.psycopg import register_vector
 
 from core.utils.utils import FTS_LANG, K_BM25, K_FINAL, K_SEMANTIC, RRF_K, load_config
 
-# Get the logger instance configured in logger.py
-logger = logging.getLogger("oracle")
+
 
 class VectorManager:
     """Handles connections to PostgreSQL/Supabase and manages hybrid search execution."""
@@ -24,31 +27,25 @@ class VectorManager:
         """Initializes database connection and embedding model."""
         config = load_config()
         db_config = config.get("database", {})
-        self.conn = None
-        self.db_available = False
 
         try:
-            conn_string = db_config.get("connection_string")
-            if not conn_string:
-                raise ValueError("DATABASE_URL (connection_string) is not set in the configuration.")
-            
-            self.conn = psycopg.connect(conn_string, autocommit=True)
+            if "connection_string" in db_config:
+                self.conn = psycopg.connect(db_config["connection_string"], autocommit=True)
+            else:
+                self.conn = psycopg.connect(
+                    host=db_config.get("host"),
+                    dbname=db_config.get("dbname"),
+                    user=db_config.get("user"),
+                    password=db_config.get("password"),
+                    port=int(db_config.get("port", 5432)),
+                    sslmode="require",
+                    autocommit=True,
+                )
             register_vector(self.conn)
-            
-            # Test connection
-            with self.conn.cursor() as cur:
-                cur.execute("SELECT 1")
-            
             self.db_available = True
-            logger.info("VectorManager: Database connection successful.")
-
-        except (psycopg.Error, ValueError) as e:
-            # Log the specific connection error
-            logger.error(f"VectorManager: Failed to connect to the database. Error: {e}", exc_info=True)
-            if self.conn:
-                self.conn.close()
-            self.conn = None
+        except psycopg.OperationalError:
             self.db_available = False
+            self.conn = None
 
         self.embeddings_model = embeddings_model or HuggingFaceEmbedding(
             model_name="intfloat/multilingual-e5-base"
@@ -56,11 +53,19 @@ class VectorManager:
 
     def is_db_available(self) -> bool:
         """Checks if the database connection is active."""
-        return self.db_available and self.conn is not None and not self.conn.closed
+        if not self.db_available or self.conn is None:
+            return False
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT 1")
+            return True
+        except psycopg.Error:
+            return False
 
     def add_document(self, text: str, metadata: Optional[Dict[str, Any]] = None) -> None:
         """
         Generates an embedding and saves the text with metadata and ingestion timestamp.
+        The fts_vector column is populated automatically by the database trigger.
         """
         if not self.is_db_available():
             raise ConnectionError("Database is not available.")
@@ -89,6 +94,13 @@ class VectorManager:
     ) -> List[Tuple[str, float, Dict[str, Any]]]:
         """
         Executes cosine similarity search (<=>).
+        
+        Args:
+            query_vector: The vectorized user query.
+            k: Number of semantic results to retrieve.
+            
+        Returns:
+            List of tuples containing (content, distance, metadata).
         """
         if not self.is_db_available():
             return []
@@ -108,6 +120,13 @@ class VectorManager:
     def search_bm25(self, query: str, k: int = K_BM25) -> List[Tuple[str, float, Dict[str, Any]]]:
         """
         Executes PostgreSQL Full-Text Search for exact keyword matches.
+        
+        Args:
+            query: The raw string user query.
+            k: Number of exact match results to retrieve.
+            
+        Returns:
+            List of tuples containing (content, rank_score, metadata).
         """
         if not self.is_db_available():
             return []
@@ -129,14 +148,22 @@ class VectorManager:
                 cur.execute(query_sql, (query, query, k))
                 return cur.fetchall()
         except Exception as e:
-            logger.warning(f"BM25 search failed: {e}")
+            print(f"⚠️ BM25 unavailable ({e}) — semantic-only fallback active")
             return []
 
     def search_hybrid(
         self, query: str, query_vector: List[float], k_final: int = K_FINAL
     ) -> List[Tuple[str, float, Dict[str, Any]]]:
         """
-        Combines semantic and BM25 searches using Reciprocal Rank Fusion.
+        Combines semantic cosine and BM25 searches using Reciprocal Rank Fusion.
+        
+        Args:
+            query: Raw string query for exact matching.
+            query_vector: Vectorized query for semantic matching.
+            k_final: Total number of fused results to return.
+            
+        Returns:
+            List of tuples containing (content, rrf_score, metadata) ordered by best score.
         """
         if not self.is_db_available():
             return []
@@ -165,10 +192,13 @@ class VectorManager:
     def list_sources(self) -> List[Dict[str, Any]]:
         """
         Aggregates database entries to return unique source files.
+        
+        Returns:
+            List of dictionaries containing source metrics and metadata.
         """
         if not self.is_db_available():
             return []
-            
+
         try:
             with self.conn.cursor() as cur:
                 cur.execute(
@@ -195,7 +225,7 @@ class VectorManager:
                     for r in rows
                 ]
         except Exception as e:
-            logger.warning(f"list_sources failed: {e}")
+            print(f"⚠️ list_sources failed: {e}")
             return []
 
     def search_similar(

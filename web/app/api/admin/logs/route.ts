@@ -1,29 +1,31 @@
 import { NextResponse } from "next/server";
 
+const BACKEND = process.env.BACKEND_API_URL || "http://127.0.0.1:8000";
+const API_KEY = process.env.API_SECRET_KEY || "";
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const lines = searchParams.get("lines") ?? "100";
-  const level = searchParams.get("level") ?? "";
-
+  const lines = searchParams.get("lines") || "100";
   try {
-    const url = new URL(`${process.env.BACKEND_API_URL}/logs`);
-    url.searchParams.set("lines", lines);
-    if (level) url.searchParams.set("level", level);
-
-    const res = await fetch(url.toString(), {
-      headers: {
-        "X-API-Key": process.env.ADMIN_PASSWORD ?? "",
-      },
+    const res = await fetch(`${BACKEND}/logs?lines=${lines}`, {
+      headers: { "X-Api-Key": API_KEY },
+      cache: "no-store",
     });
-
-    if (!res.ok) throw new Error(`Backend error: ${res.status}`);
-
     const data = await res.json();
     return NextResponse.json(data);
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: "Erreur récupération logs", details: error.message },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ logs: [], total: 0 }, { status: 500 });
+  }
+}
+
+export async function DELETE() {
+  try {
+    await fetch(`${BACKEND}/logs`, {
+      method: "DELETE",
+      headers: { "X-Api-Key": API_KEY },
+    });
+    return NextResponse.json({ cleared: true });
+  } catch {
+    return NextResponse.json({ error: "Erreur backend" }, { status: 500 });
   }
 }
