@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 const ROLES = [
@@ -15,7 +14,6 @@ const ROLES = [
 ];
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -31,8 +29,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInAnonymously();
     if (error) setError(error.message);
     else {
-      router.push("/");
-      router.refresh();
+      window.location.href = "/";
     }
     setLoading(false);
   }
@@ -51,8 +48,7 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
-        router.push("/");
-        router.refresh();
+        window.location.href = "/";
       }
     } else {
       const { data, error } = await supabase.auth.signUp({ email, password });

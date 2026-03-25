@@ -16,6 +16,7 @@ class TestVectorManager(unittest.TestCase):
         }
 
         self.mock_conn = MagicMock()
+        self.mock_conn.closed = False
         mock_connect.return_value = self.mock_conn
 
         self.mock_cur = MagicMock()

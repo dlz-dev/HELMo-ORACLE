@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Lock, Unlock, Eye, EyeOff } from "lucide-react";
 import { clsx } from "clsx";
 import type { IngestStatus } from "@/lib/api";
@@ -43,11 +43,6 @@ export function AdminPanel() {
   >("idle");
   const [testOutput, setTestOutput] = useState("");
 
-  // ── Logs ──────────────────────────────────────────────────────────
-  const [logs, setLogs] = useState<string[]>([]);
-  const [logsLoading, setLogsLoading] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(false);
-
   // ── Health ────────────────────────────────────────────────────────
   const [healthData, setHealthData] = useState<any>(null);
   const [healthState, setHealthState] = useState<"idle" | "running" | "done">(
@@ -73,26 +68,6 @@ export function AdminPanel() {
       // JSON.parse peut échouer si la valeur localStorage est corrompue — on garde les défauts
     }
   }, []);
-
-  // ── Auto-refresh logs ─────────────────────────────────────────────
-  const fetchLogs = useCallback(async () => {
-    setLogsLoading(true);
-    try {
-      const res = await fetch("/api/admin/logs?lines=150");
-      const data = await res.json();
-      setLogs(data.logs || []);
-    } catch (err) {
-      console.error("Erreur lors du chargement des logs:", err);
-    } finally {
-      setLogsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!autoRefresh) return;
-    const id = setInterval(fetchLogs, 3000);
-    return () => clearInterval(id);
-  }, [autoRefresh, fetchLogs]);
 
   // ── Handlers ─────────────────────────────────────────────────────
   const handleLogin = async () => {
@@ -304,17 +279,7 @@ export function AdminPanel() {
         onMsgChange={setTestMsg}
         onTest={handleTestProvider}
       />
-      <LogsSection
-        logs={logs}
-        logsLoading={logsLoading}
-        autoRefresh={autoRefresh}
-        onFetch={fetchLogs}
-        onToggleAutoRefresh={() => setAutoRefresh((v) => !v)}
-        onClear={async () => {
-          await fetch("/api/admin/logs", { method: "DELETE" });
-          setLogs([]);
-        }}
-      />
+      <LogsSection />
       <HealthSection
         healthData={healthData}
         healthState={healthState}
