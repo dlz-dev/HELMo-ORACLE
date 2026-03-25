@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const backendUrl = process.env.BACKEND_API_URL || "http://127.0.0.1:8000";
   try {
-    const res = await fetch(`${backendUrl}/health/full`, { cache: "no-store" });
+    const res = await fetch(`${backendUrl}/health`, { cache: "no-store" });
     const data = await res.json();
     return NextResponse.json(data);
   } catch {

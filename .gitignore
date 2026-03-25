@@ -24,3 +24,6 @@ api/data/quarantaine/
 api/storage
 web/.env.local
 api/logs
+web/.next/
+web/node_modules/
+web/next-env.d.ts
