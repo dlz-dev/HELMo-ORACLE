@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HeLMO Oracle - Architecture</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="script.js"></script>
+<script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.js';
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'dark',
+        themeVariables: {
+            primaryColor: '#10141c',
+            primaryTextColor: '#f0f2f5',
+            primaryBorderColor: '#C9A84C',
+            lineColor: '#888',
+            secondaryColor: '#161b26',
+            tertiaryColor: '#10141c'
+        }
+    });
+</script>
+<link href="style.css" rel="stylesheet"/>
+</head>
+<body class="antialiased relative min-h-screen flex flex-col bg-gray-50 dark:bg-[#0a0c10]">
+
+<div class="absolute top-[10%] left-1/2 -translate-x-1/2 w-[90vw] h-[700px] bg-hero-glow -z-10 blur-3xl rounded-full pointer-events-none"></div>
+
+<header class="fixed top-0 left-0 right-0 z-50 bg-gray-50/80 dark:bg-[#0a0c10]/80 backdrop-blur-md border-b border-gray-900/10 dark:border-white/10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <a href="index.html" class="flex-shrink-0 flex items-center gap-2 cursor-pointer">
+        <span class="text-gold text-xl leading-none select-none">◈</span>
+        <span class="font-heading text-xl font-bold tracking-wide uppercase">Oracle</span>
+      </a>
+
+      <nav class="hidden md:flex space-x-6 text-sm font-medium text-gray-600 dark:text-gray-400">
+        <a class="hover:text-gold transition-colors" href="technologie.html">Technologie</a>
+        <a class="hover:text-gold transition-colors" href="pipeline-rag.html">Pipeline RAG</a>
+        <a class="hover:text-gold transition-colors" href="architecture.html">Architecture</a>
+        <a class="hover:text-gold transition-colors" href="faq.html">FAQ</a>
+      </nav>
+
+      <div class="hidden md:flex items-center space-x-2 text-sm font-medium">
+        <button id="theme-toggle" type="button" class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10 focus:outline-none">
+          <span class="sr-only">Toggle theme</span>
+          <svg id="theme-toggle-sun" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg id="theme-toggle-moon" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+        <a class="px-5 py-2 rounded-md bg-gold hover:bg-gold-light text-white font-semibold transition-all duration-300" href="https://oracle.dlzteam.com/">Accéder au Chat</a>
+      </div>
+    </div>
+  </div>
+  <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-gold to-transparent opacity-40"></div>
+</header>
+<main class="flex-grow pt-32 pb-20">
+  <section class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center z-10 text-gray-900 dark:text-white">
+    <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-4 max-w-5xl mx-auto leading-none font-heading">
+      <span class="text-gradient">Architecture</span>
+    </h1>
+    <p class="mt-2 text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+      Contenu à venir sur l'architecture de HeLMO Oracle.
+    </p>
+  </section>
+</main>
+
+<footer class="mt-auto py-8 text-center text-sm text-gray-500 dark:text-gray-400 font-medium border-t border-gray-900/10 dark:border-white/10 relative z-20">
+  <p>© 2025 HeLMO Oracle. Projet académique par Tim, Maxime et Arnaud.</p>
+</footer>
+
+<script src="main.js" defer></script>
+</body>
+</html>
