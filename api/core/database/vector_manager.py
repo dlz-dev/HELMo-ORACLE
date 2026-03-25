@@ -31,7 +31,8 @@ class VectorManager:
             conn_string = db_config.get("connection_string")
             if not conn_string:
                 raise ValueError("DATABASE_URL (connection_string) is not set in the configuration.")
-            
+
+            self._conn_string = conn_string
             self.conn = psycopg.connect(conn_string, autocommit=True)
             register_vector(self.conn)
             
@@ -49,14 +50,47 @@ class VectorManager:
                 self.conn.close()
             self.conn = None
             self.db_available = False
+            self._conn_string = db_config.get("connection_string", "")
 
         self.embeddings_model = embeddings_model or HuggingFaceEmbedding(
             model_name="intfloat/multilingual-e5-base"
         )
 
+    def _reconnect(self) -> bool:
+        """Attempts to re-establish the database connection."""
+        try:
+            if self.conn and not self.conn.closed:
+                try:
+                    self.conn.close()
+                except Exception:
+                    pass
+            conn_string = getattr(self, "_conn_string", None)
+            if not conn_string:
+                return False
+            self.conn = psycopg.connect(conn_string, autocommit=True, connect_timeout=10)
+            register_vector(self.conn)
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT 1")
+            self.db_available = True
+            logger.info("VectorManager: Reconnected to database successfully.")
+            return True
+        except Exception as e:
+            logger.error(f"VectorManager: Reconnect failed. Error: {e}")
+            self.conn = None
+            self.db_available = False
+            return False
+
     def is_db_available(self) -> bool:
-        """Checks if the database connection is active."""
-        return self.db_available and self.conn is not None and not self.conn.closed
+        """Checks if the database connection is active, attempting a reconnect if needed."""
+        if not self.db_available or self.conn is None or self.conn.closed:
+            return self._reconnect()
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT 1")
+            return True
+        except Exception:
+            logger.warning("VectorManager: Connection lost, attempting reconnect...")
+            return self._reconnect()
 
     def add_document(self, text: str, metadata: Optional[Dict[str, Any]] = None) -> None:
         """
