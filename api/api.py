@@ -8,11 +8,14 @@ Exposes the RAG pipeline as a REST API so a separate frontend
 import os
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Optional
 import uuid
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Header, Depends
+import threading as _threading
+
+from fastapi import FastAPI, File, HTTPException, Header, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from langgraph.prebuilt import create_react_agent
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
@@ -42,12 +45,24 @@ _embeddings = HuggingFaceEmbedding(model_name="intfloat/multilingual-e5-base")
 logger.info("Modèle embeddings chargé : intfloat/multilingual-e5-base")
 
 vm = VectorManager(embeddings_model=_embeddings)
-set_shared_conn(vm.conn) # Pass the connection to the shared logger
 
 if vm.is_db_available():
-    logger.info("VectorManager connecté à PostgreSQL.")
+    logger.info("VectorManager connecté à Digital Ocean (pgvector).")
 else:
-    logger.error("VectorManager n'a PAS pu se connecter à PostgreSQL. Les logs DB et la recherche seront indisponibles.")
+    logger.error("VectorManager n'a PAS pu se connecter à Digital Ocean. La recherche sera indisponible.")
+
+# --- Connexion séparée Supabase pour logs/profils ---
+import psycopg as _psycopg
+_log_conn = None
+_LOG_DB_URL = os.getenv("LOG_DATABASE_URL", "")
+if _LOG_DB_URL:
+    try:
+        _log_conn = _psycopg.connect(_LOG_DB_URL, autocommit=False, connect_timeout=10)
+        logger.info("Connexion Supabase (logs) initialisée.")
+    except Exception as _e:
+        logger.error(f"Impossible de se connecter à Supabase pour les logs : {_e}")
+
+set_shared_conn(_log_conn)
 
 _mcp_module.setup(vm)
 _mcp_asgi = _mcp_module.mcp.streamable_http_app()
@@ -174,6 +189,81 @@ def health():
 
     return {"status": "ok", "checks": checks}
 
+@app.get("/health/full")
+def health_full():
+    """
+    Vérifie l'état de tous les composants du système.
+    Teste : base de données, embeddings, et chaque clé API configurée.
+    """
+    results = {}
+
+    # ── Base de données ───────────────────────────────────────────
+    if vm.is_db_available():
+        try:
+            start = time.time()
+            with vm.conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM documents")
+                count = cur.fetchone()[0]
+            results["database"] = {
+                "status": "ok",
+                "documents": count,
+                "latency_ms": round((time.time() - start) * 1000),
+            }
+        except Exception as e:
+            results["database"] = {"status": "error", "error": str(e)}
+    else:
+        results["database"] = {"status": "error", "error": "Connexion indisponible"}
+
+    # ── Modèle embeddings ─────────────────────────────────────────
+    try:
+        start = time.time()
+        _embeddings.get_text_embedding("test")
+        results["embeddings"] = {
+            "status": "ok",
+            "model": "intfloat/multilingual-e5-base",
+            "latency_ms": round((time.time() - start) * 1000),
+        }
+    except Exception as e:
+        results["embeddings"] = {"status": "error", "error": str(e)}
+
+    # ── Clés API (teste uniquement celles configurées) ────────────
+    providers_to_check = {
+        "groq": ("GROQ_API_KEY", "langchain_groq", "ChatGroq", {"model": "llama-3.1-8b-instant"}),
+        "openai": ("OPENAI_API_KEY", "langchain_openai", "ChatOpenAI", {"model": "gpt-4o-mini"}),
+        "anthropic": ("ANTHROPIC_API_KEY", "langchain_anthropic", "ChatAnthropic", {"model": "claude-haiku-4-5-20251001"}),
+        "gemini": ("GOOGLE_API_KEY", "langchain_google_genai", "ChatGoogleGenerativeAI", {"model": "gemini-2.0-flash"}),
+    }
+
+    from langchain_core.messages import HumanMessage as _HM
+
+    for provider_name, (env_var, module, cls_name, kwargs) in providers_to_check.items():
+        api_key = os.environ.get(env_var, "")
+        if not api_key:
+            results[provider_name] = {"status": "not_configured"}
+            continue
+        try:
+            start = time.time()
+            mod = __import__(module, fromlist=[cls_name])
+            cls = getattr(mod, cls_name)
+            llm = cls(api_key=api_key, temperature=0, **kwargs)
+            llm.invoke([_HM(content="Reply with one word: ok")])
+            results[provider_name] = {
+                "status": "ok",
+                "latency_ms": round((time.time() - start) * 1000),
+            }
+        except Exception as e:
+            results[provider_name] = {"status": "error", "error": str(e)[:120]}
+
+    has_error = any(
+        v.get("status") == "error"
+        for v in results.values()
+    )
+    return {
+        "status": "degraded" if has_error else "ok",
+        "checks": results,
+    }
+
+
 @app.get("/providers/{provider}/models")
 def list_models(provider: str):
     try:
@@ -255,18 +345,129 @@ def list_archives():
 
 # --- Ingestion ---
 _ingest_status = {"running": False, "last_status": "idle", "last_message": ""}
-# ... (ingestion code remains the same)
+
+
+def _run_ingestion(file_paths: list):
+    global _ingest_status
+    from pathlib import Path
+    from core.agent.guardian import is_valid_lore_file
+    from core.utils.utils import ARCHIVE_DIR, QUARANTINE_DIR, load_api_key
+    from converters import convert_csv, convert_markdown, convert_text, convert_json, convert_pdf
+    from converters.convert_unstructured import process_with_unstructured
+    from core.pipeline.ingestion import generate_document_context
+    import shutil
+
+    config = load_config()
+    guardian_cfg = config.get("guardian", {})
+    ctx_provider = guardian_cfg.get("provider", "groq")
+    ctx_model = guardian_cfg.get("model", "llama-3.1-8b-instant")
+    api_key = load_api_key()
+    total = len(file_paths)
+
+    try:
+        context_llm = get_llm(provider_key=ctx_provider, model=ctx_model, config=config)
+    except Exception as e:
+        context_llm = None
+        logger.warning("INGEST | Context LLM unavailable: %s", e)
+
+    try:
+        for i, fp in enumerate(file_paths):
+            fp = Path(fp)
+            _ingest_status["last_message"] = f"Fichier {i+1}/{total} — Validation de {fp.name}…"
+
+            # 1. Guardian
+            try:
+                valid = is_valid_lore_file(str(fp), api_key)
+            except RuntimeError as e:
+                _ingest_status = {"running": False, "last_status": "error", "last_message": f"Guardian indisponible: {e}"}
+                return
+
+            if not valid:
+                shutil.move(str(fp), str(QUARANTINE_DIR / fp.name))
+                logger.warning("INGEST | Rejeté : %s", fp.name)
+                continue
+
+            # 2. Conversion
+            _ingest_status["last_message"] = f"Fichier {i+1}/{total} — Conversion de {fp.name}…"
+            ext = fp.suffix.lower()
+            if ext == ".csv":
+                chunks = convert_csv.load_csv_data(str(fp))
+            elif ext == ".md":
+                chunks = convert_markdown.parse_markdown(str(fp))
+            elif ext == ".txt":
+                chunks = convert_text.process_text_file(str(fp))
+            elif ext == ".json":
+                chunks = convert_json.parse_json(str(fp))
+            elif ext == ".pdf":
+                chunks = convert_pdf.process_pdf_file(str(fp))
+            else:
+                chunks = process_with_unstructured(str(fp))
+
+            # 3. Contexte global
+            doc_context = ""
+            if context_llm is not None:
+                doc_context = generate_document_context(fp, context_llm, chunks)
+
+            base_metadata = {"source": fp.name}
+            if doc_context:
+                base_metadata["global_context"] = doc_context
+
+            # 4. Vectorisation
+            _ingest_status["last_message"] = f"Fichier {i+1}/{total} — Vectorisation de {fp.name}…"
+            for text, meta in chunks:
+                vm.add_document(text, metadata={**base_metadata, **meta})
+
+            # 5. Archive
+            shutil.move(str(fp), str(ARCHIVE_DIR / fp.name))
+            logger.info("INGEST | OK — %s (%d chunks)", fp.name, len(chunks))
+
+        _ingest_status = {"running": False, "last_status": "success", "last_message": f"{total} fichier(s) ingéré(s) avec succès."}
+
+    except Exception as e:
+        _ingest_status = {"running": False, "last_status": "error", "last_message": str(e)}
+        logger.error("INGEST | Erreur : %s", e, exc_info=True)
+
+
+@app.post("/ingest", dependencies=[Depends(_require_api_key)])
+async def trigger_ingest(files: list[UploadFile] = File(...)):
+    if _ingest_status.get("running"):
+        return {"started": False, "detail": "Une ingestion est déjà en cours."}
+
+    from core.utils.utils import NEW_FILES_DIR, ARCHIVE_DIR, QUARANTINE_DIR
+    NEW_FILES_DIR.mkdir(parents=True, exist_ok=True)
+    ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+    QUARANTINE_DIR.mkdir(parents=True, exist_ok=True)
+
+    saved_paths = []
+    for file in files:
+        safe_name = Path(file.filename).name  # strip any subdirectory prefix (webkitdirectory)
+        dest = NEW_FILES_DIR / safe_name
+        contents = await file.read()
+        with open(dest, "wb") as f:
+            f.write(contents)
+        saved_paths.append(dest)
+        logger.info("INGEST | Fichier reçu : %s", safe_name)
+
+    _ingest_status["running"] = True
+    t = _threading.Thread(target=_run_ingestion, args=[saved_paths], daemon=True)
+    t.start()
+    return {"started": True, "files": [f.filename for f in files]}
+
+
+@app.get("/ingest/status")
+def ingest_status():
+    return _ingest_status
 
 # --- Logs ---
 @app.get("/logs", dependencies=[Depends(_require_api_key)])
 def get_logs(lines: int = 100, level: Optional[str] = None, source: Optional[str] = None):
     """Fetches logs from the database with optional filters."""
-    if not vm.is_db_available():
-        logger.error("[GET_LOGS] DB not available.")
-        raise HTTPException(status_code=503, detail="Base de données indisponible")
+    if _log_conn is None or _log_conn.closed:
+        logger.error("[GET_LOGS] Connexion Supabase (logs) indisponible.")
+        raise HTTPException(status_code=503, detail="Connexion logs indisponible")
 
     try:
-        with vm.conn.cursor() as cur:
+        with _log_conn.cursor() as cur:
             base_query = sql.SQL("""
                 SELECT l.id, l.created_at, l.level, l.source, l.message, l.metadata, p.first_name, p.last_name
                 FROM logs l
