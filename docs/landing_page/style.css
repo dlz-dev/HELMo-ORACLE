@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+body {
+    background-color: #0a0c10;
+    color: #f0f2f5;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    overflow-x: hidden;
+}
+.font-heading {
+    font-family: "Outfit", sans-serif;
+}
+.glass-card {
+    background: rgba(16, 20, 28, 0.6);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+.glass-card-glow-starter {
+    box-shadow: 0 0 50px rgba(201, 168, 76, 0.05), inset 0 0 20px rgba(201, 168, 76, 0.02);
+    border: 1px solid rgba(201, 168, 76, 0.2);
+}
+.glass-card-glow-pro {
+    box-shadow: 0 0 80px rgba(201, 168, 76, 0.15), inset 0 0 40px rgba(201, 168, 76, 0.08);
+    border: 1px solid rgba(201, 168, 76, 0.5);
+    background: linear-gradient(180deg, rgba(201, 168, 76, 0.05) 0%, rgba(16, 20, 28, 0.8) 100%);
+}
+.text-gradient {
+    background: linear-gradient(to right, #fff, #C9A84C);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+/* Style pour les détails de l'accordéon FAQ */
+details summary::-webkit-details-marker {
+  display:none;
+}
+details[open] summary span.icon {
+  transform: rotate(180deg);
+}
