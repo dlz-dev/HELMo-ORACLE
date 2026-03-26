@@ -6,250 +6,106 @@
 <title>HeLMO Oracle - Présentation Vitrine</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="script.js"></script>
-<script type="module">
-    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.js';
-    mermaid.initialize({
-        startOnLoad: true,
-        theme: 'dark',
-        themeVariables: {
-            primaryColor: '#10141c',
-            primaryTextColor: '#f0f2f5',
-            primaryBorderColor: '#C9A84C',
-            lineColor: '#888',
-            secondaryColor: '#161b26',
-            tertiaryColor: '#10141c'
-        }
-    });
-</script>
 <link href="style.css" rel="stylesheet"/>
 </head>
-<body class="antialiased relative min-h-screen flex flex-col bg-gray-50 dark:bg-[#0a0c10]">
+<body class="antialiased relative min-h-screen flex flex-col bg-immersive dark:bg-[#0a0c10]">
 
-<div class="absolute top-[10%] left-1/2 -translate-x-1/2 w-[90vw] h-[700px] bg-hero-glow -z-10 blur-3xl rounded-full pointer-events-none"></div>
+<div class="fixed inset-0 bg-black/40 z-0 pointer-events-none"></div>
 
-<header class="fixed top-0 left-0 right-0 z-50 bg-gray-50/80 dark:bg-[#0a0c10]/80 backdrop-blur-md border-b border-gray-900/10 dark:border-white/10">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16">
-      <a href="index.html" class="flex-shrink-0 flex items-center gap-2 cursor-pointer">
-        <span class="text-gold text-xl leading-none select-none">◈</span>
-        <span class="font-heading text-xl font-bold tracking-wide uppercase">Oracle</span>
+<header class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl bg-white/10 dark:bg-[#0a0c10]/40 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-full px-6 py-3 shadow-lg transition-all">
+  <div class="flex items-center justify-between">
+    <a href="index.html" class="flex-shrink-0 flex items-center gap-2 cursor-pointer">
+      <span class="text-gold text-xl leading-none select-none">◈</span>
+      <span class="font-heading text-xl font-bold tracking-wide uppercase text-white">Oracle</span>
+    </a>
+
+    <nav class="hidden md:flex space-x-8 text-sm font-semibold text-white/80">
+      <a class="hover:text-gold transition-colors" href="technologie.html">Technologie</a>
+      <a class="hover:text-gold transition-colors" href="pipeline-rag.html">Pipeline RAG</a>
+      <a class="hover:text-gold transition-colors" href="architecture.html">Architecture</a>
+    </nav>
+
+    <div class="hidden md:flex items-center space-x-4 text-sm font-medium">
+      <a class="px-6 py-2.5 rounded-full bg-white text-black dark:bg-black dark:text-white font-bold hover:scale-105 transition-all duration-300" href="https://oracle.dlzteam.com/">
+        Accéder au Chat
       </a>
-
-      <nav class="hidden md:flex space-x-6 text-sm font-medium text-gray-600 dark:text-gray-400">
-        <a class="hover:text-gold transition-colors" href="technologie.html">Technologie</a>
-        <a class="hover:text-gold transition-colors" href="pipeline-rag.html">Pipeline RAG</a>
-        <a class="hover:text-gold transition-colors" href="architecture.html">Architecture</a>
-        <a class="hover:text-gold transition-colors" href="faq.html">FAQ</a>
-      </nav>
-
-      <div class="hidden md:flex items-center space-x-2 text-sm font-medium">
-        <button id="theme-toggle" type="button" class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10 focus:outline-none">
-          <span class="sr-only">Toggle theme</span>
-          <svg id="theme-toggle-sun" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-          <svg id="theme-toggle-moon" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-          </svg>
-        </button>
-        <a class="px-5 py-2 rounded-md bg-gold hover:bg-gold-light text-white font-semibold transition-all duration-300" href="https://oracle.dlzteam.com/">Accéder au Chat</a>
-      </div>
     </div>
   </div>
-  <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-gold to-transparent opacity-40"></div>
 </header>
-<main class="flex-grow pt-32 pb-20">
-  <section class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center z-10">
-    <div class="inline-flex items-center px-3 py-1 rounded-full border border-yellow-700/30 dark:border-gold/30 bg-yellow-700/10 dark:bg-gold/10 backdrop-blur-sm text-xs font-bold text-yellow-800 dark:text-gold mb-8 tracking-wide">
+
+<main class="flex-grow pt-40 pb-20 relative z-10">
+
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+
+    <div class="inline-flex items-center px-4 py-1.5 rounded-full border border-white/30 bg-white/10 backdrop-blur-md text-xs font-bold text-white mb-8 tracking-wide">
       Projet Académique — HeLMO 2025
     </div>
 
-    <h1 class="text-6xl md:text-7xl lg:text-[6rem] font-extrabold tracking-tight mb-4 max-w-5xl mx-auto leading-none font-heading">
-      <span class="text-gradient">HeLMO Oracle</span>
+    <h1 class="text-6xl md:text-8xl font-extrabold tracking-tight mb-6 max-w-5xl mx-auto leading-tight font-heading text-white drop-shadow-lg">
+      L'IA Maîtresse du <br/><span class="text-gradient">Lore de Dofus</span>
     </h1>
-    <p class="text-2xl md:text-3xl text-gray-900 dark:text-white font-medium tracking-normal mb-8 font-heading">
-      L'IA Maîtresse du Lore de Dofus
+
+    <p class="mt-4 text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
+      Un assistant intelligent basé sur l'architecture RAG, conçu pour interroger, analyser et synthétiser l'intégralité du lore du Krosmoz.
     </p>
 
-    <p class="mt-2 text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-      Un assistant intelligent basé sur l'architecture RAG, conçu pour interroger, analyser et synthétiser l'intégralité du lore du Krosmoz de manière autonome.
-    </p>
-
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-      <a class="w-full sm:w-auto px-8 py-3 rounded-md bg-gold text-white font-bold hover:bg-gold-light transition-colors shadow-[0_0_20px_rgba(201,168,76,0.3)]" href="https://oracle.dlzteam.com/">
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+      <a class="w-full sm:w-auto px-8 py-3.5 rounded-full bg-gold text-black font-bold hover:bg-gold-light hover:-translate-y-1 transition-all shadow-[0_0_20px_rgba(201,168,76,0.3)]" href="https://oracle.dlzteam.com/">
         Lancer la Démo
       </a>
-      <a class="w-full sm:w-auto px-8 py-3 rounded-md border border-gray-900/20 dark:border-white/20 text-gray-800 dark:text-white font-semibold flex items-center justify-center gap-2 hover:bg-black/5 dark:hover:bg-white/5 transition-colors" href="https://github.com/dlz-dev/HELMo-ORACLE">
+      <a class="w-full sm:w-auto px-8 py-3.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold hover:bg-white/20 transition-all" href="https://github.com/dlz-dev/HELMo-ORACLE">
         Code Source GitHub
       </a>
     </div>
 
-    <div class="relative w-full max-w-4xl mx-auto rounded-xl overflow-hidden glass-card border-gold/20 shadow-2xl z-20">
-      <div class="absolute inset-0 bg-gradient-to-br from-gold/5 to-transparent z-0"></div>
-
-      <div class="h-10 bg-gray-200 dark:bg-[#10141c] border-b border-black/10 dark:border-white/10 flex items-center px-4 gap-2 z-10 relative">
+    <div class="relative w-full max-w-4xl mx-auto rounded-3xl overflow-hidden glass-card shadow-2xl">
+      <div class="h-12 border-b border-white/10 flex items-center px-6 gap-2 bg-white/5">
         <div class="flex gap-2">
-            <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
-            <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-            <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
-        </div>
-        <div class="flex-grow text-center text-[11px] text-gray-500 dark:text-gray-400 font-medium tracking-wider flex items-center justify-center">
-            <div class="bg-black/10 dark:bg-black/30 px-3 py-1 rounded-md flex items-center gap-2">
-                <span class="text-gold opacity-70">🔒</span> oracle.dlzteam.com
-            </div>
+            <div class="w-3 h-3 rounded-full bg-white/30"></div>
+            <div class="w-3 h-3 rounded-full bg-white/30"></div>
+            <div class="w-3 h-3 rounded-full bg-white/30"></div>
         </div>
       </div>
-
-      <div class="relative w-full aspect-[16/9] md:aspect-[21/9] bg-gray-100/50 dark:bg-[#0a0c10]/80 flex flex-col p-6 md:p-8 z-10 overflow-hidden">
-
-        <div class="self-end bg-gray-200 text-gray-800 dark:bg-white/5 border border-black/5 dark:border-white/10 dark:text-white px-5 py-3 rounded-2xl rounded-tr-sm text-sm md:text-base max-w-[85%] md:max-w-[70%] text-left shadow-md mb-6 transform transition-all hover:-translate-y-0.5">
+      <div class="relative w-full aspect-[16/9] flex flex-col p-6 md:p-8">
+        <div class="self-end bg-white/20 backdrop-blur-md border border-white/10 text-white px-5 py-3 rounded-2xl rounded-tr-sm shadow-md mb-6">
             Comment fonctionne l'alignement entre Bonta et Brâkmar ?
         </div>
-
-        <div class="self-start bg-white dark:bg-[#161b26] border border-gray-200 dark:border-gold/20 text-gray-800 dark:text-gray-200 px-5 py-4 rounded-2xl rounded-tl-sm shadow-xl text-sm md:text-base max-w-[90%] md:max-w-[80%] text-left relative">
-            <div class="absolute -left-3 -top-3 w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center border border-gold/40 shadow-[0_0_10px_rgba(201,168,76,0.2)]">
-                <span class="text-gold text-xs">◈</span>
-            </div>
-            <span class="text-gold text-xs font-bold mb-2 block uppercase tracking-wider font-heading ml-2">Oracle System</span>
-            <p class="leading-relaxed ml-2 text-gray-700 dark:text-gray-300">
-                D'après les archives de la Bibliothèque d'Amakna, le système d'alignement divise le Monde des Douze en deux cités rivales éternelles. Les aventuriers peuvent prêter serment à <strong>Bonta</strong> (la Cité Blanche, protectrice de l'ordre) ou <strong>Brâkmar</strong> (la Cité Sombre, guidée par le chaos) afin d'accéder à des quêtes spécifiques, des rangs d'ordre, et participer aux guerres d'alignement.
+        <div class="self-start bg-black/40 backdrop-blur-md border border-white/10 text-white px-5 py-4 rounded-2xl rounded-tl-sm shadow-xl max-w-[90%] md:max-w-[80%] relative">
+            <span class="text-gold text-xs font-bold mb-2 block uppercase tracking-wider font-heading">Oracle System</span>
+            <p class="leading-relaxed text-white/90">
+                D'après les archives de la Bibliothèque d'Amakna, le système d'alignement divise le Monde des Douze en deux cités rivales...
             </p>
         </div>
       </div>
     </div>
   </section>
-  <section class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-32 z-20">
-    <div class="text-center mb-16">
-      <h2 class="text-3xl md:text-4xl font-heading font-bold text-gray-900 dark:text-white mb-4">Plans d'Accès Sacrés</h2>
-      <p class="text-gray-600 dark:text-gray-400">Choisissez votre niveau d'initiation aux mystères de l'Oracle.</p>
-    </div>
 
-    <div class="grid md:grid-cols-3 gap-8 items-center max-w-6xl mx-auto">
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-32">
+    <div class="grid md:grid-cols-3 gap-6 items-center max-w-6xl mx-auto">
 
-      <div class="glass-card glass-card-glow-starter rounded-2xl p-8 flex flex-col relative overflow-hidden transition-transform duration-300 hover:-translate-y-2 h-full">
-        <div class="relative z-10 mb-6">
-          <h3 class="text-2xl font-bold font-heading text-gray-900 dark:text-white mb-2">Novice</h3>
-          <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Accès Découverte</span>
-          <div class="mt-4 text-4xl font-extrabold text-gray-900 dark:text-white">0€<span class="text-xl text-gray-500 font-medium"> /mois</span></div>
-        </div>
-        <ul class="space-y-3 mb-10 text-sm text-gray-700 dark:text-gray-300 flex-grow relative z-10 font-medium">
-          <li class="flex items-center gap-3"><span class="text-gold font-bold">✓</span> Requêtes basiques (5/jour)</li>
-          <li class="flex items-center gap-3"><span class="text-gold font-bold">✓</span> Modèles standards (GPT-4o-mini)</li>
-          <li class="flex items-center gap-3 opacity-50 dark:opacity-40"><span class="text-gray-500 dark:text-gray-600 font-bold">✕</span> Accès Multi-LLMs</li>
-          <li class="flex items-center gap-3 opacity-50 dark:opacity-40"><span class="text-gray-500 dark:text-gray-600 font-bold">✕</span> Recherche Hybride</li>
-        </ul>
-        <a class="w-full text-center px-6 py-3 rounded-md border border-gray-900/20 dark:border-white/20 text-gray-800 dark:text-white font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-colors relative z-10" href="#">S'inscrire</a>
+      <div class="glass-card rounded-3xl p-8 transition-transform duration-300 hover:-translate-y-2 flex flex-col h-full">
+         <h3 class="text-2xl font-bold font-heading text-white mb-2">Novice</h3>
+         <p class="text-white/70 text-sm font-medium mb-6">L'accès idéal pour découvrir les bases du lore et tester les capacités de l'Oracle.</p>
+         <div class="mt-auto text-4xl font-extrabold text-white">0€<span class="text-xl text-white/50 font-medium"> /mois</span></div>
       </div>
 
-      <div class="glass-card glass-card-glow-pro rounded-2xl p-8 flex flex-col relative overflow-hidden transform md:scale-105 shadow-2xl z-10 h-full md:h-[105%]">
-        <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gray-800 dark:bg-[#10141c] border border-gold/30 text-gold text-[10px] font-bold px-4 py-1 rounded-full uppercase tracking-widest z-20">
+      <div class="glass-card glass-card-glow-pro rounded-3xl p-8 transform md:scale-105 shadow-2xl relative flex flex-col h-full">
+         <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gold text-black text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest">
           Le Plus Populaire
-        </div>
-        <div class="absolute top-0 right-0 w-32 h-32 bg-gold/10 rounded-full blur-2xl pointer-events-none"></div>
-        <div class="relative z-10 text-center mt-4 mb-6">
-          <h3 class="text-3xl font-bold font-heading text-gray-900 dark:text-white mb-2">Aventurier</h3>
-          <span class="text-gold text-sm font-medium">Accès Intégral RAG</span>
-          <div class="mt-4 text-5xl font-extrabold text-gray-900 dark:text-white">19€<span class="text-2xl text-gold-light font-medium"> /mois</span></div>
-        </div>
-        <ul class="space-y-4 mb-10 text-sm text-gray-800 dark:text-gray-200 flex-grow relative z-10 font-medium text-left mx-auto">
-          <li class="flex items-start gap-3"><span class="text-gold font-bold mt-0.5">◈</span> Requêtes illimitées</li>
-          <li class="flex items-start gap-3"><span class="text-gold font-bold mt-0.5">◈</span> Multi-LLMs (Groq, GPT-4o, Gemini)</li>
-          <li class="flex items-start gap-3"><span class="text-gold font-bold mt-0.5">◈</span> Recherche Hybride (Sémantique/BM25)</li>
-          <li class="flex items-start gap-3 opacity-50 dark:opacity-50"><span class="text-gray-500 dark:text-gray-600 font-bold">✕</span> Dashboard d'administration</li>
-        </ul>
-        <a class="w-full text-center px-8 py-3 rounded-md bg-gold text-white font-bold hover:bg-gold-light transition-colors shadow-[0_0_20px_rgba(201,168,76,0.3)] relative z-10" href="#">Choisir ce plan</a>
+         </div>
+         <h3 class="text-3xl font-bold font-heading text-white mb-2">Aventurier</h3>
+         <p class="text-white/80 text-sm font-medium mb-6">Profitez de requêtes illimitées, de recherches hybrides avancées et de l'accès aux modèles les plus puissants.</p>
+         <div class="mt-auto text-5xl font-extrabold text-white">19€<span class="text-2xl text-white/50 font-medium"> /mois</span></div>
       </div>
 
-      <div class="glass-card glass-card-glow-starter rounded-2xl p-8 flex flex-col relative overflow-hidden transition-transform duration-300 hover:-translate-y-2 h-full">
-        <div class="relative z-10 mb-6">
-          <h3 class="text-2xl font-bold font-heading text-gray-900 dark:text-white mb-2">Légende</h3>
-          <span class="text-gray-500 dark:text-gray-400 text-sm font-medium">Solution d'Intégration</span>
-          <div class="mt-4 text-4xl font-extrabold text-gray-900 dark:text-white">Sur Devis</div>
-        </div>
-        <ul class="space-y-3 mb-10 text-sm text-gray-700 dark:text-gray-300 flex-grow relative z-10 font-medium">
-          <li class="flex items-center gap-3"><span class="text-gold font-bold">✓</span> Déploiement On-Premise</li>
-          <li class="flex items-center gap-3"><span class="text-gold font-bold">✓</span> Intégration de corpus privé</li>
-          <li class="flex items-center gap-3"><span class="text-gold font-bold">✓</span> Dashboard d'administration complet</li>
-          <li class="flex items-center gap-3"><span class="text-gold font-bold">✓</span> Support dédié 24/7</li>
-        </ul>
-        <a class="w-full text-center px-6 py-3 rounded-md border border-gray-900/20 dark:border-white/20 text-gray-800 dark:text-white font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-colors relative z-10" href="#">Contacter</a>
+      <div class="glass-card rounded-3xl p-8 transition-transform duration-300 hover:-translate-y-2 flex flex-col h-full">
+         <h3 class="text-2xl font-bold font-heading text-white mb-2">Légende</h3>
+         <p class="text-white/70 text-sm font-medium mb-6">Une solution sur-mesure. Intégrez l'Oracle à votre guilde avec un déploiement privé et vos propres documents.</p>
+         <div class="mt-auto text-4xl font-extrabold text-white">Sur Devis</div>
       </div>
 
     </div>
   </section>
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-32 z-20 relative">
-    <div class="glass-card rounded-3xl p-10 lg:p-16 text-center relative overflow-hidden">
-      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-radial from-gold/5 to-transparent opacity-50 pointer-events-none"></div>
-      <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-12 relative z-10 text-gray-900 dark:text-white font-heading">Cœur Technologique de l'Oracle</h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-5xl mx-auto relative z-10">
-        <div class="flex flex-col items-center">
-          <div class="w-16 h-16 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center mb-6 text-yellow-700 dark:text-gold text-xl font-bold font-heading shadow-lg">RAG</div>
-          <h4 class="text-xl text-gray-900 dark:text-white mb-3 font-bold font-heading">Génération Augmentée</h4>
-          <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed font-medium">L'Oracle fonde ses réponses sur une base de connaissances certifiée (Dofus Wiki, Patch notes), évitant les hallucinations.</p>
-        </div>
-
-        <div class="flex flex-col items-center">
-          <div class="w-16 h-16 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center mb-6 text-yellow-700 dark:text-gold text-xl font-bold font-heading shadow-lg">LLM</div>
-          <h4 class="text-xl text-gray-900 dark:text-white mb-3 font-bold font-heading">Compatibilité Multi-Modèles</h4>
-          <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed font-medium">Passez instantanément entre Groq (Llama 3), OpenAI, Anthropic ou Gemini selon vos besoins de raisonnement.</p>
-        </div>
-
-        <div class="flex flex-col items-center">
-          <div class="w-16 h-16 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center mb-6 text-yellow-700 dark:text-gold text-xl font-bold font-heading shadow-lg">V-DB</div>
-          <h4 class="text-xl text-gray-900 dark:text-white mb-3 font-bold font-heading">Supabase pgvector</h4>
-          <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed font-medium">Indexation vectorielle haute performance pour une recherche sémantique ultra-rapide parmi des milliers de documents.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-  <section id="faq" class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-32 z-20">
-    <div class="text-center mb-12">
-      <h2 class="text-3xl md:text-4xl font-heading font-bold text-gray-900 dark:text-white mb-4">Mystères Dévoilés</h2>
-      <p class="text-gray-600 dark:text-gray-400 font-medium">Un aperçu des questions les plus courantes.</p>
-    </div>
-
-    <div class="space-y-4">
-      <details class="glass-card rounded-xl overflow-hidden transition-all duration-300 group" open>
-        <summary class="flex justify-between items-center px-6 py-5 cursor-pointer list-none text-gray-900 dark:text-white font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-colors font-heading text-lg">
-          <span>Comment l'Oracle garantit-il l'exactitude des faits de lore ?</span>
-          <span class="icon transition-transform duration-300 text-gold text-xl">▼</span>
-        </summary>
-        <div class="px-6 pb-6 pt-2 text-gray-700 dark:text-gray-400 text-sm md:text-base leading-relaxed border-t border-black/5 dark:border-white/5 bg-gray-500/5 dark:bg-[#10141c]/40 font-medium">
-          C'est le cœur de l'architecture RAG. L'Oracle ne "génère" pas une réponse à partir de ses propres "souvenirs". Lorsqu'une question est posée, il interroge d'abord notre base de connaissances certifiée (stockée sur Supabase) pour trouver les documents les plus pertinents. Il utilise ensuite ces documents comme unique source de contexte pour synthétiser sa réponse.
-        </div>
-      </details>
-      <details class="glass-card rounded-xl overflow-hidden transition-all duration-300 group">
-        <summary class="flex justify-between items-center px-6 py-5 cursor-pointer list-none text-gray-900 dark:text-white font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-colors font-heading text-lg">
-          <span>Quels modèles de langage (LLMs) l'Oracle utilise-t-il ?</span>
-          <span class="icon transition-transform duration-300 text-gold text-xl">▼</span>
-        </summary>
-        <div class="px-6 pb-6 pt-2 text-gray-700 dark:text-gray-400 text-sm md:text-base leading-relaxed border-t border-black/5 dark:border-white/5 bg-gray-500/5 dark:bg-[#10141c]/40 font-medium">
-          Notre architecture LangGraph est agnostique du modèle. Par défaut, nous utilisons Groq (Llama 3) pour sa rapidité incroyable, mais l'interface permet d'utiliser n'importe quel LLM compatible (OpenAI GPT-4o, Anthropic Claude, Gemini, Mistral, etc.). Nous supportons même des modèles locaux via Ollama.
-        </div>
-      </details>
-      <details class="glass-card rounded-xl overflow-hidden transition-all duration-300 group">
-        <summary class="flex justify-between items-center px-6 py-5 cursor-pointer list-none text-gray-900 dark:text-white font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-colors font-heading text-lg">
-          <span>Qu'est-ce que la recherche "Hybride" proposée dans l'abonnement ?</span>
-          <span class="icon transition-transform duration-300 text-gold text-xl">▼</span>
-        </summary>
-        <div class="px-6 pb-6 pt-2 text-gray-700 dark:text-gray-400 text-sm md:text-base leading-relaxed border-t border-black/5 dark:border-white/5 bg-gray-500/5 dark:bg-[#10141c]/40 font-medium">
-          Pour une précision maximale, nous combinons deux méthodes de recherche sur Supabase : la recherche sémantique (via pgvector, pour comprendre le sens de la question) et la recherche Full-Text classique (BM25, pour les mots-clés exacts). Les résultats sont fusionnés via l'algorithme RRF.
-        </div>
-      </details>
-    </div>
-    <div class="mt-12 text-center">
-        <a href="faq.html" class="px-8 py-3 rounded-md border border-gray-900/20 dark:border-white/20 text-gray-800 dark:text-white font-semibold flex items-center justify-center gap-2 hover:bg-black/5 dark:hover:bg-white/5 transition-colors max-w-xs mx-auto">
-            Voir toutes les questions
-        </a>
-    </div>
-  </section>
-  </main>
-
-<footer class="mt-auto py-8 text-center text-sm text-gray-500 dark:text-gray-400 font-medium border-t border-gray-900/10 dark:border-white/10 relative z-20">
-  <p>© 2025 HeLMO Oracle. Projet académique par Tim, Maxime et Arnaud.</p>
-</footer>
-
-<script src="main.js" defer></script>
+</main>
 </body>
 </html>
