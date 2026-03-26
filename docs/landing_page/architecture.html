@@ -23,55 +23,108 @@
 </script>
 <link href="style.css" rel="stylesheet"/>
 </head>
-<body class="antialiased relative min-h-screen flex flex-col bg-gray-50 dark:bg-[#0a0c10]">
+<body class="antialiased relative min-h-screen flex flex-col bg-immersive dark:bg-[#0a0c10]">
 
-<div class="absolute top-[10%] left-1/2 -translate-x-1/2 w-[90vw] h-[700px] bg-hero-glow -z-10 blur-3xl rounded-full pointer-events-none"></div>
+<div class="fixed inset-0 bg-black/40 z-0 pointer-events-none"></div>
 
-<header class="fixed top-0 left-0 right-0 z-50 bg-gray-50/80 dark:bg-[#0a0c10]/80 backdrop-blur-md border-b border-gray-900/10 dark:border-white/10">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16">
-      <a href="index.html" class="flex-shrink-0 flex items-center gap-2 cursor-pointer">
-        <span class="text-gold text-xl leading-none select-none">◈</span>
-        <span class="font-heading text-xl font-bold tracking-wide uppercase">Oracle</span>
+<header class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl bg-white/10 dark:bg-[#0a0c10]/40 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-full px-6 py-3 shadow-lg transition-all">
+  <div class="flex items-center justify-between">
+    <a href="index.html" class="flex-shrink-0 flex items-center gap-2 cursor-pointer">
+      <span class="text-gold text-xl leading-none select-none">◈</span>
+      <span class="font-heading text-xl font-bold tracking-wide uppercase text-white">Oracle</span>
+    </a>
+
+    <nav class="hidden md:flex space-x-8 text-sm font-semibold text-white/80">
+      <a class="hover:text-gold transition-colors" href="technologie.html">Technologie</a>
+      <a class="hover:text-gold transition-colors" href="pipeline-rag.html">Pipeline RAG</a>
+      <a class="hover:text-gold transition-colors text-gold" href="architecture.html">Architecture</a>
+      <a class="hover:text-gold transition-colors" href="faq.html">FAQ</a>
+    </nav>
+
+    <div class="hidden md:flex items-center space-x-4 text-sm font-medium">
+      <a class="px-6 py-2.5 rounded-full bg-white text-black dark:bg-black dark:text-white font-bold hover:scale-105 transition-all duration-300" href="https://oracle.dlzteam.com/">
+        Accéder au Chat
       </a>
-
-      <nav class="hidden md:flex space-x-6 text-sm font-medium text-gray-600 dark:text-gray-400">
-        <a class="hover:text-gold transition-colors" href="technologie.html">Technologie</a>
-        <a class="hover:text-gold transition-colors" href="pipeline-rag.html">Pipeline RAG</a>
-        <a class="hover:text-gold transition-colors" href="architecture.html">Architecture</a>
-        <a class="hover:text-gold transition-colors" href="faq.html">FAQ</a>
-      </nav>
-
-      <div class="hidden md:flex items-center space-x-2 text-sm font-medium">
-        <button id="theme-toggle" type="button" class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10 focus:outline-none">
-          <span class="sr-only">Toggle theme</span>
-          <svg id="theme-toggle-sun" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-          <svg id="theme-toggle-moon" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-          </svg>
-        </button>
-        <a class="px-5 py-2 rounded-md bg-gold hover:bg-gold-light text-white font-semibold transition-all duration-300" href="https://oracle.dlzteam.com/">Accéder au Chat</a>
-      </div>
     </div>
   </div>
-  <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-gold to-transparent opacity-40"></div>
 </header>
-<main class="flex-grow pt-32 pb-20">
-  <section class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center z-10 text-gray-900 dark:text-white">
-    <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-4 max-w-5xl mx-auto leading-none font-heading">
-      <span class="text-gradient">Architecture</span>
-    </h1>
-    <p class="mt-2 text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-      Contenu à venir sur l'architecture de HeLMO Oracle.
-    </p>
+
+<main class="flex-grow pt-40 pb-20 relative z-10">
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-white">
+
+    <div class="text-center mb-16">
+      <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 max-w-5xl mx-auto leading-tight font-heading drop-shadow-lg">
+        <span class="text-gradient">Vue d'Ensemble</span>
+      </h1>
+      <p class="text-lg md:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed font-medium">
+        Découvrez comment les différentes briques de l'Oracle interagissent pour fournir une expérience fluide et précise.
+      </p>
+    </div>
+
+    <div class="glass-card rounded-3xl p-6 md:p-10 bg-black/40 mb-10 max-w-5xl mx-auto">
+        <h2 class="text-2xl font-bold font-heading text-gold mb-6 text-center">Flux des Données</h2>
+        <pre class="mermaid" style="text-align: center;">
+graph LR
+    A[Client Web<br/>Interface UI] -->|Requête API| B(Serveur Backend)
+    B --> C{Agent LangGraph}
+    C -->|Recherche| D[(Supabase<br/>pgvector)]
+    D -->|Documents| C
+    C -->|Contexte + Prompt| E[API LLM<br/>Groq / OpenAI]
+    E -->|Réponse générée| C
+    C -->|Formatage| B
+    B -->|Flux réseau| A
+
+    style A fill:#222,stroke:#C9A84C,stroke-width:1px
+    style D fill:#161b26,stroke:#C9A84C,stroke-width:1px
+    style E fill:#222,stroke:#C9A84C,stroke-width:1px
+        </pre>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+
+      <div class="glass-card rounded-3xl p-8 hover:bg-white/5 transition-all duration-300">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 text-xl">🌐</div>
+          <h3 class="text-xl font-bold font-heading text-white">1. L'Interface Front-End</h3>
+        </div>
+        <p class="text-white/80 text-sm leading-relaxed font-medium">
+          Point d'entrée de l'utilisateur. Elle gère la saisie des questions et affiche les réponses en temps réel de manière fluide.
+        </p>
+      </div>
+
+      <div class="glass-card rounded-3xl p-8 hover:bg-white/5 transition-all duration-300">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center border border-gold/30 text-xl">🧠</div>
+          <h3 class="text-xl font-bold font-heading text-white">2. L'Orchestrateur (Agent)</h3>
+        </div>
+        <p class="text-white/80 text-sm leading-relaxed font-medium">
+          Le cœur logique. Il reçoit la question, décide s'il faut chercher dans la base de données, reformule les requêtes et vérifie la qualité des réponses.
+        </p>
+      </div>
+
+      <div class="glass-card rounded-3xl p-8 hover:bg-white/5 transition-all duration-300">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 text-xl">🗄️</div>
+          <h3 class="text-xl font-bold font-heading text-white">3. La Base de Connaissances</h3>
+        </div>
+        <p class="text-white/80 text-sm leading-relaxed font-medium">
+          Stocke les archives du lore. Grâce à l'indexation vectorielle, le système peut retrouver les passages pertinents en quelques millisecondes.
+        </p>
+      </div>
+
+      <div class="glass-card rounded-3xl p-8 hover:bg-white/5 transition-all duration-300">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 text-xl">⚡</div>
+          <h3 class="text-xl font-bold font-heading text-white">4. Le Moteur Génératif (LLM)</h3>
+        </div>
+        <p class="text-white/80 text-sm leading-relaxed font-medium">
+          Consomme le contexte extrait de la base de données pour rédiger une réponse naturelle, précise et sourcée, sans jamais inventer d'informations.
+        </p>
+      </div>
+
+    </div>
   </section>
 </main>
-
-<footer class="mt-auto py-8 text-center text-sm text-gray-500 dark:text-gray-400 font-medium border-t border-gray-900/10 dark:border-white/10 relative z-20">
-  <p>© 2025 HeLMO Oracle. Projet académique par Tim, Maxime et Arnaud.</p>
-</footer>
 
 <script src="main.js" defer></script>
 </body>

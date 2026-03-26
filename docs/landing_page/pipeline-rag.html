@@ -8,123 +8,69 @@
 <script src="script.js"></script>
 <script type="module">
     import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.js';
-    mermaid.initialize({
-        startOnLoad: true,
-        theme: 'dark',
-        themeVariables: {
-            primaryColor: '#10141c',
-            primaryTextColor: '#f0f2f5',
-            primaryBorderColor: '#C9A84C',
-            lineColor: '#888',
-            secondaryColor: '#161b26',
-            tertiaryColor: '#10141c'
-        }
-    });
+    mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { primaryColor: '#10141c', primaryTextColor: '#f0f2f5', primaryBorderColor: '#C9A84C', lineColor: '#888', secondaryColor: '#161b26', tertiaryColor: '#10141c' } });
 </script>
 <link href="style.css" rel="stylesheet"/>
 </head>
-<body class="antialiased relative min-h-screen flex flex-col bg-gray-50 dark:bg-[#0a0c10]">
+<body class="antialiased relative min-h-screen flex flex-col bg-immersive dark:bg-[#0a0c10]">
 
-<div class="absolute top-[10%] left-1/2 -translate-x-1/2 w-[90vw] h-[700px] bg-hero-glow -z-10 blur-3xl rounded-full pointer-events-none"></div>
+<div class="fixed inset-0 bg-black/40 z-0 pointer-events-none"></div>
 
-<header class="fixed top-0 left-0 right-0 z-50 bg-gray-50/80 dark:bg-[#0a0c10]/80 backdrop-blur-md border-b border-gray-900/10 dark:border-white/10">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16">
-      <a href="index.html" class="flex-shrink-0 flex items-center gap-2 cursor-pointer">
-        <span class="text-gold text-xl leading-none select-none">◈</span>
-        <span class="font-heading text-xl font-bold tracking-wide uppercase">Oracle</span>
-      </a>
-
-      <nav class="hidden md:flex space-x-6 text-sm font-medium text-gray-600 dark:text-gray-400">
-        <a class="hover:text-gold transition-colors" href="technologie.html">Technologie</a>
-        <a class="hover:text-gold transition-colors" href="pipeline-rag.html">Pipeline RAG</a>
-        <a class="hover:text-gold transition-colors" href="architecture.html">Architecture</a>
-        <a class="hover:text-gold transition-colors" href="faq.html">FAQ</a>
-      </nav>
-
-      <div class="hidden md:flex items-center space-x-2 text-sm font-medium">
-        <button id="theme-toggle" type="button" class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10 focus:outline-none">
-          <span class="sr-only">Toggle theme</span>
-          <svg id="theme-toggle-sun" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-          <svg id="theme-toggle-moon" class="h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-          </svg>
-        </button>
-        <a class="px-5 py-2 rounded-md bg-gold hover:bg-gold-light text-white font-semibold transition-all duration-300" href="https://oracle.dlzteam.com/">Accéder au Chat</a>
-      </div>
+<header class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl bg-white/10 dark:bg-[#0a0c10]/40 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-full px-6 py-3 shadow-lg transition-all">
+  <div class="flex items-center justify-between">
+    <a href="index.html" class="flex-shrink-0 flex items-center gap-2 cursor-pointer">
+      <span class="text-gold text-xl leading-none select-none">◈</span>
+      <span class="font-heading text-xl font-bold tracking-wide uppercase text-white">Oracle</span>
+    </a>
+    <nav class="hidden md:flex space-x-8 text-sm font-semibold text-white/80">
+      <a class="hover:text-gold transition-colors" href="technologie.html">Technologie</a>
+      <a class="hover:text-gold transition-colors text-gold" href="pipeline-rag.html">Pipeline RAG</a>
+      <a class="hover:text-gold transition-colors" href="architecture.html">Architecture</a>
+      <a class="hover:text-gold transition-colors" href="faq.html">FAQ</a>
+    </nav>
+    <div class="hidden md:flex items-center space-x-4 text-sm font-medium">
+      <a class="px-6 py-2.5 rounded-full bg-white text-black dark:bg-black dark:text-white font-bold hover:scale-105 transition-all duration-300" href="https://oracle.dlzteam.com/">Accéder au Chat</a>
     </div>
   </div>
-  <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-gold to-transparent opacity-40"></div>
 </header>
-<main class="flex-grow pt-32 pb-20">
-  <section class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+
+<main class="flex-grow pt-40 pb-20 relative z-10">
+  <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-white">
     <div class="text-center">
-        <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-4 max-w-5xl mx-auto leading-none font-heading">
+        <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-4 max-w-5xl mx-auto leading-none font-heading drop-shadow-lg">
           <span class="text-gradient">Anatomie de l'Oracle</span>
         </h1>
-        <p class="mt-2 text-lg md:text-xl text-gray-400 max-w-3xl mx-auto mb-16 leading-relaxed">
-          Au cœur de l'Oracle se trouve un pipeline de Génération Augmentée par la Récupération (RAG) orchestré par LangGraph. Ce processus garantit que chaque réponse est non seulement intelligente, mais aussi factuellement ancrée dans les sources de lore les plus fiables.
+        <p class="mt-4 text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-16 leading-relaxed font-medium">
+          Au cœur de l'Oracle se trouve un pipeline de Génération Augmentée par la Récupération (RAG) orchestré par LangGraph.
         </p>
     </div>
 
-    <div class="glass-card rounded-2xl p-6 md:p-8">
+    <div class="glass-card rounded-3xl p-6 md:p-8 bg-black/40">
         <pre class="mermaid" style="text-align: center;">
 graph TD
     subgraph "Pipeline d'Interrogation"
         A[Question de l'Utilisateur] --> B{LangGraph Agent};
     end
-
-    subgraph "Étape 1: Recherche Augmentée (Retrieval)"
-        B --> C[Reformulation de la question];
+    subgraph "Étape 1: Recherche Augmentée"
+        B --> C[Reformulation];
         C --> D{Recherche Hybride};
-        D --> D1[Recherche Sémantique];
-        D --> D2[Recherche Mots-clés];
-        D1 & D2 --> E[Base Vectorielle<br>(Supabase pgvector)];
-        E --> F[Fusion des résultats (RRF)];
     end
-
-    subgraph "Étape 2: Génération"
-        F --> G[Construction du Contexte];
-        A & G --> H{Prompt Augmenté};
-        H --> I[LLM (Groq, GPT-4o, ...)];
-        I --> J[Génération de la Réponse];
-    end
-
-    subgraph "Étape 3: Validation & Sortie"
-        J --> K[Vérification de la pertinence];
-        K --> L[Réponse finale sourcée];
-    end
-
     style A fill:#333,stroke:#C9A84C,stroke-width:2px
-    style L fill:#333,stroke:#C9A84C,stroke-width:2px
-    style B fill:#222,stroke:#C9A84C,stroke-width:1px,stroke-dasharray: 5 5
-    style E fill:#161b26,stroke:#C9A84C,stroke-width:1px
         </pre>
     </div>
 
-    <div class="mt-12 space-y-8 text-gray-300">
-        <div class="glass-card rounded-xl p-6">
-            <h3 class="font-heading text-xl font-bold text-gold mb-2">1. Recherche Augmentée</h3>
-            <p class="text-gray-400">Plutôt que de deviner, l'agent LangGraph commence par analyser la question de l'utilisateur. Il utilise une <strong>recherche hybride</strong> pour interroger notre base de données Supabase, combinant la puissance de la recherche sémantique (pour comprendre l'intention) et la précision de la recherche par mots-clés (pour les termes spécifiques). Les résultats sont ensuite classés et fusionnés pour ne garder que les extraits de lore les plus pertinents.</p>
+    <div class="mt-12 space-y-8">
+        <div class="glass-card rounded-3xl p-8 hover:bg-white/5 transition-colors">
+            <h3 class="font-heading text-2xl font-bold text-gold mb-3">1. Recherche Augmentée</h3>
+            <p class="text-white/80 leading-relaxed font-medium">Plutôt que de deviner, l'agent LangGraph commence par analyser la question de l'utilisateur. Il utilise une recherche hybride pour interroger notre base de données Supabase...</p>
         </div>
-        <div class="glass-card rounded-xl p-6">
-            <h3 class="font-heading text-xl font-bold text-gold mb-2">2. Génération Contextualisée</h3>
-            <p class="text-gray-400">Les documents récupérés sont injectés dans un "prompt" aux côtés de la question originale. Ce contexte enrichi est ensuite soumis à un grand modèle de langage (LLM) tel que Llama 3 via Groq. Le LLM n'a qu'une seule instruction : synthétiser une réponse en se basant <strong>uniquement</strong> sur le contexte fourni. Cela élimine le risque d'hallucination et garantit la fidélité au lore.</p>
-        </div>
-        <div class="glass-card rounded-xl p-6">
-            <h3 class="font-heading text-xl font-bold text-gold mb-2">3. Validation et Sourçage</h3>
-            <p class="text-gray-400">Avant de présenter la réponse, une dernière étape de validation s'assure que la sortie est pertinente et directement liée aux documents sources. La réponse finale est ensuite formatée et présentée à l'utilisateur, souvent accompagnée des sources utilisées pour sa génération, offrant une transparence totale.</p>
+        <div class="glass-card rounded-3xl p-8 hover:bg-white/5 transition-colors">
+            <h3 class="font-heading text-2xl font-bold text-gold mb-3">2. Génération Contextualisée</h3>
+            <p class="text-white/80 leading-relaxed font-medium">Les documents récupérés sont injectés dans un "prompt" aux côtés de la question originale...</p>
         </div>
     </div>
   </section>
 </main>
-
-<footer class="mt-auto py-8 text-center text-sm text-gray-500 dark:text-gray-400 font-medium border-t border-gray-900/10 dark:border-white/10 relative z-20">
-  <p>© 2025 HeLMO Oracle. Projet académique par Tim, Maxime et Arnaud.</p>
-</footer>
-
 <script src="main.js" defer></script>
 </body>
 </html>
