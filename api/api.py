@@ -370,6 +370,9 @@ def _run_ingestion(file_paths: list):
         context_llm = None
         logger.warning("INGEST | Context LLM unavailable: %s", e)
 
+    new_chunks = 0
+    duplicate_chunks = 0
+
     try:
         for i, fp in enumerate(file_paths):
             fp = Path(fp)
@@ -414,14 +417,20 @@ def _run_ingestion(file_paths: list):
 
             # 4. Vectorisation
             _ingest_status["last_message"] = f"Fichier {i+1}/{total} — Vectorisation de {fp.name}…"
+            new_chunks = 0
+            duplicate_chunks = 0
             for text, meta in chunks:
-                vm.add_document(text, metadata={**base_metadata, **meta})
+                inserted = vm.add_document(text, metadata={**base_metadata, **meta})
+                if inserted:
+                    new_chunks += 1
+                else:
+                    duplicate_chunks += 1
 
             # 5. Archive
             shutil.move(str(fp), str(ARCHIVE_DIR / fp.name))
-            logger.info("INGEST | OK — %s (%d chunks)", fp.name, len(chunks))
+            logger.info("INGEST | OK — %s (%d nouveaux, %d doublons)", fp.name, new_chunks, duplicate_chunks)
 
-        _ingest_status = {"running": False, "last_status": "success", "last_message": f"{total} fichier(s) ingéré(s) avec succès."}
+        _ingest_status = {"running": False, "last_status": "success", "last_message": f"{total} fichier(s) ingéré(s) — {new_chunks} chunks nouveaux, {duplicate_chunks} doublons ignorés."}
 
     except Exception as e:
         _ingest_status = {"running": False, "last_status": "error", "last_message": str(e)}
