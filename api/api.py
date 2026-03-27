@@ -420,7 +420,7 @@ def _run_ingestion(file_paths: list):
             # 4. Vectorisation
             _ingest_status["last_message"] = f"Fichier {i+1}/{total} — Vectorisation de {fp.name}…"
             for text, meta in chunks:
-                inserted = vm.add_document(text, metadata={**base_metadata, **meta})
+                inserted = vm.add_document(text, metadata={**meta, **base_metadata})
                 if inserted:
                     new_chunks += 1
                 else:
@@ -432,11 +432,11 @@ def _run_ingestion(file_paths: list):
 
         accepted = total - rejected_files
         if rejected_files == total:
-            _ingest_status = {"running": False, "last_status": "warning", "last_message": f"{rejected_files} fichier(s) rejeté(s) par le Guardian (contenu non lore Dofus)."}
+            _ingest_status = {"running": False, "last_status": "warning", "last_message": f"Fichier refusé — déplacé en quarantaine."}
         elif rejected_files > 0:
-            _ingest_status = {"running": False, "last_status": "warning", "last_message": f"{accepted} ingéré(s), {rejected_files} rejeté(s) par le Guardian — {new_chunks} chunks nouveaux, {duplicate_chunks} doublons ignorés."}
+            _ingest_status = {"running": False, "last_status": "warning", "last_message": f"{accepted} fichier(s) ajouté(s) — {new_chunks} chunks ajoutés, {duplicate_chunks} doublons. {rejected_files} refusé(s) et déplacé(s) en quarantaine."}
         else:
-            _ingest_status = {"running": False, "last_status": "success", "last_message": f"{total} fichier(s) ingéré(s) — {new_chunks} chunks nouveaux, {duplicate_chunks} doublons ignorés."}
+            _ingest_status = {"running": False, "last_status": "success", "last_message": f"Fichier ajouté ! {new_chunks} chunks ajoutés, {duplicate_chunks} doublons ignorés."}
 
     except Exception as e:
         _ingest_status = {"running": False, "last_status": "error", "last_message": str(e)}
@@ -463,7 +463,7 @@ async def trigger_ingest(files: list[UploadFile] = File(...)):
         saved_paths.append(dest)
         logger.info("INGEST | Fichier reçu : %s", safe_name)
 
-    _ingest_status["running"] = True
+    _ingest_status.update({"running": True, "last_status": "idle", "last_message": "Démarrage…"})
     t = _threading.Thread(target=_run_ingestion, args=[saved_paths], daemon=True)
     t.start()
     return {"started": True, "files": [f.filename for f in files]}
