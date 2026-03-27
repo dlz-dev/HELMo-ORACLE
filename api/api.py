@@ -381,14 +381,14 @@ def _run_ingestion(file_paths: list):
 
             # 1. Guardian
             try:
-                valid = is_valid_lore_file(str(fp), api_key)
+                valid, reason = is_valid_lore_file(str(fp), api_key)
             except RuntimeError as e:
                 _ingest_status = {"running": False, "last_status": "error", "last_message": f"Guardian indisponible: {e}"}
                 return
 
             if not valid:
                 shutil.move(str(fp), str(QUARANTINE_DIR / fp.name))
-                logger.warning("INGEST | Rejeté : %s", fp.name)
+                logger.warning("INGEST | Rejeté : %s — %s", fp.name, reason)
                 rejected_files += 1
                 continue
 
