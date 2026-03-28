@@ -161,10 +161,12 @@ export function AdminPanel() {
         body: formData,
       });
       if (!res.ok) throw new Error("Erreur lors de l'envoi");
+      let pollErrors = 0;
       const poll = setInterval(async () => {
         try {
           const r = await fetch("/api/admin/ingest/status");
           const status = await r.json();
+          pollErrors = 0;
           setIngestMsg(status.last_message || "En cours…");
           if (!status.running) {
             clearInterval(poll);
@@ -178,8 +180,12 @@ export function AdminPanel() {
             setIngestMsg(status.last_message);
           }
         } catch {
-          clearInterval(poll);
-          setIngestState("error");
+          pollErrors++;
+          if (pollErrors >= 5) {
+            clearInterval(poll);
+            setIngestState("error");
+            setIngestMsg("Impossible de joindre le backend.");
+          }
         }
       }, 2000);
     } catch (e: any) {
