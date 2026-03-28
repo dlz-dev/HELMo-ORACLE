@@ -2,6 +2,7 @@
 Manages vector operations and hybrid search against the PostgreSQL/Supabase database.
 """
 
+import hashlib
 import json
 import logging
 from datetime import datetime, timezone
@@ -92,13 +93,15 @@ class VectorManager:
             logger.warning("VectorManager: Connection lost, attempting reconnect...")
             return self._reconnect()
 
-    def add_document(self, text: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+    def add_document(self, text: str, metadata: Optional[Dict[str, Any]] = None) -> bool:
         """
         Generates an embedding and saves the text with metadata and ingestion timestamp.
+        Returns True if the chunk was inserted, False if it already exists (duplicate).
         """
         if not self.is_db_available():
             raise ConnectionError("Database is not available.")
-            
+
+        chunk_hash = hashlib.sha256(text.encode()).hexdigest()
         metadata = metadata or {}
         text_to_embed = text
 
@@ -112,11 +115,15 @@ class VectorManager:
         vector = self.embeddings_model.get_text_embedding(text_to_embed)
         ingested_at = datetime.now(timezone.utc)
 
-        with self.conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO documents (content, vecteur, metadata, ingested_at) VALUES (%s, %s, %s, %s)",
-                (text, vector, json.dumps(metadata), ingested_at),
-            )
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO documents (content, vecteur, metadata, ingested_at, chunk_hash) VALUES (%s, %s, %s, %s, %s)",
+                    (text, vector, json.dumps(metadata), ingested_at, chunk_hash),
+                )
+            return True
+        except psycopg.errors.UniqueViolation:
+            return False
 
     def search_semantic(
         self, query_vector: List[float], k: int = K_SEMANTIC
