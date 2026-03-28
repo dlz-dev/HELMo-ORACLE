@@ -115,15 +115,14 @@ class VectorManager:
         vector = self.embeddings_model.get_text_embedding(text_to_embed)
         ingested_at = datetime.now(timezone.utc)
 
-        try:
-            with self.conn.cursor() as cur:
-                cur.execute(
-                    "INSERT INTO documents (content, vecteur, metadata, ingested_at, chunk_hash) VALUES (%s, %s, %s, %s, %s)",
-                    (text, vector, json.dumps(metadata), ingested_at, chunk_hash),
-                )
-            return True
-        except psycopg.errors.UniqueViolation:
-            return False
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO documents (content, vecteur, metadata, ingested_at, chunk_hash)
+                   VALUES (%s, %s, %s, %s, %s)
+                   ON CONFLICT (chunk_hash) WHERE (chunk_hash IS NOT NULL) DO NOTHING""",
+                (text, vector, json.dumps(metadata), ingested_at, chunk_hash),
+            )
+            return cur.rowcount == 1
 
     def search_semantic(
         self, query_vector: List[float], k: int = K_SEMANTIC
