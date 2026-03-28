@@ -64,6 +64,38 @@ if _LOG_DB_URL:
 
 set_shared_conn(_log_conn)
 
+
+def _ensure_log_conn() -> bool:
+    """Ensures _log_conn is alive, reconnecting if needed. Returns True if available."""
+    global _log_conn
+    if not _LOG_DB_URL:
+        return False
+    # Check if existing connection is still usable
+    if _log_conn is not None and not _log_conn.closed:
+        try:
+            with _log_conn.cursor() as cur:
+                cur.execute("SELECT 1")
+            return True
+        except Exception:
+            pass
+    # Reconnect
+    try:
+        if _log_conn is not None and not _log_conn.closed:
+            try:
+                _log_conn.close()
+            except Exception:
+                pass
+        _log_conn = _psycopg.connect(_LOG_DB_URL, autocommit=False, connect_timeout=10)
+        set_shared_conn(_log_conn)
+        logger.info("Connexion Supabase (logs) reconnectée.")
+        return True
+    except Exception as _e:
+        logger.error(f"_ensure_log_conn: Reconnexion échouée : {_e}")
+        _log_conn = None
+        set_shared_conn(None)
+        return False
+
+
 # --- Client Supabase Python (pour feedback) ---
 _supabase = None
 _SUPABASE_URL = os.getenv("SUPABASE_URL", "")
@@ -521,7 +553,7 @@ def ingest_status():
 @app.get("/logs", dependencies=[Depends(_require_api_key)])
 def get_logs(lines: int = 100, offset: int = 0, level: Optional[str] = None, source: Optional[str] = None):
     """Fetches logs from the database with optional filters and pagination."""
-    if _log_conn is None or _log_conn.closed:
+    if not _ensure_log_conn():
         logger.error("[GET_LOGS] Connexion Supabase (logs) indisponible.")
         raise HTTPException(status_code=503, detail="Connexion logs indisponible")
 
