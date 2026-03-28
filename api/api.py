@@ -64,6 +64,18 @@ if _LOG_DB_URL:
 
 set_shared_conn(_log_conn)
 
+# --- Client Supabase Python (pour feedback) ---
+_supabase = None
+_SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+_SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+if _SUPABASE_URL and _SUPABASE_KEY:
+    try:
+        from supabase import create_client as _create_supabase_client
+        _supabase = _create_supabase_client(_SUPABASE_URL, _SUPABASE_KEY)
+        logger.info("Client Supabase initialisé.")
+    except Exception as _e:
+        logger.error(f"Impossible d'initialiser le client Supabase : {_e}")
+
 _mcp_module.setup(vm)
 _mcp_asgi = _mcp_module.mcp.streamable_http_app()
 sm = SessionManager()
@@ -112,6 +124,13 @@ class ChatRequest(BaseModel):
 
 class RenameRequest(BaseModel):
     title: str
+
+
+class FeedbackRequest(BaseModel):
+    session_id: Optional[str] = None
+    user_id: Optional[str] = None
+    rating: int
+    comment: Optional[str] = None
 
 
 # --- Per-request Session Manager ---
@@ -500,8 +519,8 @@ def ingest_status():
 
 # --- Logs ---
 @app.get("/logs", dependencies=[Depends(_require_api_key)])
-def get_logs(lines: int = 100, level: Optional[str] = None, source: Optional[str] = None):
-    """Fetches logs from the database with optional filters."""
+def get_logs(lines: int = 100, offset: int = 0, level: Optional[str] = None, source: Optional[str] = None):
+    """Fetches logs from the database with optional filters and pagination."""
     if _log_conn is None or _log_conn.closed:
         logger.error("[GET_LOGS] Connexion Supabase (logs) indisponible.")
         raise HTTPException(status_code=503, detail="Connexion logs indisponible")
@@ -530,8 +549,8 @@ def get_logs(lines: int = 100, level: Optional[str] = None, source: Optional[str
                 params.append(source)
             if conditions:
                 base_query += sql.SQL(" WHERE ") + sql.SQL(" AND ").join(conditions)
-            base_query += sql.SQL(" ORDER BY l.created_at DESC LIMIT %s")
-            params.append(lines)
+            base_query += sql.SQL(" ORDER BY l.created_at DESC LIMIT %s OFFSET %s")
+            params.extend([lines, offset])
 
             cur.execute(base_query, params)
             rows = cur.fetchall()
@@ -560,6 +579,36 @@ def clear_logs():
     except Exception as e:
         logger.error("[CLEAR_LOGS] Failed to clear local log file.", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Feedback ---
+@app.post("/feedback", status_code=201)
+def submit_feedback(req: FeedbackRequest):
+    """Enregistre un feedback utilisateur (note 1-5 + commentaire optionnel)."""
+    if not (1 <= req.rating <= 5):
+        raise HTTPException(status_code=422, detail="La note doit être entre 1 et 5.")
+    if _supabase is None:
+        raise HTTPException(status_code=503, detail="Client Supabase indisponible.")
+    user_id = req.user_id if req.user_id and _is_valid_uuid(req.user_id) else None
+    try:
+        _supabase.table("feedback").insert({
+            "session_id": req.session_id,
+            "user_id": user_id,
+            "rating": req.rating,
+            "comment": req.comment,
+        }).execute()
+        logger.info(f"Feedback reçu — session={req.session_id} note={req.rating}")
+        log_to_db_sync(
+            level="INFO",
+            source="FEEDBACK",
+            message=f"Note {req.rating}/5",
+            metadata={"session_id": req.session_id, "rating": req.rating, "comment": req.comment},
+            user_id=user_id,
+        )
+    except Exception as e:
+        logger.error(f"Erreur insertion feedback: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de l'enregistrement du feedback.")
+    return {"status": "ok"}
 
 
 # --- Entry Point ---

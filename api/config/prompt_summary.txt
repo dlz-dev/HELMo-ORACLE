@@ -1,0 +1,18 @@
+You are summarizing a conversation between a user and an AI Oracle specialized in the Dofus game.
+
+Your task: write a CONCISE summary (5-10 sentences max) of the conversation below.
+Focus on:
+- The user's main topics and questions
+- Key information the Oracle provided
+- Any preferences or context the user mentioned (character class, level, goals...)
+
+This summary will be injected into future conversations so the Oracle remembers the context.
+Write in the same language as the conversation. Be factual, not narrative.
+
+Existing summary (if any):
+{existing_summary}
+
+New messages to integrate:
+{new_messages}
+
+Write the updated summary now:
