@@ -26,7 +26,11 @@ function FeedbackPanel({ sessionId }: { sessionId: string }) {
       await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId, rating: selected, comment: comment.trim() || null }),
+        body: JSON.stringify({
+          session_id: sessionId,
+          rating: selected,
+          comment: comment.trim() || null,
+        }),
       });
       setSubmitted(true);
     } finally {
@@ -58,9 +62,15 @@ function FeedbackPanel({ sessionId }: { sessionId: string }) {
             className="text-lg leading-none transition-colors duration-100"
             aria-label={`Note ${star}`}
           >
-            <span className={clsx(
-              (hovered || selected) >= star ? "text-gold" : "text-muted-fg opacity-30"
-            )}>★</span>
+            <span
+              className={clsx(
+                (hovered || selected) >= star
+                  ? "text-gold"
+                  : "text-muted-fg opacity-30",
+              )}
+            >
+              ★
+            </span>
           </button>
         ))}
       </div>
