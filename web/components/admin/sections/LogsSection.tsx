@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, AlertTriangle, Info, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Loader2,
+  AlertTriangle,
+  Info,
+  XCircle,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { clsx } from "clsx";
 import { Section } from "./shared";
 
@@ -18,9 +25,15 @@ interface LogEntry {
 const PAGE_SIZE = 15;
 
 const levelConfig = {
-  ERROR:   { icon: XCircle,        color: "text-red-400 bg-red-400/10 border-red-400/20" },
-  WARNING: { icon: AlertTriangle,  color: "text-amber-400 bg-amber-400/10 border-amber-400/20" },
-  INFO:    { icon: Info,           color: "text-sky-400 bg-sky-400/10 border-sky-400/20" },
+  ERROR: {
+    icon: XCircle,
+    color: "text-red-400 bg-red-400/10 border-red-400/20",
+  },
+  WARNING: {
+    icon: AlertTriangle,
+    color: "text-amber-400 bg-amber-400/10 border-amber-400/20",
+  },
+  INFO: { icon: Info, color: "text-sky-400 bg-sky-400/10 border-sky-400/20" },
 };
 
 export function LogsSection() {
@@ -46,7 +59,9 @@ export function LogsSection() {
         const res = await fetch(`/api/admin/logs?${params.toString()}`);
         if (!res.ok) {
           const data = await res.json();
-          throw new Error(data.error || "Erreur lors de la récupération des logs");
+          throw new Error(
+            data.error || "Erreur lors de la récupération des logs",
+          );
         }
         const data = await res.json();
         const all: LogEntry[] = data.logs || [];
@@ -63,8 +78,14 @@ export function LogsSection() {
   }, [page, levelFilter, sourceFilter]);
 
   // Reset page quand les filtres changent
-  function handleLevelFilter(v: string) { setLevelFilter(v); setPage(0); }
-  function handleSourceFilter(v: string) { setSourceFilter(v); setPage(0); }
+  function handleLevelFilter(v: string) {
+    setLevelFilter(v);
+    setPage(0);
+  }
+  function handleSourceFilter(v: string) {
+    setSourceFilter(v);
+    setPage(0);
+  }
 
   return (
     <Section title="Logs Système" defaultOpen={true}>
@@ -110,11 +131,15 @@ export function LogsSection() {
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-red-400">{error}</td>
+                <td colSpan={5} className="p-8 text-center text-red-400">
+                  {error}
+                </td>
               </tr>
             ) : logs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-muted-fg">Aucun log trouvé.</td>
+                <td colSpan={5} className="p-8 text-center text-muted-fg">
+                  Aucun log trouvé.
+                </td>
               </tr>
             ) : (
               logs.map((log) => {
@@ -130,15 +155,19 @@ export function LogsSection() {
                       {new Date(log.created_at).toLocaleString()}
                     </td>
                     <td className="px-4 py-2">
-                      <span className={clsx(
-                        "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border",
-                        config.color,
-                      )}>
+                      <span
+                        className={clsx(
+                          "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border",
+                          config.color,
+                        )}
+                      >
                         <Icon size={12} />
                         {log.level}
                       </span>
                     </td>
-                    <td className="px-4 py-2 font-mono text-xs">{log.source}</td>
+                    <td className="px-4 py-2 font-mono text-xs">
+                      {log.source}
+                    </td>
                     <td className="px-4 py-2 text-muted-fg">{user}</td>
                     <td className="px-4 py-2">
                       <p>{log.message}</p>
@@ -158,9 +187,7 @@ export function LogsSection() {
 
       {/* Pagination */}
       <div className="flex items-center justify-between mt-3">
-        <span className="text-xs text-muted-fg">
-          Page {page + 1}
-        </span>
+        <span className="text-xs text-muted-fg">Page {page + 1}</span>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setPage((p) => p - 1)}
