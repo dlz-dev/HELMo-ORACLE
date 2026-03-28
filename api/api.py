@@ -370,6 +370,10 @@ def _run_ingestion(file_paths: list):
         context_llm = None
         logger.warning("INGEST | Context LLM unavailable: %s", e)
 
+    new_chunks = 0
+    duplicate_chunks = 0
+    rejected_files = 0
+
     try:
         for i, fp in enumerate(file_paths):
             fp = Path(fp)
@@ -377,14 +381,15 @@ def _run_ingestion(file_paths: list):
 
             # 1. Guardian
             try:
-                valid = is_valid_lore_file(str(fp), api_key)
+                valid, reason = is_valid_lore_file(str(fp), api_key)
             except RuntimeError as e:
                 _ingest_status = {"running": False, "last_status": "error", "last_message": f"Guardian indisponible: {e}"}
                 return
 
             if not valid:
                 shutil.move(str(fp), str(QUARANTINE_DIR / fp.name))
-                logger.warning("INGEST | Rejeté : %s", fp.name)
+                logger.warning("INGEST | Rejeté : %s — %s", fp.name, reason)
+                rejected_files += 1
                 continue
 
             # 2. Conversion
@@ -415,13 +420,23 @@ def _run_ingestion(file_paths: list):
             # 4. Vectorisation
             _ingest_status["last_message"] = f"Fichier {i+1}/{total} — Vectorisation de {fp.name}…"
             for text, meta in chunks:
-                vm.add_document(text, metadata={**base_metadata, **meta})
+                inserted = vm.add_document(text, metadata={**meta, **base_metadata})
+                if inserted:
+                    new_chunks += 1
+                else:
+                    duplicate_chunks += 1
 
             # 5. Archive
             shutil.move(str(fp), str(ARCHIVE_DIR / fp.name))
-            logger.info("INGEST | OK — %s (%d chunks)", fp.name, len(chunks))
+            logger.info("INGEST | OK — %s (%d nouveaux, %d doublons)", fp.name, new_chunks, duplicate_chunks)
 
-        _ingest_status = {"running": False, "last_status": "success", "last_message": f"{total} fichier(s) ingéré(s) avec succès."}
+        accepted = total - rejected_files
+        if rejected_files == total:
+            _ingest_status = {"running": False, "last_status": "warning", "last_message": f"Fichier refusé — déplacé en quarantaine."}
+        elif rejected_files > 0:
+            _ingest_status = {"running": False, "last_status": "warning", "last_message": f"{accepted} fichier(s) ajouté(s) — {new_chunks} chunks ajoutés, {duplicate_chunks} doublons. {rejected_files} refusé(s) et déplacé(s) en quarantaine."}
+        else:
+            _ingest_status = {"running": False, "last_status": "success", "last_message": f"Fichier ajouté ! {new_chunks} chunks ajoutés, {duplicate_chunks} doublons ignorés."}
 
     except Exception as e:
         _ingest_status = {"running": False, "last_status": "error", "last_message": str(e)}
@@ -448,7 +463,7 @@ async def trigger_ingest(files: list[UploadFile] = File(...)):
         saved_paths.append(dest)
         logger.info("INGEST | Fichier reçu : %s", safe_name)
 
-    _ingest_status["running"] = True
+    _ingest_status.update({"running": True, "last_status": "idle", "last_message": "Démarrage…"})
     t = _threading.Thread(target=_run_ingestion, args=[saved_paths], daemon=True)
     t.start()
     return {"started": True, "files": [f.filename for f in files]}
