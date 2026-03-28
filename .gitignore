@@ -1,8 +1,9 @@
-.streamlit/
-api/config/config.yaml
 api/.env
 .envrc
 api/config/prompt.txt
+api/config/prompt_context.txt
+api/config/prompt_guardian.txt
+api/config/prompt_summary.txt
 .venv/
 venv/
 env/

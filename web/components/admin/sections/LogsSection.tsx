@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { Loader2, AlertTriangle, Info, XCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Loader2, AlertTriangle, Info, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { clsx } from "clsx";
 import { Section } from "./shared";
 
-// Définition du type pour un enregistrement de log
 interface LogEntry {
   id: string;
   created_at: string;
@@ -13,26 +12,15 @@ interface LogEntry {
   source: string;
   message: string;
   metadata?: Record<string, any>;
-  profiles?: {
-    first_name: string;
-    last_name: string;
-  } | null;
+  profiles?: { first_name: string; last_name: string } | null;
 }
 
-// Configuration des badges de niveau
+const PAGE_SIZE = 15;
+
 const levelConfig = {
-  ERROR: {
-    icon: XCircle,
-    color: "text-red-400 bg-red-400/10 border-red-400/20",
-  },
-  WARNING: {
-    icon: AlertTriangle,
-    color: "text-amber-400 bg-amber-400/10 border-amber-400/20",
-  },
-  INFO: {
-    icon: Info,
-    color: "text-sky-400 bg-sky-400/10 border-sky-400/20",
-  },
+  ERROR:   { icon: XCircle,        color: "text-red-400 bg-red-400/10 border-red-400/20" },
+  WARNING: { icon: AlertTriangle,  color: "text-amber-400 bg-amber-400/10 border-amber-400/20" },
+  INFO:    { icon: Info,           color: "text-sky-400 bg-sky-400/10 border-sky-400/20" },
 };
 
 export function LogsSection() {
@@ -41,13 +29,16 @@ export function LogsSection() {
   const [error, setError] = useState<string | null>(null);
   const [levelFilter, setLevelFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
+  const [page, setPage] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
 
-  // Récupération des données
   useEffect(() => {
     const fetchLogs = async () => {
       setLoading(true);
       setError(null);
       const params = new URLSearchParams();
+      params.set("lines", String(PAGE_SIZE + 1)); // +1 pour détecter s'il y a une page suivante
+      params.set("offset", String(page * PAGE_SIZE));
       if (levelFilter) params.set("level", levelFilter);
       if (sourceFilter) params.set("source", sourceFilter);
 
@@ -55,12 +46,12 @@ export function LogsSection() {
         const res = await fetch(`/api/admin/logs?${params.toString()}`);
         if (!res.ok) {
           const data = await res.json();
-          throw new Error(
-            data.error || "Erreur lors de la récupération des logs",
-          );
+          throw new Error(data.error || "Erreur lors de la récupération des logs");
         }
         const data = await res.json();
-        setLogs(data.logs || []);
+        const all: LogEntry[] = data.logs || [];
+        setHasNext(all.length > PAGE_SIZE);
+        setLogs(all.slice(0, PAGE_SIZE));
       } catch (e: any) {
         setError(e.message);
       } finally {
@@ -69,13 +60,11 @@ export function LogsSection() {
     };
 
     fetchLogs();
-  }, [levelFilter, sourceFilter]);
+  }, [page, levelFilter, sourceFilter]);
 
-  // Calcul des sources uniques pour le filtre
-  const uniqueSources = useMemo(() => {
-    const sources = new Set(logs.map((log) => log.source));
-    return Array.from(sources).sort();
-  }, [logs]);
+  // Reset page quand les filtres changent
+  function handleLevelFilter(v: string) { setLevelFilter(v); setPage(0); }
+  function handleSourceFilter(v: string) { setSourceFilter(v); setPage(0); }
 
   return (
     <Section title="Logs Système" defaultOpen={true}>
@@ -83,7 +72,7 @@ export function LogsSection() {
       <div className="flex items-center gap-3 mb-4">
         <select
           value={levelFilter}
-          onChange={(e) => setLevelFilter(e.target.value)}
+          onChange={(e) => handleLevelFilter(e.target.value)}
           className="bg-subtle border border-default rounded-md px-2 py-1 text-xs"
         >
           <option value="">Tous les niveaux</option>
@@ -91,21 +80,16 @@ export function LogsSection() {
           <option value="WARNING">Warning</option>
           <option value="INFO">Info</option>
         </select>
-        <select
+        <input
+          type="text"
           value={sourceFilter}
-          onChange={(e) => setSourceFilter(e.target.value)}
-          className="bg-subtle border border-default rounded-md px-2 py-1 text-xs"
-        >
-          <option value="">Toutes les sources</option>
-          {uniqueSources.map((source) => (
-            <option key={source} value={source}>
-              {source}
-            </option>
-          ))}
-        </select>
+          onChange={(e) => handleSourceFilter(e.target.value)}
+          placeholder="Filtrer par source…"
+          className="bg-subtle border border-default rounded-md px-2 py-1 text-xs w-40 focus:outline-none focus:border-gold/50"
+        />
       </div>
 
-      {/* Tableau des logs */}
+      {/* Tableau */}
       <div className="overflow-x-auto border border-default rounded-lg bg-surface">
         <table className="min-w-full divide-y divide-default text-sm">
           <thead className="bg-subtle">
@@ -126,15 +110,11 @@ export function LogsSection() {
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-red-400">
-                  {error}
-                </td>
+                <td colSpan={5} className="p-8 text-center text-red-400">{error}</td>
               </tr>
             ) : logs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-muted-fg">
-                  Aucun log trouvé.
-                </td>
+                <td colSpan={5} className="p-8 text-center text-muted-fg">Aucun log trouvé.</td>
               </tr>
             ) : (
               logs.map((log) => {
@@ -150,19 +130,15 @@ export function LogsSection() {
                       {new Date(log.created_at).toLocaleString()}
                     </td>
                     <td className="px-4 py-2">
-                      <span
-                        className={clsx(
-                          "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border",
-                          config.color,
-                        )}
-                      >
+                      <span className={clsx(
+                        "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border",
+                        config.color,
+                      )}>
                         <Icon size={12} />
                         {log.level}
                       </span>
                     </td>
-                    <td className="px-4 py-2 font-mono text-xs">
-                      {log.source}
-                    </td>
+                    <td className="px-4 py-2 font-mono text-xs">{log.source}</td>
                     <td className="px-4 py-2 text-muted-fg">{user}</td>
                     <td className="px-4 py-2">
                       <p>{log.message}</p>
@@ -178,6 +154,33 @@ export function LogsSection() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between mt-3">
+        <span className="text-xs text-muted-fg">
+          Page {page + 1}
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPage((p) => p - 1)}
+            disabled={page === 0 || loading}
+            className="flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-default
+                       text-muted-fg hover:text-main hover:border-gold/40 disabled:opacity-30
+                       disabled:cursor-not-allowed transition-colors duration-150"
+          >
+            <ChevronLeft size={13} /> Précédent
+          </button>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={!hasNext || loading}
+            className="flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-default
+                       text-muted-fg hover:text-main hover:border-gold/40 disabled:opacity-30
+                       disabled:cursor-not-allowed transition-colors duration-150"
+          >
+            Suivant <ChevronRight size={13} />
+          </button>
+        </div>
       </div>
     </Section>
   );

@@ -29,81 +29,43 @@ QUARANTINE_DIR = DATA_DIR / "quarantine"
 
 STORAGE_DIR = BASE_DIR / "storage" / "sessions"
 PIPELINE_DIR = CURRENT_DIR
-PROMPT_PATH = BASE_DIR / "config" / "prompt.txt"
+PROMPT_PATH         = BASE_DIR / "config" / "prompt.txt"
+PROMPT_CONTEXT_PATH = BASE_DIR / "config" / "prompt_context.txt"
+PROMPT_GUARDIAN_PATH= BASE_DIR / "config" / "prompt_guardian.txt"
+PROMPT_SUMMARY_PATH = BASE_DIR / "config" / "prompt_summary.txt"
 
 # Ensure the base directory is in the system path for module imports
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-_CONTEXT_PROMPT = """
-Tu analyses un document provenant des archives du jeu Dofus (MMORPG).
-Écris en 2-3 phrases maximum une description du CONTENU GLOBAL de ce document.
-Cette description sera utilisée comme contexte pour chaque fragment du document.
+def _load_prompt_file(path: Path, env_var: str) -> str:
+    if path.exists():
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    prompt = os.environ.get(env_var, "")
+    if not prompt:
+        raise RuntimeError(f"Prompt introuvable : créez {path.name} ou définissez {env_var}.")
+    return prompt
 
-Sois précis : mentionne le type de données (armes, monstres, quêtes, lore historique...),
-les entités principales couvertes, et l'utilité pour un joueur Dofus.
 
-Document (extrait des 3000 premiers caractères) :
----
-{sample}
----
+@lru_cache(maxsize=1)
+def load_context_prompt() -> str:
+    return _load_prompt_file(PROMPT_CONTEXT_PATH, "CONTEXT_PROMPT")
 
-Réponds avec UNIQUEMENT la description, sans introduction ni ponctuation finale.
-"""
 
-_GUARDIAN_PROMPT = """
-Tu es le Gardien des Archives du jeu Dofus (MMORPG fantasy d'Ankama).
-Ta mission : déterminer si le contenu ci-dessous fait partie de l'univers Dofus ou d'un MMORPG fantasy.
+@lru_cache(maxsize=1)
+def load_guardian_prompt() -> str:
+    return _load_prompt_file(PROMPT_GUARDIAN_PATH, "GUARDIAN_PROMPT")
 
-RÈGLE IMPORTANTE : Le contenu peut se présenter sous n'importe quel format :
-- Texte narratif (description de lore, histoire du monde)
-- JSON ou CSV avec des noms d'armes, monstres, sorts, équipements, classes, objets
-- Statistiques de jeu (dommages, PA, PM, pods, résistances, niveaux)
-- URLs vers dofus.com ou ankama.com (= preuve formelle que c'est du lore Dofus)
-- Noms propres Dofus : Amakna, Bonta, Brakmar, Pandala, Iop, Osamodas, Sacrieur...
 
-EXEMPLES ACCEPTÉS → répondre OUI :
-- {{"nom": "Hache Ériphe", "Type": "Hache", "url": "https://www.dofus.com/..."}}
-- "Mazic est le Méryde de la naissance..."
-- "Chaque personnage dans Dofus possède un alignement..."
-- Données CSV sur les classes, donjons ou monstres du jeu
+@lru_cache(maxsize=1)
+def load_summary_prompt() -> str:
+    return _load_prompt_file(PROMPT_SUMMARY_PATH, "SUMMARY_PROMPT")
 
-EXEMPLES REJETÉS → répondre NON :
-- Une recette de cuisine réelle
-- Du code source informatique sans rapport avec un jeu
-- Une facture ou document administratif
-- Un texte sur de l'informatique, des sciences ou qui n'a pas de lien avec un MMORPG ou de la fantasy
 
-Contenu à analyser :
----
-{sample_text}
----
-
-Tu dois répondre STRICTEMENT sous ce format, sur deux lignes :
-Ligne 1 : OUI ou NON
-Ligne 2 : Un résumé court (max 20 mots) du pourquoi.
-"""
-
-_SUMMARY_PROMPT = """
-You are summarizing a conversation between a user and an AI Oracle specialized in the Dofus game.
-
-Your task: write a CONCISE summary (5-10 sentences max) of the conversation below.
-Focus on:
-- The user's main topics and questions
-- Key information the Oracle provided
-- Any preferences or context the user mentioned (character class, level, goals...)
-
-This summary will be injected into future conversations so the Oracle remembers the context.
-Write in the same language as the conversation. Be factual, not narrative.
-
-Existing summary (if any):
-{existing_summary}
-
-New messages to integrate:
-{new_messages}
-
-Write the updated summary now:
-"""
+_CONTEXT_PROMPT  = load_context_prompt()
+_GUARDIAN_PROMPT = load_guardian_prompt()
+_SUMMARY_PROMPT  = load_summary_prompt()
 
 
 @lru_cache(maxsize=1)

@@ -1,0 +1,13 @@
+Tu analyses un document provenant des archives du jeu Dofus (MMORPG).
+Écris en 2-3 phrases maximum une description du CONTENU GLOBAL de ce document.
+Cette description sera utilisée comme contexte pour chaque fragment du document.
+
+Sois précis : mentionne le type de données (armes, monstres, quêtes, lore historique...),
+les entités principales couvertes, et l'utilité pour un joueur Dofus.
+
+Document (extrait des 3000 premiers caractères) :
+---
+{sample}
+---
+
+Réponds avec UNIQUEMENT la description, sans introduction ni ponctuation finale.
