@@ -1,10 +1,10 @@
-import unittest
-from unittest.mock import MagicMock, patch
 import os
 import shutil
+import unittest
+from unittest.mock import MagicMock, patch
 
-from core.context.memory_manager import MemoryManager
 from core.context import SessionManager, _make_title
+from core.context.memory_manager import MemoryManager
 
 
 class TestMemoryManager(unittest.TestCase):

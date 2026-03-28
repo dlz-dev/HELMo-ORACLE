@@ -5,11 +5,11 @@ Persistent session storage module with automatic environment detection.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-import logging
 
 from core.utils.utils import STORAGE_DIR
 
@@ -18,9 +18,11 @@ logger = logging.getLogger("oracle")
 # Constants
 LOCAL_USER_ID = "local_dev"
 
+
 def _is_cloud() -> bool:
     """Detects if running in production (env var ENV=production)."""
     return os.environ.get("ENV", "local") == "production"
+
 
 def get_current_user_id() -> Optional[str]:
     """
@@ -36,17 +38,21 @@ def get_current_user_id() -> Optional[str]:
         logger.warning(f"USER_ID '{user_id_str}' is not a valid UUID. Treating as anonymous.")
         return None
 
+
 def _now_iso() -> str:
     """Returns the current UTC time as an ISO formatted string."""
     return datetime.now(timezone.utc).isoformat()
+
 
 def _make_title(first_user_message: str) -> str:
     """Truncates the first user message to create a readable session title."""
     title = first_user_message.strip().replace("\n", " ")
     return title[:60] + "…" if len(title) > 60 else title
 
+
 class _LocalBackend:
     """Stores sessions as JSON files locally, scoped by user_id."""
+
     def __init__(self, user_id: str) -> None:
         self._user_dir = os.path.join(STORAGE_DIR, user_id)
         os.makedirs(self._user_dir, exist_ok=True)
@@ -77,15 +83,18 @@ class _LocalBackend:
                         "updated_at": data.get("updated_at", ""), "provider": data.get("provider", ""),
                         "model": data.get("model", ""),
                     })
-            except (json.JSONDecodeError, KeyError): continue
+            except (json.JSONDecodeError, KeyError):
+                continue
         return sorted(sessions, key=lambda s: s["updated_at"], reverse=True)
 
     def delete(self, session_id: str) -> None:
         path = self._path(session_id)
         if os.path.exists(path): os.remove(path)
 
+
 class _SupabaseBackend:
     """Stores sessions in a Supabase database, scoped by user_id."""
+
     def __init__(self, user_id: str) -> None:
         from supabase import create_client
         url = os.environ.get("SUPABASE_URL")
@@ -106,18 +115,23 @@ class _SupabaseBackend:
         self._client.table("chat_sessions").upsert(payload).execute()
 
     def load(self, session_id: str) -> Optional[Dict[str, Any]]:
-        res = self._client.table("chat_sessions").select("*").eq("session_id", session_id).eq("user_id", self._user_id).single().execute()
+        res = self._client.table("chat_sessions").select("*").eq("session_id", session_id).eq("user_id",
+                                                                                              self._user_id).single().execute()
         return res.data if res.data else None
 
     def list_sessions(self) -> List[Dict[str, Any]]:
-        res = self._client.table("chat_sessions").select("session_id, title, updated_at, provider, model").eq("user_id", self._user_id).order("updated_at", desc=True).limit(50).execute()
+        res = self._client.table("chat_sessions").select("session_id, title, updated_at, provider, model").eq("user_id",
+                                                                                                              self._user_id).order(
+            "updated_at", desc=True).limit(50).execute()
         return res.data or []
 
     def delete(self, session_id: str) -> None:
         self._client.table("chat_sessions").delete().eq("session_id", session_id).eq("user_id", self._user_id).execute()
 
+
 class SessionManager:
     """Unified session manager that automatically routes to the correct backend."""
+
     def __init__(self, user_id: Optional[str] = None) -> None:
         # Per-request: explicit user_id provided (from frontend auth)
         if user_id:

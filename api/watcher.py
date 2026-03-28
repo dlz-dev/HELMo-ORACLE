@@ -44,13 +44,13 @@ class LoreWatcherHandler(FileSystemEventHandler):
     def on_created(self, event: FileSystemEvent) -> None:
         """Watchdog entry point triggered upon file creation."""
         file_path = Path(event.src_path)
-        
+
         # Ignore directories and hidden/temp files
         if event.is_directory or file_path.name.startswith(('.', '~')):
             return
 
         print(f"[WATCHER] New file detected: {file_path.name}")
-        
+
         # Small delay to ensure the OS has finished writing the file
         time.sleep(1.0)
         self.process_file(file_path)
@@ -60,9 +60,9 @@ class LoreWatcherHandler(FileSystemEventHandler):
         Processes a file: AI validation, conversion, vectorization, and archiving.
         """
         file_name: str = file_path.name
-        
+
         print(f"[AI] Guardian evaluating {file_name}...")
-        
+
         # String conversion for legacy compatibility with is_valid_lore_file
         if not is_valid_lore_file(str(file_path), self.llm):
             print(f"[AI] REJECTED: {file_name}. Moving to quarantine.")
@@ -110,7 +110,7 @@ def start_watching() -> None:
     event_handler = LoreWatcherHandler()
 
     print(f"[INIT] Checking for existing files in: {NEW_FILES_DIR}...")
-    
+
     # Process backlog files deposited before the script started
     for file_path in NEW_FILES_DIR.iterdir():
         if file_path.is_file() and not file_path.name.startswith(('.', '~')):

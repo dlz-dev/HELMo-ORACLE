@@ -23,8 +23,8 @@ HeLMO-Oracle/
 ├── api/          ← Backend Python (FastAPI)
 │   ├── core/     ← RAG pipeline, mémoire, sessions, PII
 │   ├── converters/   ← Parseurs CSV, JSON, MD, TXT, PDF, Unstructured
-│   ├── providers/    ← Groq, OpenAI, Anthropic, Gemini, Ollama
-│   ├── config/       ← prompt.txt (personnalité de l'Oracle)
+│   ├── providers/    ← Groq, OpenAI, Anthropic, Gemini
+│   ├── config/       ← Prompts système (prompt.txt, prompt_guardian.txt, …)
 │   └── data/         ← Fichiers lore à ingérer
 └── web/          ← Frontend Next.js (Vercel AI SDK)
     ├── app/      ← Pages : Oracle, Sources, Admin
@@ -36,7 +36,7 @@ HeLMO-Oracle/
 Question utilisateur
   → Recherche hybride (cosine pgvector + BM25 tsvector + fusion RRF)
   → Agent LangGraph avec outil search_knowledge_base
-  → LLM (Groq / OpenAI / Anthropic / Gemini / Ollama)
+  → LLM (Groq / OpenAI / Anthropic / Gemini)
   → Réponse streamée (Vercel AI SDK)
 ```
 
@@ -46,7 +46,7 @@ Question utilisateur
 
 - **Python 3.12**
 - **Node.js 22+**
-- **Compte Supabase** (base PostgreSQL + extension pgvector)
+- **Compte Supabase** (base PostgreSQL + extension pgvector) — ou Docker (voir ci-dessous)
 - **Clé API Groq** (gratuit, suffisant pour démarrer)
 
 ---
@@ -60,44 +60,106 @@ git clone https://github.com/ton-org/helmo-oracle.git
 cd helmo-oracle
 ```
 
-### 2. Configurer Supabase
+### 2. Configurer la base de données
+
+#### Option A — Supabase (recommandé pour le cloud)
 
 Dans le **SQL Editor** de ton projet Supabase, exécute ce script une seule fois :
 
 ```sql
 -- Extension vectorielle
-create extension if not exists vector;
+CREATE EXTENSION IF NOT EXISTS vector;
 
--- Table des documents
-create table if not exists documents (
-  id          serial primary key,
-  content     text,
-  vecteur     vector(768),
-  metadata    jsonb,
-  ingested_at timestamptz default now(),
-  fts_vector  tsvector
+-- Documents (base de connaissances RAG)
+CREATE TABLE IF NOT EXISTS documents (
+  id          SERIAL PRIMARY KEY,
+  content     TEXT,
+  vecteur     VECTOR(768),
+  metadata    JSONB,
+  ingested_at TIMESTAMPTZ DEFAULT now(),
+  fts_vector  TSVECTOR
 );
 
--- Index vectoriel cosine (créer après avoir ingéré des données)
-create index if not exists idx_documents_cosine
-  on documents using ivfflat (vecteur vector_cosine_ops) with (lists = 100);
+CREATE INDEX IF NOT EXISTS idx_documents_cosine
+  ON documents USING ivfflat (vecteur vector_cosine_ops) WITH (lists = 100);
 
--- Index full-text search
-create index if not exists idx_documents_fts
-  on documents using gin(fts_vector);
+CREATE INDEX IF NOT EXISTS idx_documents_fts
+  ON documents USING gin(fts_vector);
 
--- Trigger auto mise à jour fts_vector
-create or replace function update_fts_vector() returns trigger as $$
-begin
+CREATE OR REPLACE FUNCTION update_fts_vector() RETURNS TRIGGER AS $$
+BEGIN
   new.fts_vector := to_tsvector('french', new.content);
-  return new;
-end;
-$$ language plpgsql;
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql;
 
-create or replace trigger trig_update_fts
-  before insert or update on documents
-  for each row execute function update_fts_vector();
+CREATE OR REPLACE TRIGGER trig_update_fts
+  BEFORE INSERT OR UPDATE ON documents
+  FOR EACH ROW EXECUTE FUNCTION update_fts_vector();
+
+-- Sessions de conversation
+CREATE TABLE IF NOT EXISTS chat_sessions (
+  session_id  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  title       TEXT,
+  provider    TEXT,
+  model       TEXT,
+  messages    JSONB DEFAULT '[]',
+  summary     TEXT,
+  created_at  TIMESTAMPTZ DEFAULT now(),
+  updated_at  TIMESTAMPTZ DEFAULT now()
+);
+
+-- Logs système
+CREATE TABLE IF NOT EXISTS logs (
+  id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  level      TEXT NOT NULL,
+  source     TEXT NOT NULL,
+  message    TEXT,
+  metadata   JSONB,
+  user_id    UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Feedbacks utilisateurs
+CREATE TABLE IF NOT EXISTS feedback (
+  id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  session_id TEXT,
+  user_id    UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  rating     SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment    TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE feedback DISABLE ROW LEVEL SECURITY;
+
+-- Profils utilisateurs (complète auth.users)
+CREATE TABLE IF NOT EXISTS profiles (
+  id         UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  first_name TEXT,
+  last_name  TEXT
+);
 ```
+
+#### Option B — Docker (local, 100% autonome)
+
+Le service base de données est intégré dans `api/docker-compose.yml` sous un **profile optionnel** — il ne démarre que si on l'active explicitement.
+
+```bash
+# Démarrer backend + base de données locale
+docker compose --profile db up -d
+```
+
+Puis adapter `api/.env` :
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/oracle
+SUPABASE_URL=        # laisser vide
+SUPABASE_ANON_KEY=   # laisser vide
+```
+
+> Les fonctionnalités d'authentification (sessions par utilisateur) nécessitent Supabase Auth. En mode Docker, toutes les conversations sont anonymes.
+
+---
 
 ### 3. Backend (api/)
 
@@ -146,18 +208,22 @@ UNSTRUCTURED_API_KEY=
 UNSTRUCTURED_SERVER_URL=https://api.unstructuredapp.io/general/v0/general
 ```
 
-Créer le prompt système :
+Créer les prompts système :
 
 ```bash
-copy config\prompt.example.txt config\prompt.txt    # Windows
-# cp config/prompt.example.txt config/prompt.txt    # Mac/Linux
+# Windows
+copy config\prompt.example.txt config\prompt.txt
+
+# Mac/Linux
+cp config/prompt.example.txt config/prompt.txt
 ```
+
+> Les prompts `prompt_context.txt`, `prompt_guardian.txt` et `prompt_summary.txt` sont déjà présents dans `config/`. Modifie-les pour adapter l'Oracle à un autre domaine.
 
 Lancer le backend :
 
 ```bash
 python api.py
-# python -m uvicorn api:app --reload --port 8000 → même chose mais avec rechargement auto
 # → http://localhost:8000
 # → http://localhost:8000/docs  (Swagger UI)
 ```
@@ -167,10 +233,8 @@ python api.py
 ```bash
 cd web
 
-# Installer les dépendances
 npm install
 
-# Créer le fichier d'environnement
 copy env.local.example .env.local    # Windows
 # cp env.local.example .env.local    # Mac/Linux
 ```
@@ -203,7 +267,7 @@ npm run dev
 
 3. Connecte-toi avec le mot de passe admin (`oracle` par défaut)
 
-4. Dans la section **Ingestion**, entre le chemin absolu vers `api/data/files/` et clique **Lancer l'ingestion**
+4. Dans la section **Ingestion**, clique **Lancer l'ingestion**
 
 > Le Guardian valide automatiquement chaque fichier via LLM avant ingestion.
 > Les fichiers rejetés sont déplacés dans `api/data/quarantine/`.
@@ -225,6 +289,24 @@ npm run dev
 - Saisir et sauvegarder les clés API
 - Tester la connexion au provider
 - Lancer une ingestion
+- Consulter les logs système (paginés, 15 par page)
+
+**Feedback utilisateur** — En bas de la barre latérale, les utilisateurs peuvent noter chaque conversation de 1 à 5 étoiles et laisser un commentaire. Les feedbacks sont visibles dans les logs (`source = FEEDBACK`) et dans la table `feedback` Supabase.
+
+---
+
+## Adapter l'Oracle à un autre domaine
+
+Tout ce qui est spécifique à Dofus est isolé dans les fichiers de config :
+
+| Fichier | Rôle |
+|---------|------|
+| `api/config/prompt.txt` | Personnalité et règles de l'Oracle |
+| `api/config/prompt_guardian.txt` | Critères de validation des documents ingérés |
+| `api/config/prompt_context.txt` | Description automatique des documents lors de l'ingestion |
+| `api/config/prompt_summary.txt` | Résumé de conversation pour la mémoire long terme |
+
+Aucune modification de code nécessaire — seuls ces fichiers texte sont à adapter.
 
 ---
 
@@ -234,9 +316,10 @@ npm run dev
 
 | Variable | Description | Défaut |
 |----------|-------------|--------|
-| `DATABASE_URL` | URL de connexion PostgreSQL | — |
+| `DATABASE_URL` | URL de connexion PostgreSQL (pgvector) | — |
 | `SUPABASE_URL` | URL du projet Supabase | — |
 | `SUPABASE_ANON_KEY` | Clé publique Supabase | — |
+| `LOG_DATABASE_URL` | URL Supabase pour logs/profils (optionnel, = DATABASE_URL si absent) | — |
 | `GROQ_API_KEY` | Clé API Groq | — |
 | `OPENAI_API_KEY` | Clé API OpenAI | — |
 | `ANTHROPIC_API_KEY` | Clé API Anthropic | — |
@@ -244,6 +327,9 @@ npm run dev
 | `GUARDIAN_PROVIDER` | Provider du Guardian | `groq` |
 | `GUARDIAN_MODEL` | Modèle du Guardian | `llama-3.1-8b-instant` |
 | `UNSTRUCTURED_API_KEY` | Clé Unstructured.io (PDF/DOCX) | — |
+| `CONTEXT_PROMPT` | Prompt contexte (si pas de fichier .txt) | — |
+| `GUARDIAN_PROMPT` | Prompt guardian (si pas de fichier .txt) | — |
+| `SUMMARY_PROMPT` | Prompt résumé (si pas de fichier .txt) | — |
 | `K_SEMANTIC` | Candidats recherche sémantique | `10` |
 | `K_BM25` | Candidats recherche BM25 | `10` |
 | `K_FINAL` | Chunks retournés après fusion | `5` |
@@ -266,9 +352,9 @@ npm run dev
 |-----------|-------------|
 | Backend | Python 3.12, FastAPI, LangGraph |
 | Embeddings | `intfloat/multilingual-e5-base` (HuggingFace, local) |
-| Base vectorielle | Supabase + pgvector |
+| Base vectorielle | Supabase / Docker + pgvector |
 | Recherche | Cosine similarity + BM25 + RRF fusion |
-| LLM | Groq / OpenAI / Anthropic / Gemini / Ollama |
+| LLM | Groq / OpenAI / Anthropic / Gemini |
 | Frontend | Next.js 15, Vercel AI SDK, Tailwind CSS |
 | Ingestion | LlamaIndex, Unstructured.io |
 

@@ -23,4 +23,3 @@ __all__ = [
     "QUARANTINE_DIR",
     "STORAGE_DIR",
 ]
-

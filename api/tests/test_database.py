@@ -1,6 +1,7 @@
 import unittest
-from unittest.mock import MagicMock, patch
 from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
+
 from core.database.vector_manager import VectorManager
 
 
