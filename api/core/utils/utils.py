@@ -128,7 +128,6 @@ def load_config() -> Dict[str, Any]:
             "openai": {"api_key": os.environ.get("OPENAI_API_KEY", "")},
             "anthropic": {"api_key": os.environ.get("ANTHROPIC_API_KEY", "")},
             "gemini": {"api_key": os.environ.get("GOOGLE_API_KEY", "")},
-            "ollama": {"base_url": os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")},
             "unstructured": {
                 "api_key": os.environ.get("UNSTRUCTURED_API_KEY", ""),
                 "server_url": os.environ.get("UNSTRUCTURED_SERVER_URL",
@@ -137,7 +136,7 @@ def load_config() -> Dict[str, Any]:
         },
         "guardian": {
             "provider": os.environ.get("GUARDIAN_PROVIDER", "groq"),
-                "model": os.environ.get("GUARDIAN_MODEL", "llama-3.1-8b-instant"),
+            "model": os.environ.get("GUARDIAN_MODEL", "llama-3.1-8b-instant"),
         },
         "memory": {
             "max_recent_tokens": int(os.environ.get("MAX_RECENT_TOKENS", "1200")),

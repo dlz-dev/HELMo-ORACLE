@@ -5,7 +5,8 @@ from llama_index.core import SimpleDirectoryReader
 from llama_index.core.node_parser import SentenceSplitter
 
 
-def process_pdf_file(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50) -> List[Tuple[str, Dict[str, Any]]]:
+def process_pdf_file(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50) -> List[
+    Tuple[str, Dict[str, Any]]]:
     """
     Loads a PDF file, extracts the text, and chunks it into segments.
     
@@ -21,7 +22,7 @@ def process_pdf_file(file_path: str, chunk_size: int = 512, chunk_overlap: int =
     documents = reader.load_data()
 
     file_name = os.path.basename(file_path)
-    
+
     for doc in documents:
         doc.metadata["source"] = file_name
         # Duplication of 'page_label' to 'page_number' for backward compatibility

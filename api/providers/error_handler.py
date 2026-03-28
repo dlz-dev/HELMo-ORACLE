@@ -19,7 +19,6 @@ class ErrorType(Enum):
     CONNECTION_ERROR = "connection_error"
     CONTEXT_TOO_LONG = "context_too_long"
     CONTENT_FILTERED = "content_filtered"
-    OLLAMA_OFFLINE = "ollama_offline"
     UNKNOWN = "unknown"
 
 
@@ -65,12 +64,6 @@ _USER_MESSAGES: dict[ErrorType, dict[str, str]] = {
         "title": "Message blocked by safety filter",
         "message": "The AI provider refused to process this message for safety reasons.",
         "suggestion": "Try rephrasing your question.",
-    },
-    ErrorType.OLLAMA_OFFLINE: {
-        "icon": "🏠",
-        "title": "Local AI server not running",
-        "message": "Ollama doesn't seem to be running on your machine.",
-        "suggestion": "Open a terminal and run: `ollama serve`. Then try again.",
     },
     ErrorType.UNKNOWN: {
         "icon": "⚡",
@@ -118,31 +111,37 @@ def _classify(error: Exception, provider: str) -> ErrorType:
     msg = str(error).lower()
     cls_name = type(error).__name__.lower()
 
-    if provider == "ollama":
-        if any(k in msg for k in ["connection refused", "connect call failed", "cannot connect"]):
-            return ErrorType.OLLAMA_OFFLINE
-        if "not found" in msg or "no such model" in msg:
-            return ErrorType.MODEL_UNAVAILABLE
-
-    if any(k in msg for k in ["invalid api key", "invalid_api_key", "incorrect api key", "authentication", "unauthorized", "401", "api key"]):
+    if any(k in msg for k in
+           ["invalid api key", "invalid_api_key", "incorrect api key", "authentication", "unauthorized", "401",
+            "api key"]):
         return ErrorType.INVALID_KEY
 
-    if any(k in msg for k in ["quota", "insufficient_quota", "billing", "exceeded your current quota", "credit", "402", "payment"]):
+    if any(k in msg for k in
+           ["quota", "insufficient_quota", "billing", "exceeded your current quota", "credit", "402", "payment"]):
         return ErrorType.QUOTA_EXCEEDED
 
-    if any(k in msg for k in ["rate_limit", "rate limit", "too many requests", "429", "ratelimiterror", "requests per minute", "tokens per minute"]):
+    if any(k in msg for k in
+           ["rate_limit", "rate limit", "too many requests", "429", "ratelimiterror", "requests per minute",
+            "tokens per minute"]):
         return ErrorType.RATE_LIMITED
 
-    if any(k in msg for k in ["model not found", "no such model", "does not exist", "model_not_found", "invalid model", "404", "deprecated", "model is currently overloaded"]):
+    if any(k in msg for k in
+           ["model not found", "no such model", "does not exist", "model_not_found", "invalid model", "404",
+            "deprecated", "model is currently overloaded"]):
         return ErrorType.MODEL_UNAVAILABLE
 
-    if any(k in msg for k in ["context_length", "context length", "too long", "maximum context", "token limit", "max_tokens", "string too long"]):
+    if any(k in msg for k in
+           ["context_length", "context length", "too long", "maximum context", "token limit", "max_tokens",
+            "string too long"]):
         return ErrorType.CONTEXT_TOO_LONG
 
-    if any(k in msg for k in ["content filter", "safety", "policy", "blocked", "harm", "content_policy_violation", "responsible ai"]):
+    if any(k in msg for k in
+           ["content filter", "safety", "policy", "blocked", "harm", "content_policy_violation", "responsible ai"]):
         return ErrorType.CONTENT_FILTERED
 
-    if any(k in msg for k in ["connection", "timeout", "network", "unreachable", "service unavailable", "503", "502", "500", "connecterror", "connectionerror", "remotedisconnected"]):
+    if any(k in msg for k in
+           ["connection", "timeout", "network", "unreachable", "service unavailable", "503", "502", "500",
+            "connecterror", "connectionerror", "remotedisconnected"]):
         return ErrorType.CONNECTION_ERROR
 
     if "authenticationerror" in cls_name:

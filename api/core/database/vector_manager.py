@@ -9,14 +9,14 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 import psycopg
-from psycopg import sql
+from core.utils.utils import FTS_LANG, K_BM25, K_FINAL, K_SEMANTIC, RRF_K, load_config
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from pgvector.psycopg import register_vector
-
-from core.utils.utils import FTS_LANG, K_BM25, K_FINAL, K_SEMANTIC, RRF_K, load_config
+from psycopg import sql
 
 # Get the logger instance configured in logger.py
 logger = logging.getLogger("oracle")
+
 
 class VectorManager:
     """Handles connections to PostgreSQL/Supabase and manages hybrid search execution."""
@@ -36,11 +36,11 @@ class VectorManager:
             self._conn_string = conn_string
             self.conn = psycopg.connect(conn_string, autocommit=True)
             register_vector(self.conn)
-            
+
             # Test connection
             with self.conn.cursor() as cur:
                 cur.execute("SELECT 1")
-            
+
             self.db_available = True
             logger.info("VectorManager: Database connection successful.")
 
@@ -126,21 +126,21 @@ class VectorManager:
             return False
 
     def search_semantic(
-        self, query_vector: List[float], k: int = K_SEMANTIC
+            self, query_vector: List[float], k: int = K_SEMANTIC
     ) -> List[Tuple[str, float, Dict[str, Any]]]:
         """
         Executes cosine similarity search (<=>).
         """
         if not self.is_db_available():
             return []
-            
+
         with self.conn.cursor() as cur:
             cur.execute(
                 """
                 SELECT content, vecteur <=> %s::vector AS distance, metadata
                 FROM documents
                 ORDER BY distance
-                LIMIT %s
+                    LIMIT %s
                 """,
                 (query_vector, k),
             )
@@ -152,7 +152,7 @@ class VectorManager:
         """
         if not self.is_db_available():
             return []
-            
+
         try:
             with self.conn.cursor() as cur:
                 query_sql = sql.SQL(
@@ -161,12 +161,13 @@ class VectorManager:
                            ts_rank(fts_vector, plainto_tsquery({lang}, %s)) AS rank,
                            metadata
                     FROM documents
-                    WHERE fts_vector @@ plainto_tsquery({lang}, %s)
+                    WHERE fts_vector @@ plainto_tsquery({lang}
+                        , %s)
                     ORDER BY rank DESC
-                    LIMIT %s
+                        LIMIT %s
                     """
                 ).format(lang=sql.Literal(FTS_LANG))
-                
+
                 cur.execute(query_sql, (query, query, k))
                 return cur.fetchall()
         except Exception as e:
@@ -174,14 +175,14 @@ class VectorManager:
             return []
 
     def search_hybrid(
-        self, query: str, query_vector: List[float], k_final: int = K_FINAL
+            self, query: str, query_vector: List[float], k_final: int = K_FINAL
     ) -> List[Tuple[str, float, Dict[str, Any]]]:
         """
         Combines semantic and BM25 searches using Reciprocal Rank Fusion.
         """
         if not self.is_db_available():
             return []
-            
+
         semantic_results = self.search_semantic(query_vector, k=K_SEMANTIC)
         bm25_results = self.search_bm25(query, k=K_BM25)
 
@@ -209,16 +210,12 @@ class VectorManager:
         """
         if not self.is_db_available():
             return []
-            
+
         try:
             with self.conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT 
-                        metadata ->>'source' AS source, 
-                        COUNT (*) AS chunk_count, 
-                        MAX (metadata->>'global_context') AS global_context, 
-                        MAX (ingested_at) AS ingested_at
+                    SELECT metadata ->>'source' AS source, COUNT (*) AS chunk_count, MAX (metadata->>'global_context') AS global_context, MAX (ingested_at) AS ingested_at
                     FROM documents
                     WHERE metadata->>'source' IS NOT NULL
                     GROUP BY metadata->>'source'
@@ -240,7 +237,7 @@ class VectorManager:
             return []
 
     def search_similar(
-        self, query_vector: List[float], k: int = K_FINAL
+            self, query_vector: List[float], k: int = K_FINAL
     ) -> List[Tuple[str, float, Dict[str, Any]]]:
         """Alias for search_semantic() — kept for backward compatibility."""
         return self.search_semantic(query_vector, k)

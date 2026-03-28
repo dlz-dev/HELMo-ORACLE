@@ -2,16 +2,17 @@
 Centralized logging configuration and database logging for HELMo Oracle.
 """
 
-import logging
-import json
-import psycopg
-from typing import Optional
 import asyncio
+import json
+import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from typing import Optional
+
+import psycopg
 
 # Define log directory and file
-_LOG_DIR = Path(__file__).parent.parent.parent / "logs" # api/logs
+_LOG_DIR = Path(__file__).parent.parent.parent / "logs"  # api/logs
 _LOG_DIR.mkdir(exist_ok=True)
 _LOG_FILE = _LOG_DIR / "oracle.log"
 
@@ -32,10 +33,11 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
     logger.addHandler(rotating_handler)
     logger.addHandler(stream_handler)
-    logger.propagate = False # Prevent messages from being passed to the root logger
+    logger.propagate = False  # Prevent messages from being passed to the root logger
 
 # Shared database connection for log_to_db
 _shared_db_conn: Optional[psycopg.Connection] = None
+
 
 def set_shared_conn(conn: Optional[psycopg.Connection]):
     """Sets the shared database connection for logging."""
@@ -45,6 +47,7 @@ def set_shared_conn(conn: Optional[psycopg.Connection]):
         logger.info("[Logger] Connexion DB partagée initialisée pour le logger.")
     else:
         logger.warning("[Logger] Connexion DB partagée NON disponible.")
+
 
 def _log_to_db_sync(level: str, source: str, message: str, metadata: dict = None, user_id: str = None):
     """Synchronous internal function to perform the DB logging."""
@@ -62,13 +65,16 @@ def _log_to_db_sync(level: str, source: str, message: str, metadata: dict = None
                 """,
                 (level, source, message, json.dumps(metadata) if metadata else None, user_id)
             )
-        _shared_db_conn.commit() # Explicitly commit the transaction
+        _shared_db_conn.commit()  # Explicitly commit the transaction
         logger.info(f"[DB_LOG_SYNC_SUCCESS] Log inséré pour la source: {source}")
     except Exception as e:
-        logger.error(f"[DB_LOG_SYNC_FAIL] Erreur lors de l'insertion du log pour la source {source}: {e}", exc_info=True)
-        _shared_db_conn.rollback() # Rollback on error
+        logger.error(f"[DB_LOG_SYNC_FAIL] Erreur lors de l'insertion du log pour la source {source}: {e}",
+                     exc_info=True)
+        _shared_db_conn.rollback()  # Rollback on error
+
 
 log_to_db_sync = _log_to_db_sync
+
 
 async def log_to_db(level: str, source: str, message: str, metadata: dict = None, user_id: str = None):
     """
@@ -78,4 +84,3 @@ async def log_to_db(level: str, source: str, message: str, metadata: dict = None
         await asyncio.to_thread(_log_to_db_sync, level, source, message, metadata, user_id)
     except Exception as e:
         logger.error(f"[LOG_TO_DB_ASYNC_FAIL] Erreur dans le thread de logging: {e}", exc_info=True)
-

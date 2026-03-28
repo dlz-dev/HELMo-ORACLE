@@ -9,4 +9,3 @@ __all__ = [
     "is_valid_lore_file",
     "get_search_tool",
 ]
-

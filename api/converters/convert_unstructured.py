@@ -6,6 +6,7 @@ from llama_index.core.node_parser import SentenceSplitter
 from unstructured_client import UnstructuredClient
 from unstructured_client.models import shared, operations
 
+
 # Import delayed to avoid circular dependency issues
 def _get_load_config():
     from ..core.utils.utils import load_config
