@@ -10,9 +10,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Tuple
 
-from llama_index.core.llms import LLM
-
 from core.utils.utils import _SUMMARY_PROMPT
+from llama_index.core.llms import LLM
 
 
 def _estimate_tokens(text: str) -> int:

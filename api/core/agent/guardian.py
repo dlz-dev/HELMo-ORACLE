@@ -1,6 +1,7 @@
 import os
+from typing import Optional
+
 import pypdf
-from typing import Optional, Tuple
 from core.utils.utils import load_config, _GUARDIAN_PROMPT
 
 
@@ -99,7 +100,7 @@ def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> tuple[b
         status = "✅ ACCEPTED" if verdict else "❌ REJECTED"
         print(f"  🛡️  Guardian [{fname}] via {provider_key}/{model} → '{response.content.strip()}' → {status}")
 
-        return verdict,explication
+        return verdict, explication
     except Exception as e:
         print(f"  🚫 [{fname}] API error during validation: {e} → REJECTED (Not validated)")
         return False, "Erreur API"

@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import MagicMock, patch, mock_open
 
-from core.agent.tools_oracle import get_search_tool, CONFIDENCE_THRESHOLD_HIGH
 from core.agent.guardian import is_valid_lore_file
+from core.agent.tools_oracle import get_search_tool, CONFIDENCE_THRESHOLD_HIGH
 
 
 class TestOracleTool(unittest.TestCase):

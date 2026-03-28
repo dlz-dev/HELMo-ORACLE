@@ -4,6 +4,93 @@ import { useEffect, useState, useCallback } from "react";
 import { MessageSquarePlus, Trash2, Clock } from "lucide-react";
 import { clsx } from "clsx";
 
+function FeedbackPanel({ sessionId }: { sessionId: string }) {
+  const [hovered, setHovered] = useState(0);
+  const [selected, setSelected] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Réinitialise si la session change
+  useEffect(() => {
+    setHovered(0);
+    setSelected(0);
+    setComment("");
+    setSubmitted(false);
+  }, [sessionId]);
+
+  async function handleSubmit() {
+    if (!selected) return;
+    setSubmitting(true);
+    try {
+      await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId, rating: selected, comment: comment.trim() || null }),
+      });
+      setSubmitted(true);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (submitted) {
+    return (
+      <div className="px-3 py-3 text-center text-xs text-muted-fg">
+        Merci pour ton retour ✦
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-3 py-3 space-y-2">
+      <p className="text-xs text-subtle-fg">Noter cette conversation</p>
+
+      {/* Étoiles */}
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onMouseEnter={() => setHovered(star)}
+            onMouseLeave={() => setHovered(0)}
+            onClick={() => setSelected(star)}
+            className="text-lg leading-none transition-colors duration-100"
+            aria-label={`Note ${star}`}
+          >
+            <span className={clsx(
+              (hovered || selected) >= star ? "text-gold" : "text-muted-fg opacity-30"
+            )}>★</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Commentaire + bouton */}
+      {selected > 0 && (
+        <div className="flex flex-col gap-1.5 animate-fade-up">
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Un commentaire ? (optionnel)"
+            rows={2}
+            className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-default bg-surface-alt
+                       text-main placeholder:text-subtle-fg focus:outline-none focus:border-gold/50
+                       resize-none transition-colors duration-150"
+          />
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="self-start px-3 py-1 text-xs rounded-lg bg-gold/10 border border-gold/30
+                       text-gold hover:bg-gold/20 transition-colors duration-150 disabled:opacity-50"
+          >
+            {submitting ? "Envoi…" : "Envoyer"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface Session {
   session_id: string;
   title: string;
@@ -98,7 +185,7 @@ export function SessionSidebar({
       </div>
 
       {/* Liste */}
-      <div className="flex-1 overflow-y-auto py-2">
+      <div className="flex-1 overflow-y-auto py-2 min-h-0">
         {loading && (
           <div className="px-4 py-8 text-center text-subtle-fg text-sm animate-pulse">
             Chargement…
@@ -163,6 +250,13 @@ export function SessionSidebar({
           </div>
         ))}
       </div>
+
+      {/* Feedback — affiché uniquement quand une session est active */}
+      {activeSessionId && (
+        <div className="border-t border-default">
+          <FeedbackPanel sessionId={activeSessionId} />
+        </div>
+      )}
     </div>
   );
 }

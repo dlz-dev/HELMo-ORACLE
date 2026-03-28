@@ -5,7 +5,6 @@ langchain_core==1.2.19
 langchain_google_genai==4.2.1
 langchain_groq==1.1.2
 langchain_huggingface==1.2.1
-langchain_ollama==1.0.1
 langchain_openai==1.1.11
 langgraph==1.1.2
 llama_index==0.14.16
@@ -16,6 +15,7 @@ psycopg[binary]==3.3.3
 PyYAML==6.0.3
 sentence-transformers==5.3.0
 spacy==3.8.11
+streamlit==1.55.0
 supabase==2.28.2
 unstructured_client==0.42.10
 watchdog==6.0.0

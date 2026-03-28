@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   oracle-backend:
     build:
@@ -10,13 +8,35 @@ services:
     env_file: .env
     volumes:
       - ./config/prompt.txt:/app/config/prompt.txt:ro
+      - ./config/prompt_context.txt:/app/config/prompt_context.txt:ro
+      - ./config/prompt_guardian.txt:/app/config/prompt_guardian.txt:ro
+      - ./config/prompt_summary.txt:/app/config/prompt_summary.txt:ro
       - ./storage:/app/storage
       - ./data:/app/data
-      - ./logs:/app/logs
-      - huggingface-cache:/root/.cache/huggingface
     restart: unless-stopped
     environment:
       - PYTHONUNBUFFERED=1
 
+  # Service optionnel — démarrer avec : docker compose --profile db up
+  # Par défaut (cloud/Supabase), ce service n'est pas démarré.
+  db:
+    profiles: ["db"]
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: oracle
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./config/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d oracle"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
-  huggingface-cache:
+  pgdata:

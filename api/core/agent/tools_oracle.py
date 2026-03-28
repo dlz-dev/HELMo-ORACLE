@@ -8,9 +8,8 @@ in the optional cot_storage list (API mode).
 
 from typing import Callable, Any, Optional
 
-from langchain_core.tools import tool
-
 from core.database.vector_manager import VectorManager
+from langchain_core.tools import tool
 
 # RRF score thresholds for confidence classification
 # Empirical values for the paraphrase-multilingual-MiniLM-L12-v2 model

@@ -1,17 +1,16 @@
-import unittest
-import tempfile
-import os
 import json
-
+import os
+import tempfile
+import unittest
 from unittest.mock import patch, MagicMock
-from llama_index.core import Document
 
-from converters.convert_json import parse_json
 from converters.convert_csv import load_csv_data
+from converters.convert_json import parse_json
 from converters.convert_markdown import parse_markdown
-from converters.convert_text import process_text_file
 from converters.convert_pdf import process_pdf_file
+from converters.convert_text import process_text_file
 from converters.convert_unstructured import process_with_unstructured
+from llama_index.core import Document
 
 
 def create_temp_file(content: str, suffix: str) -> str:
@@ -351,6 +350,7 @@ class TestProcessWithUnstructured(unittest.TestCase):
         # Doit renvoyer une liste vide si les clés API sont absentes
         self.assertEqual(result, [])
         mock_load_config.assert_called_once()
+
 
 if __name__ == '__main__':
     unittest.main()

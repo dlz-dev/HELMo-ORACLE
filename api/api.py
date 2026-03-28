@@ -6,21 +6,20 @@ Exposes the RAG pipeline as a REST API so a separate frontend
 """
 
 import os
+import threading as _threading
 import time
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
-import uuid
 
 import uvicorn
-import threading as _threading
-
 from fastapi import FastAPI, File, HTTPException, Header, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from langgraph.prebuilt import create_react_agent
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from pydantic import BaseModel
 from psycopg import sql
+from pydantic import BaseModel
 
 import mcp_server as _mcp_module
 from core.agent.tools_oracle import get_search_tool
@@ -31,7 +30,7 @@ from core.pipeline.pii_manager import PIIManager
 # Import logger and utils from the corrected logger module
 from core.utils.logger import logger, set_shared_conn, log_to_db_sync
 from core.utils.utils import load_config, load_base_prompt, format_response
-from providers import get_llm, get_available_models, PROVIDER_LABELS
+from providers import get_llm, get_available_models
 
 # --- Configuration Loading ---
 config = load_config()
@@ -53,6 +52,7 @@ else:
 
 # --- Connexion séparée Supabase pour logs/profils ---
 import psycopg as _psycopg
+
 _log_conn = None
 _LOG_DB_URL = os.getenv("LOG_DATABASE_URL", "")
 if _LOG_DB_URL:
@@ -63,6 +63,18 @@ if _LOG_DB_URL:
         logger.error(f"Impossible de se connecter à Supabase pour les logs : {_e}")
 
 set_shared_conn(_log_conn)
+
+# --- Client Supabase Python (pour feedback) ---
+_supabase = None
+_SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+_SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+if _SUPABASE_URL and _SUPABASE_KEY:
+    try:
+        from supabase import create_client as _create_supabase_client
+        _supabase = _create_supabase_client(_SUPABASE_URL, _SUPABASE_KEY)
+        logger.info("Client Supabase initialisé.")
+    except Exception as _e:
+        logger.error(f"Impossible d'initialiser le client Supabase : {_e}")
 
 _mcp_module.setup(vm)
 _mcp_asgi = _mcp_module.mcp.streamable_http_app()
@@ -76,15 +88,18 @@ pii = PIIManager()
 # --- Auth ---
 _ADMIN_API_KEY = os.getenv("API_SECRET_KEY", "")
 
+
 def _require_api_key(x_api_key: str = Header(...)):
     if not _ADMIN_API_KEY or x_api_key != _ADMIN_API_KEY:
         raise HTTPException(status_code=401, detail="Clé API invalide")
+
 
 # --- FastAPI App ---
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     async with _mcp_asgi.router.lifespan_context(app):
         yield
+
 
 app = FastAPI(title="HELMo Oracle API", version="1.0.0", lifespan=_lifespan)
 app.add_middleware(
@@ -94,6 +109,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.mount("/mcp", _mcp_asgi)
+
 
 # --- Schemas ---
 class ChatRequest(BaseModel):
@@ -105,8 +121,17 @@ class ChatRequest(BaseModel):
     temperature: float = float(config.get("llm", {}).get("temperature", 0.0))
     k_final: int = config.get("search", {}).get("k_final", 5)
 
+
 class RenameRequest(BaseModel):
     title: str
+
+
+class FeedbackRequest(BaseModel):
+    session_id: Optional[str] = None
+    user_id: Optional[str] = None
+    rating: int
+    comment: Optional[str] = None
+
 
 # --- Per-request Session Manager ---
 def _get_sm(user_id: Optional[str] = None) -> SessionManager:
@@ -114,6 +139,7 @@ def _get_sm(user_id: Optional[str] = None) -> SessionManager:
     if user_id and _is_valid_uuid(user_id):
         return SessionManager(user_id=user_id)
     return sm
+
 
 # --- Shared Agent Logic ---
 def _is_valid_uuid(val):
@@ -123,6 +149,7 @@ def _is_valid_uuid(val):
     except ValueError:
         return False
 
+
 def _build_lc_history(history_tuples, masked_message):
     from langchain_core.messages import HumanMessage as HM, AIMessage as AM
     lc_history = []
@@ -131,6 +158,7 @@ def _build_lc_history(history_tuples, masked_message):
     if not lc_history or not isinstance(lc_history[-1], HM) or lc_history[-1].content != masked_message:
         lc_history.append(HM(content=masked_message))
     return lc_history
+
 
 def _run_agent(session: dict, masked_message: str, provider: str, model: str,
                temperature: float, k_final: int) -> tuple[str, list]:
@@ -167,6 +195,7 @@ def _run_agent(session: dict, masked_message: str, provider: str, model: str,
     )
     return response_text, []
 
+
 # --- Routes ---
 @app.get("/health")
 def health():
@@ -188,6 +217,7 @@ def health():
     checks["embeddings"] = {"status": "ok", "model": "intfloat/multilingual-e5-base"}
 
     return {"status": "ok", "checks": checks}
+
 
 @app.get("/health/full")
 def health_full():
@@ -230,7 +260,8 @@ def health_full():
     providers_to_check = {
         "groq": ("GROQ_API_KEY", "langchain_groq", "ChatGroq", {"model": "llama-3.1-8b-instant"}),
         "openai": ("OPENAI_API_KEY", "langchain_openai", "ChatOpenAI", {"model": "gpt-4o-mini"}),
-        "anthropic": ("ANTHROPIC_API_KEY", "langchain_anthropic", "ChatAnthropic", {"model": "claude-haiku-4-5-20251001"}),
+        "anthropic": ("ANTHROPIC_API_KEY", "langchain_anthropic", "ChatAnthropic",
+                      {"model": "claude-haiku-4-5-20251001"}),
         "gemini": ("GOOGLE_API_KEY", "langchain_google_genai", "ChatGoogleGenerativeAI", {"model": "gemini-2.0-flash"}),
     }
 
@@ -271,9 +302,11 @@ def list_models(provider: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @app.get("/sessions")
 def list_sessions(user_id: Optional[str] = None):
     return {"sessions": _get_sm(user_id).list_sessions()}
+
 
 @app.post("/sessions")
 def create_session(provider: str = "", model: str = "", user_id: Optional[str] = None):
@@ -282,6 +315,7 @@ def create_session(provider: str = "", model: str = "", user_id: Optional[str] =
     request_sm.save(session)
     return session
 
+
 @app.get("/sessions/{session_id}")
 def get_session(session_id: str, user_id: Optional[str] = None):
     session = _get_sm(user_id).load(session_id)
@@ -289,10 +323,12 @@ def get_session(session_id: str, user_id: Optional[str] = None):
         raise HTTPException(status_code=404, detail="Session not found")
     return session
 
+
 @app.delete("/sessions/{session_id}")
 def delete_session(session_id: str, user_id: Optional[str] = None):
     _get_sm(user_id).delete(session_id)
     return {"deleted": session_id}
+
 
 @app.patch("/sessions/{session_id}/rename")
 def rename_session(session_id: str, body: RenameRequest, user_id: Optional[str] = None):
@@ -303,6 +339,7 @@ def rename_session(session_id: str, body: RenameRequest, user_id: Optional[str] 
     session["title"] = body.title
     request_sm.save(session)
     return {"session_id": session_id, "title": body.title}
+
 
 @app.post("/chat")
 def chat(req: ChatRequest):
@@ -339,9 +376,11 @@ def chat(req: ChatRequest):
     request_sm.save(session)
     return {"session_id": session["session_id"], "response": response, "cot_results": cot_storage}
 
+
 @app.get("/archives")
 def list_archives():
     return {"sources": vm.list_sources()}
+
 
 # --- Ingestion ---
 _ingest_status = {"running": False, "last_status": "idle", "last_message": ""}
@@ -377,13 +416,14 @@ def _run_ingestion(file_paths: list):
     try:
         for i, fp in enumerate(file_paths):
             fp = Path(fp)
-            _ingest_status["last_message"] = f"Fichier {i+1}/{total} — Validation de {fp.name}…"
+            _ingest_status["last_message"] = f"Fichier {i + 1}/{total} — Validation de {fp.name}…"
 
             # 1. Guardian
             try:
                 valid, reason = is_valid_lore_file(str(fp), api_key)
             except RuntimeError as e:
-                _ingest_status = {"running": False, "last_status": "error", "last_message": f"Guardian indisponible: {e}"}
+                _ingest_status = {"running": False, "last_status": "error",
+                                  "last_message": f"Guardian indisponible: {e}"}
                 return
 
             if not valid:
@@ -393,7 +433,7 @@ def _run_ingestion(file_paths: list):
                 continue
 
             # 2. Conversion
-            _ingest_status["last_message"] = f"Fichier {i+1}/{total} — Conversion de {fp.name}…"
+            _ingest_status["last_message"] = f"Fichier {i + 1}/{total} — Conversion de {fp.name}…"
             ext = fp.suffix.lower()
             if ext == ".csv":
                 chunks = convert_csv.load_csv_data(str(fp))
@@ -418,7 +458,7 @@ def _run_ingestion(file_paths: list):
                 base_metadata["global_context"] = doc_context
 
             # 4. Vectorisation
-            _ingest_status["last_message"] = f"Fichier {i+1}/{total} — Vectorisation de {fp.name}…"
+            _ingest_status["last_message"] = f"Fichier {i + 1}/{total} — Vectorisation de {fp.name}…"
             for text, meta in chunks:
                 inserted = vm.add_document(text, metadata={**meta, **base_metadata})
                 if inserted:
@@ -432,11 +472,14 @@ def _run_ingestion(file_paths: list):
 
         accepted = total - rejected_files
         if rejected_files == total:
-            _ingest_status = {"running": False, "last_status": "warning", "last_message": f"Fichier refusé — déplacé en quarantaine."}
+            _ingest_status = {"running": False, "last_status": "warning",
+                              "last_message": f"Fichier refusé — déplacé en quarantaine."}
         elif rejected_files > 0:
-            _ingest_status = {"running": False, "last_status": "warning", "last_message": f"{accepted} fichier(s) ajouté(s) — {new_chunks} chunks ajoutés, {duplicate_chunks} doublons. {rejected_files} refusé(s) et déplacé(s) en quarantaine."}
+            _ingest_status = {"running": False, "last_status": "warning",
+                              "last_message": f"{accepted} fichier(s) ajouté(s) — {new_chunks} chunks ajoutés, {duplicate_chunks} doublons. {rejected_files} refusé(s) et déplacé(s) en quarantaine."}
         else:
-            _ingest_status = {"running": False, "last_status": "success", "last_message": f"Fichier ajouté ! {new_chunks} chunks ajoutés, {duplicate_chunks} doublons ignorés."}
+            _ingest_status = {"running": False, "last_status": "success",
+                              "last_message": f"Fichier ajouté ! {new_chunks} chunks ajoutés, {duplicate_chunks} doublons ignorés."}
 
     except Exception as e:
         _ingest_status = {"running": False, "last_status": "error", "last_message": str(e)}
@@ -473,10 +516,11 @@ async def trigger_ingest(files: list[UploadFile] = File(...)):
 def ingest_status():
     return _ingest_status
 
+
 # --- Logs ---
 @app.get("/logs", dependencies=[Depends(_require_api_key)])
-def get_logs(lines: int = 100, level: Optional[str] = None, source: Optional[str] = None):
-    """Fetches logs from the database with optional filters."""
+def get_logs(lines: int = 100, offset: int = 0, level: Optional[str] = None, source: Optional[str] = None):
+    """Fetches logs from the database with optional filters and pagination."""
     if _log_conn is None or _log_conn.closed:
         logger.error("[GET_LOGS] Connexion Supabase (logs) indisponible.")
         raise HTTPException(status_code=503, detail="Connexion logs indisponible")
@@ -484,10 +528,17 @@ def get_logs(lines: int = 100, level: Optional[str] = None, source: Optional[str
     try:
         with _log_conn.cursor() as cur:
             base_query = sql.SQL("""
-                SELECT l.id, l.created_at, l.level, l.source, l.message, l.metadata, p.first_name, p.last_name
-                FROM logs l
-                LEFT JOIN profiles p ON l.user_id = p.id
-            """)
+                                 SELECT l.id,
+                                        l.created_at,
+                                        l.level,
+                                        l.source,
+                                        l.message,
+                                        l.metadata,
+                                        p.first_name,
+                                        p.last_name
+                                 FROM logs l
+                                          LEFT JOIN profiles p ON l.user_id = p.id
+                                 """)
             conditions = []
             params = []
             if level:
@@ -498,12 +549,12 @@ def get_logs(lines: int = 100, level: Optional[str] = None, source: Optional[str
                 params.append(source)
             if conditions:
                 base_query += sql.SQL(" WHERE ") + sql.SQL(" AND ").join(conditions)
-            base_query += sql.SQL(" ORDER BY l.created_at DESC LIMIT %s")
-            params.append(lines)
-            
+            base_query += sql.SQL(" ORDER BY l.created_at DESC LIMIT %s OFFSET %s")
+            params.extend([lines, offset])
+
             cur.execute(base_query, params)
             rows = cur.fetchall()
-            
+
             logs_list = [
                 {
                     "id": row[0], "created_at": row[1], "level": row[2], "source": row[3],
@@ -513,8 +564,9 @@ def get_logs(lines: int = 100, level: Optional[str] = None, source: Optional[str
             ]
             return {"logs": logs_list}
     except Exception as e:
-        logger.error("[GET_LOGS] Failed to fetch logs from DB.", exc_info=True) # Log the full exception
+        logger.error("[GET_LOGS] Failed to fetch logs from DB.", exc_info=True)  # Log the full exception
         raise HTTPException(status_code=500, detail=f"Erreur interne du serveur lors de la récupération des logs: {e}")
+
 
 @app.delete("/logs", dependencies=[Depends(_require_api_key)])
 def clear_logs():
@@ -527,6 +579,37 @@ def clear_logs():
     except Exception as e:
         logger.error("[CLEAR_LOGS] Failed to clear local log file.", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Feedback ---
+@app.post("/feedback", status_code=201)
+def submit_feedback(req: FeedbackRequest):
+    """Enregistre un feedback utilisateur (note 1-5 + commentaire optionnel)."""
+    if not (1 <= req.rating <= 5):
+        raise HTTPException(status_code=422, detail="La note doit être entre 1 et 5.")
+    if _supabase is None:
+        raise HTTPException(status_code=503, detail="Client Supabase indisponible.")
+    user_id = req.user_id if req.user_id and _is_valid_uuid(req.user_id) else None
+    try:
+        _supabase.table("feedback").insert({
+            "session_id": req.session_id,
+            "user_id": user_id,
+            "rating": req.rating,
+            "comment": req.comment,
+        }).execute()
+        logger.info(f"Feedback reçu — session={req.session_id} note={req.rating}")
+        log_to_db_sync(
+            level="INFO",
+            source="FEEDBACK",
+            message=f"Note {req.rating}/5",
+            metadata={"session_id": req.session_id, "rating": req.rating, "comment": req.comment},
+            user_id=user_id,
+        )
+    except Exception as e:
+        logger.error(f"Erreur insertion feedback: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de l'enregistrement du feedback.")
+    return {"status": "ok"}
+
 
 # --- Entry Point ---
 if __name__ == "__main__":
