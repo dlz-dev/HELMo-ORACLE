@@ -6,11 +6,7 @@ import { supabase } from "@/lib/supabase";
 const ROLES = [
   { value: "etudiant", label: "Étudiant" },
   { value: "professeur", label: "Professeur" },
-  { value: "nrb", label: "NRB" },
-  { value: "nsi", label: "NSI" },
-  { value: "gaming1", label: "Gaming1" },
-  { value: "safran", label: "Safran" },
-  { value: "visiteur", label: "Visiteur" },
+  { value: "entreprise", label: "Entreprise" },
 ];
 
 export default function LoginPage() {
