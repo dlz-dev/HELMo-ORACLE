@@ -3,9 +3,9 @@ Handles the preprocessing and embedding of textual queries.
 """
 
 import string
-import unicodedata
 from typing import List
 
+import unicodedata
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 

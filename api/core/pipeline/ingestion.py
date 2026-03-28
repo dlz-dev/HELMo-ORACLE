@@ -15,14 +15,17 @@ from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger("oracle")
 
+
 # Import converters - moved to function-level to avoid circular imports
 def _import_converters():
     from converters import convert_csv, convert_markdown, convert_text, convert_json, convert_pdf, convert_unstructured
     return convert_csv, convert_markdown, convert_text, convert_json, convert_pdf, convert_unstructured
 
+
 from core.agent.guardian import is_valid_lore_file
 from core.database.vector_manager import VectorManager
 from core.utils.utils import _CONTEXT_PROMPT, ARCHIVE_DIR, QUARANTINE_DIR, load_config, load_api_key
+
 
 # Import providers - moved to function-level to avoid circular imports
 def _import_providers():
@@ -31,9 +34,9 @@ def _import_providers():
 
 
 def generate_document_context(
-    file_path: Path,
-    llm: Any,
-    extracted_chunks: List[Tuple[str, Dict]] = None
+        file_path: Path,
+        llm: Any,
+        extracted_chunks: List[Tuple[str, Dict]] = None
 ) -> str:
     """
     Generates a contextual description of the entire document using an LLM.

@@ -5,7 +5,8 @@ from llama_index.core import Document
 from llama_index.core.node_parser import SentenceSplitter
 
 
-def process_text_file(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50) -> List[Tuple[str, Dict[str, Any]]]:
+def process_text_file(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50) -> List[
+    Tuple[str, Dict[str, Any]]]:
     """
     Loads a text file and chunks it into fragments for vector indexing.
     
@@ -21,12 +22,12 @@ def process_text_file(file_path: str, chunk_size: int = 512, chunk_overlap: int 
         full_text = f.read()
 
     file_name = os.path.basename(file_path)
-    
+
     # Extraction of a document preview for global context
     global_context = full_text[:300].strip() + "..."
 
     doc = Document(
-        text=full_text, 
+        text=full_text,
         metadata={
             "source": file_name,
             "global_context": global_context

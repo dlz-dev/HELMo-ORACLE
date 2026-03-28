@@ -1,10 +1,10 @@
 import unittest
-from unittest.mock import patch, MagicMock, mock_open
 from pathlib import Path
+from unittest.mock import patch, MagicMock, mock_open
 
+from core.pipeline import generate_document_context, seed_database
 from core.pipeline.pii_manager import PIIManager
 from core.pipeline.preprocess import QuestionProcessor
-from core.pipeline import generate_document_context, seed_database
 
 
 class TestPIIManager(unittest.TestCase):
@@ -120,7 +120,7 @@ class TestIngestionPipeline(unittest.TestCase):
         mock_db.return_value = mock_db_instance
 
         with patch("core.pipeline.ingestion._import_providers", return_value=lambda: None), \
-             patch('shutil.move'):
+                patch('shutil.move'):
             seed_database()
 
         mock_db_instance.add_document.assert_called_once_with(

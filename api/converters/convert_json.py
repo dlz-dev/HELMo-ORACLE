@@ -44,11 +44,11 @@ def parse_json(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50) -
                     if isinstance(item, dict) and (name := _extract_item_name(item)):
                         metadata["item_name"] = name
                     documents.append(Document(text=json.dumps(item, ensure_ascii=False), metadata=metadata))
-                    
+
             elif isinstance(parent_value, dict):
                 metadata = {"source": file_name, "category": parent_key}
                 documents.append(Document(text=json.dumps(parent_value, ensure_ascii=False), metadata=metadata))
-            
+
             else:
                 metadata = {"source": file_name, "category": parent_key}
                 documents.append(Document(text=str(parent_value), metadata=metadata))

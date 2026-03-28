@@ -6,6 +6,7 @@ from typing import List, Tuple, Dict, Any
 from llama_index.core import Document
 from llama_index.core.node_parser import SentenceSplitter
 
+
 def load_csv_data(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50) -> List[Tuple[str, Dict[str, Any]]]:
     """
     Reads a CSV file, converts each row to JSON (text), and chunks it.
@@ -25,11 +26,11 @@ def load_csv_data(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50
         with open(file_path, "r", encoding="utf-8", errors="strict") as file:
             sample = file.read(1024)
             file.seek(0)
-            
+
             # Automatic deduction of the delimiter (comma, semicolon, etc.)
             dialect = csv.Sniffer().sniff(sample)
             reader = csv.DictReader(file, dialect=dialect)
-            
+
             for row in reader:
                 item_name = row.get("name") or row.get("nom") or row.get("id")
                 metadata: Dict[str, Any] = {"source": file_name}
@@ -52,7 +53,7 @@ def load_csv_data(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50
 
     if not documents:
         return []
-    
+
     # Chunking with LlamaIndex (secures rows containing very long texts)
     text_splitter = SentenceSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
     nodes = text_splitter.get_nodes_from_documents(documents)
