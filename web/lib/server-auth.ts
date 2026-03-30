@@ -1,11 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+const LOCAL_MODE = process.env.NEXT_PUBLIC_LOCAL_MODE === "true";
+
 /**
- * Returns the Supabase user ID from the server-side session cookie.
- * Used in API route handlers to identify the authenticated user.
+ * Returns the user ID from the server-side session.
+ * In local mode, returns a fixed "local_user" ID (no auth required).
  */
 export async function getServerUserId(): Promise<string | null> {
+  if (LOCAL_MODE) {
+    return "local_user";
+  }
+
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+
+const LOCAL_MODE = process.env.NEXT_PUBLIC_LOCAL_MODE === "true";
 
 const ROLES = [
   { value: "etudiant", label: "Étudiant" },
@@ -10,6 +13,7 @@ const ROLES = [
 ];
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -19,6 +23,26 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
+
+  if (LOCAL_MODE) {
+    return (
+      <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
+        <div className="w-full max-w-sm text-center">
+          <span className="text-gold text-3xl">◈</span>
+          <h1 className="font-oracle text-2xl font-semibold text-main tracking-widest uppercase mt-2">
+            Oracle
+          </h1>
+          <p className="text-muted-fg text-sm mt-1 mb-6">Mode local</p>
+          <button
+            onClick={() => router.push("/")}
+            className="w-full py-2 rounded-md bg-gold text-white text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            Accéder à l&apos;Oracle
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   async function handleGuest() {
     setLoading(true);

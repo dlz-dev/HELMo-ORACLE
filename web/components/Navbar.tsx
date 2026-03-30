@@ -15,18 +15,26 @@ import { clsx } from "clsx";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 
+const LOCAL_MODE = process.env.NEXT_PUBLIC_LOCAL_MODE === "true";
+
 const BASE_NAV_LINKS = [
   { href: "/", label: "Oracle", icon: MessageSquare },
   { href: "/sources", label: "Sources", icon: BookOpen },
+];
+
+const ALL_NAV_LINKS = [
+  ...BASE_NAV_LINKS,
+  { href: "/admin", label: "Admin", icon: Settings },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, toggle } = useTheme();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(LOCAL_MODE);
 
   useEffect(() => {
+    if (LOCAL_MODE) return;
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -44,9 +52,7 @@ export function Navbar() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const navLinks = isAdmin
-    ? [...BASE_NAV_LINKS, { href: "/admin", label: "Admin", icon: Settings }]
-    : BASE_NAV_LINKS;
+  const navLinks = isAdmin ? ALL_NAV_LINKS : BASE_NAV_LINKS;
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -105,13 +111,15 @@ export function Navbar() {
           >
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>
-          <button
-            onClick={handleLogout}
-            aria-label="Se déconnecter"
-            className="p-2 rounded-md text-muted-fg hover:text-main hover:bg-subtle transition-all duration-150"
-          >
-            <LogOut size={16} />
-          </button>
+          {!LOCAL_MODE && (
+            <button
+              onClick={handleLogout}
+              aria-label="Se déconnecter"
+              className="p-2 rounded-md text-muted-fg hover:text-main hover:bg-subtle transition-all duration-150"
+            >
+              <LogOut size={16} />
+            </button>
+          )}
         </div>
       </div>
 

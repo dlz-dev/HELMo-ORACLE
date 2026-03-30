@@ -1,6 +1,32 @@
 import { createBrowserClient } from "@supabase/ssr";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const LOCAL_MODE = process.env.NEXT_PUBLIC_LOCAL_MODE === "true";
 
-export const supabase = createBrowserClient(supabaseUrl, supabaseKey);
+const mockClient = {
+  auth: {
+    onAuthStateChange: () => ({
+      data: { subscription: { unsubscribe: () => {} } },
+    }),
+    signOut: async () => {},
+    signInAnonymously: async () => ({ error: null }),
+    signInWithPassword: async () => ({ error: null }),
+    signUp: async () => ({ data: { user: null }, error: null }),
+    getUser: async () => ({ data: { user: { id: "local_user" } } }),
+  },
+  from: () => ({
+    select: () => ({
+      eq: () => ({
+        single: () => Promise.resolve({ data: { role: "admin" } }),
+      }),
+    }),
+    update: () => ({ eq: () => Promise.resolve({ error: null }) }),
+    insert: () => Promise.resolve({ error: null }),
+  }),
+} as ReturnType<typeof createBrowserClient>;
+
+export const supabase = LOCAL_MODE
+  ? mockClient
+  : createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
