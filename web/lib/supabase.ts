@@ -22,7 +22,7 @@ const mockClient = {
     update: () => ({ eq: () => Promise.resolve({ error: null }) }),
     insert: () => Promise.resolve({ error: null }),
   }),
-} as ReturnType<typeof createBrowserClient>;
+} as unknown as ReturnType<typeof createBrowserClient>;
 
 export const supabase = LOCAL_MODE
   ? mockClient
