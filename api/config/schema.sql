@@ -1,5 +1,5 @@
 -- =============================================================
--- HeLMO Oracle — Schéma PostgreSQL (Docker / hors Supabase)
+-- HELMo Oracle — Schéma PostgreSQL (Docker / hors Supabase)
 -- Compatible pgvector/pgvector:pg17
 -- =============================================================
 
