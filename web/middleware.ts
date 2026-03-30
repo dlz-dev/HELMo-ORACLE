@@ -2,12 +2,18 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = ["/login"];
+const LOCAL_MODE = process.env.NEXT_PUBLIC_LOCAL_MODE === "true";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
+  }
+
+  // Mode local : pas d'authentification requise
+  if (LOCAL_MODE) {
+    return NextResponse.next({ request });
   }
 
   const response = NextResponse.next({ request });

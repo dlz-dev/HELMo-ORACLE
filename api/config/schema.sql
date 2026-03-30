@@ -14,9 +14,13 @@ CREATE TABLE IF NOT EXISTS documents (
   content     TEXT,
   vecteur     VECTOR(768),
   metadata    JSONB,
+  chunk_hash  VARCHAR(64),
   ingested_at TIMESTAMPTZ DEFAULT now(),
   fts_vector  TSVECTOR
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS documents_chunk_hash_key
+  ON documents (chunk_hash) WHERE chunk_hash IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_documents_cosine
   ON documents USING ivfflat (vecteur vector_cosine_ops) WITH (lists = 100);
