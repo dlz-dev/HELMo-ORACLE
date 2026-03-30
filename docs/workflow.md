@@ -1,4 +1,4 @@
-# 🔮 HeLMO Oracle — Workflow Diagrams
+# 🔮 HELMo Oracle — Workflow Diagrams
 
 ## 1. Architecture globale
 
@@ -20,20 +20,34 @@ flowchart LR
         FASTAPI --> PROV
     end
 
-    subgraph INFRA ["☁️ Infrastructure"]
+    ROUTES -->|"HTTP + SSE"| FASTAPI
+
+    subgraph DEPLOIEMENT ["🚀 Déploiement"]
+        direction LR
+        subgraph CLOUD ["☁️ Cloud Mode"]
+            DB_CLOUD[("Supabase\npgvector")]
+        end
+        subgraph LOCAL ["💻 Local Mode"]
+            DB_LOCAL[("ChromaDB\n(local)")]
+        end
+    end
+
+    subgraph INFRA ["⚙️ Services Communs"]
         direction TB
-        DB[("Supabase\npgvector")]
         EMBED["HuggingFace\nmultilingual-e5-base\n(local)"]
         UNSTRUCT["Unstructured.io\n(PDF · DOCX)"]
     end
 
-    ROUTES -->|"HTTP + SSE"| FASTAPI
-    CORE <-->|"SQL"| DB
+    CORE <-->|"SQL"| DB_CLOUD
+    CORE <-->|"SDK"| DB_LOCAL
     CORE <-->|"embeddings"| EMBED
     CORE -->|"parsing"| UNSTRUCT
 
     style WEB     fill:#1e1e2e,stroke:#7c3aed,color:#e2e8f0
     style API     fill:#1e1e2e,stroke:#f59e0b,color:#e2e8f0
+    style DEPLOIEMENT fill:#0f172a,stroke:#334155,color:#94a3b8
+    style CLOUD fill:#1e1e2e,stroke:#059669,color:#e2e8f0
+    style LOCAL fill:#1e1e2e,stroke:#6366f1,color:#e2e8f0
     style INFRA   fill:#0f172a,stroke:#334155,color:#94a3b8
 ```
 
@@ -67,7 +81,13 @@ flowchart TD
         R2["Unstructured.io\nHI_RES (pdf/docx) · FAST (autres)"]
     end
 
-    ROUTE --> EMBED
+    ROUTE --> HASH
+
+    subgraph HASH ["#️⃣ Hash Chunks"]
+        H1["SHA256(chunk_content)\n→ chunk_hash"]
+    end
+
+    HASH --> EMBED
 
     subgraph EMBED ["⚡ Embeddings — local"]
         E1["intfloat/multilingual-e5-base\n768 dimensions · HuggingFace"]
@@ -77,14 +97,20 @@ flowchart TD
 
     EMBED --> DB
 
-    subgraph DB ["🗄️ Supabase pgvector"]
-        D1["INSERT documents\n(content, vecteur, metadata, ingested_at)"]
-        D2["Trigger auto → fts_vector\nindex IVFFlat cosine + GIN FTS"]
-        D1 --> D2
+    subgraph DB ["🗄️ Vector Store"]
+        direction LR
+        subgraph DB_CLOUD ["☁️ Supabase pgvector"]
+            D1["INSERT documents\n(content, vecteur, metadata, chunk_hash)"]
+            D2["Trigger auto → fts_vector\nindex IVFFlat cosine + GIN FTS"]
+            D1 --> D2
+        end
+        subgraph DB_LOCAL ["💻 ChromaDB"]
+            D3["upsert documents\n(content, vecteur, metadata, chunk_hash)"]
+        end
     end
 
     subgraph LOG ["📋 Logs — oracle.log"]
-        L1["Fichier accepté/rejeté · chunks insérés"]
+        L1["Fichier accepté/rejeté · chunks insérés/skippés"]
     end
 
     DB --> LOG
@@ -92,8 +118,11 @@ flowchart TD
     style GUARD  fill:#1e1e2e,stroke:#f59e0b,color:#e2e8f0
     style CTX    fill:#1e1e2e,stroke:#8b5cf6,color:#e2e8f0
     style ROUTE  fill:#1e1e2e,stroke:#6366f1,color:#e2e8f0
+    style HASH   fill:#1e1e2e,stroke:#ec4899,color:#e2e8f0
     style EMBED  fill:#1e1e2e,stroke:#f87171,color:#e2e8f0
-    style DB     fill:#1e1e2e,stroke:#059669,color:#e2e8f0
+    style DB     fill:#0f172a,stroke:#334155,color:#94a3b8
+    style DB_CLOUD fill:#1e1e2e,stroke:#059669,color:#e2e8f0
+    style DB_LOCAL fill:#1e1e2e,stroke:#6366f1,color:#e2e8f0
     style LOG    fill:#1e1e2e,stroke:#475569,color:#94a3b8
     style INPUT  fill:#312e81,stroke:#818cf8,color:#e2e8f0
     style G2     fill:#3b0f0f,stroke:#dc2626,color:#e2e8f0
@@ -136,22 +165,33 @@ flowchart TD
 
     subgraph TOOL ["🔧 tools_oracle.py"]
         T1["get_query_embedding(query)"]
-        T2["search_hybrid()"]
+        T2["search()"]
         T3["<archives_sacrees>...</archives_sacrees>"]
         T1 --> T2 --> T3
     end
 
-    subgraph VM ["📊 VectorManager — recherche hybride"]
-        direction LR
-        S1["🔵 Cosine <=> pgvector\nk_semantic candidats"]
-        S2["🟠 BM25 tsvector\nk_bm25 candidats"]
-        RRF["⚖️ RRF Fusion\nΣ 1÷(k+rank)"]
-        S1 --> RRF
-        S2 --> RRF
+    subgraph DBS ["🗄️ Vector Stores"]
+        DB_CLOUD[("☁️ Supabase pgvector")]
+        DB_LOCAL[("💻 ChromaDB")]
+    end
+
+    subgraph VM ["📊 VectorManager — recherche"]
+        subgraph VM_CLOUD ["☁️ Hybride (Supabase)"]
+            direction LR
+            S1["🔵 Cosine"]
+            S2["🟠 BM25"]
+            RRF["⚖️ RRF Fusion"]
+            S1 --> RRF
+            S2 --> RRF
+        end
+        subgraph VM_LOCAL ["💻 Sémantique (ChromaDB)"]
+            S3["🔵 Cosine"]
+        end
     end
 
     T2 <--> VM
-    VM <--> DB[("🗄️ Supabase pgvector")]
+    VM_CLOUD <--> DB_CLOUD
+    VM_LOCAL <--> DB_LOCAL
 
     T3 -->|"contexte RAG"| A2
     A2 -->|"réponse finale"| STREAM
@@ -179,7 +219,10 @@ flowchart TD
     style FASTAPI  fill:#1e1e2e,stroke:#f59e0b,color:#e2e8f0
     style AGENT    fill:#1e1e2e,stroke:#a78bfa,color:#e2e8f0
     style TOOL     fill:#1e1e2e,stroke:#f59e0b,color:#e2e8f0
-    style VM       fill:#1e1e2e,stroke:#059669,color:#e2e8f0
+    style DBS      fill:#0f172a,stroke:#334155,color:#94a3b8
+    style VM       fill:#0f172a,stroke:#334155,color:#94a3b8
+    style VM_CLOUD fill:#1e1e2e,stroke:#059669,color:#e2e8f0
+    style VM_LOCAL fill:#1e1e2e,stroke:#6366f1,color:#e2e8f0
     style STREAM   fill:#1e1e2e,stroke:#38bdf8,color:#e2e8f0
     style PROV     fill:#1e1e2e,stroke:#6366f1,color:#e2e8f0
     style LOG      fill:#1e1e2e,stroke:#475569,color:#94a3b8
@@ -267,7 +310,8 @@ graph LR
 flowchart LR
     subgraph ADMIN ["🔐 /admin — AdminPanel"]
         direction TB
-        AUTH["Authentification\nmot de passe"]
+        AUTH["Authentification\n(local mode: bypass)"]
+        MODE[" sélecteur Cloud/Local\n(Navbar)"]
         MODEL["Modèle IA\nprovider · model · temp · K\n→ localStorage"]
         KEYS["Clés API\n→ localStorage"]
         TEST["Test Provider\nPOST /api/admin/test"]
@@ -284,6 +328,10 @@ flowchart LR
         IS["/ingest/status"]
     end
 
+    AUTH --> MODE
+    MODE --> MODEL
+    MODEL --> KEYS
+    KEYS --> TEST
     TEST --> T
     LOGS --> L
     HEALTH --> H
