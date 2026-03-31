@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export const inputClass = `w-full px-3 py-2 rounded-lg border border-default bg-surface-alt text-sm text-main
   placeholder:text-subtle-fg focus:outline-none focus:border-gold/50 transition-colors duration-150`;
@@ -46,24 +48,27 @@ export function Section({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border border-default rounded-xl overflow-hidden bg-surface animate-fade-up">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-subtle transition-colors duration-150 text-left"
-      >
-        <span className="text-sm font-medium text-main">{title}</span>
-        {open ? (
-          <ChevronUp size={14} className="text-muted-fg" />
-        ) : (
-          <ChevronDown size={14} className="text-muted-fg" />
-        )}
-      </button>
+    <Card className="border-[var(--border)] bg-[var(--surface)] animate-fade-up overflow-hidden">
+      <CardHeader className="p-0">
+        <Button
+          variant="ghost"
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-[var(--bg-subtle)] rounded-none h-auto text-left"
+        >
+          <span className="text-sm font-medium text-[var(--text)]">{title}</span>
+          {open ? (
+            <ChevronUp size={14} className="text-[var(--text-muted)]" />
+          ) : (
+            <ChevronDown size={14} className="text-[var(--text-muted)]" />
+          )}
+        </Button>
+      </CardHeader>
       {open && (
-        <div className="px-5 pb-5 border-t border-default space-y-4 pt-4">
+        <CardContent className="px-5 pb-5 border-t border-[var(--border)] space-y-4 pt-4">
           {children}
-        </div>
+        </CardContent>
       )}
-    </div>
+    </Card>
   );
 }
 
