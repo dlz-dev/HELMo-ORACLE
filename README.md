@@ -35,24 +35,24 @@ La démo tourne sur le lore de **Dofus** (MMORPG d'Ankama), mais l'architecture 
     -   Validation automatique du contenu par un LLM (**Guardian**).
     -   Détection des doublons grâce au **hachage des chunks**.
     -   Support multi-format (`.pdf`, `.docx`, `.md`, `.csv`, `.json`, `.txt`).
-    -   [Plus de détails sur le pipeline d'ingestion](./docs/ingestion.md)
+    -   [Plus de détails sur le pipeline d'ingestion](docs/FR/ingestion.md)
 
 -   **Recherche Hybride Performante** :
     -   Combine la **recherche sémantique** (similarité vectorielle) et la **recherche par mots-clés** (BM25).
     -   Utilise **Reciprocal Rank Fusion (RRF)** pour fusionner intelligemment les résultats.
-    -   [Comprendre la recherche hybride](./docs/hybrid_search.md)
+    -   [Comprendre la recherche hybride](docs/FR/hybrid_search.md)
 
 -   **Sécurité et Confidentialité** :
     -   Anonymisation automatique des données personnelles (**PII Masking**) avant l'envoi aux LLMs.
-    -   [Comment fonctionne le PII Masking ?](./docs/pii_masking.md)
+    -   [Comment fonctionne le PII Masking ?](docs/FR/pii_masking.md)
 
 -   **Interface Réactive** :
     -   Streaming des réponses en temps réel grâce au **Vercel AI SDK**.
-    -   [L'utilité du Vercel AI SDK](./docs/ai_sdk.md)
+    -   [L'utilité du Vercel AI SDK](docs/FR/ai_sdk.md)
 
 -   **Supervision Humaine (Human-in-the-Loop)** :
     -   Mécanismes de validation et de correction pour améliorer continuellement la pertinence du système.
-    -   [En savoir plus sur notre approche HITL](./docs/human_in_the_loop.md)
+    -   [En savoir plus sur notre approche HITL](docs/FR/human_in_the_loop.md)
 
 ---
 
