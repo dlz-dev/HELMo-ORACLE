@@ -6,6 +6,9 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 import spacy
+from core.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class PIIManager:
@@ -45,7 +48,7 @@ class PIIManager:
                     disable=["parser", "tagger", "attribute_ruler", "lemmatizer"],
                 )
             except OSError:
-                print("⚠️ Spacy model not found. Downloading 'fr_core_news_sm'...")
+                logger.warning("Spacy model 'fr_core_news_sm' not found, downloading...")
                 from spacy.cli import download
 
                 download("fr_core_news_sm")

@@ -77,14 +77,14 @@ def _ensure_log_conn() -> bool:
                 cur.execute("SELECT 1")
             return True
         except Exception:
-            pass
+            logger.warning("_ensure_log_conn: Ping failed, will attempt reconnect", exc_info=True)
     # Reconnect
     try:
         if _log_conn is not None and not _log_conn.closed:
             try:
                 _log_conn.close()
             except Exception:
-                pass
+                logger.warning("_ensure_log_conn: Failed to close stale connection", exc_info=True)
         _log_conn = _psycopg.connect(_LOG_DB_URL, autocommit=False, connect_timeout=10)
         set_shared_conn(_log_conn)
         logger.info("Connexion Supabase (logs) reconnectée.")
@@ -395,6 +395,7 @@ def chat(req: ChatRequest):
             model=model, temperature=req.temperature, k_final=req.k_final,
         )
     except Exception as e:
+        logger.error("CHAT | Agent execution failed", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
     session["messages"].append({"role": "assistant", "content": response, "_cot": cot_storage})
