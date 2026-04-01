@@ -76,6 +76,11 @@ def _log_to_db_sync(level: str, source: str, message: str, metadata: dict = None
 log_to_db_sync = _log_to_db_sync
 
 
+def get_logger(name: str) -> logging.Logger:
+    """Returns a child logger of the main 'oracle' logger."""
+    return logging.getLogger(f"oracle.{name}")
+
+
 async def log_to_db(level: str, source: str, message: str, metadata: dict = None, user_id: str = None):
     """
     Asynchronously logs a message to the Supabase 'logs' table by running the sync function in a thread.

@@ -7,6 +7,9 @@ from typing import List
 
 import unicodedata
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from core.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class QuestionProcessor:
@@ -18,7 +21,7 @@ class QuestionProcessor:
         """
         Initializes the HuggingFace embedding model for vectorizing queries.
         """
-        print("🔮 Loading the Oracle embedding model...")
+        logger.info("Loading the Oracle embedding model...")
         self.embeddings_model = HuggingFaceEmbedding(
             model_name="intfloat/multilingual-e5-base"
         )

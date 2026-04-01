@@ -3,6 +3,9 @@ from typing import Optional
 
 import pypdf
 from core.utils.utils import load_config, _GUARDIAN_PROMPT
+from core.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 # Import delayed to avoid circular dependency
@@ -53,7 +56,7 @@ def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> tuple[b
 
             # Security: scanning images without text
             if not sample_text.strip():
-                print(f"  🚫 [{fname}] PDF vide ou composé uniquement d'images → REJECTED")
+                logger.warning(f"[{fname}] PDF vide ou composé uniquement d'images → REJECTED")
                 return False, "PDF illisible (aucun texte extrait)."
 
         else:
@@ -66,7 +69,7 @@ def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> tuple[b
                     sample_text = f.read(1500)
 
     except Exception as e:
-        print(f"  🚫 [{fname}] Erreur de lecture physique du fichier: {e} → REJECTED")
+        logger.error(f"[{fname}] Erreur de lecture physique du fichier → REJECTED", exc_info=True)
         return False, f"Fichier illisible: {e}"
 
     # Load configuration and initialize the LLM
@@ -97,10 +100,10 @@ def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> tuple[b
 
         explication = lines[1].strip() if len(lines) > 1 else "Aucune explication fournie."
 
-        status = "✅ ACCEPTED" if verdict else "❌ REJECTED"
-        print(f"  🛡️  Guardian [{fname}] via {provider_key}/{model} → '{response.content.strip()}' → {status}")
+        status = "ACCEPTED" if verdict else "REJECTED"
+        logger.info(f"Guardian [{fname}] via {provider_key}/{model} → {status}")
 
         return verdict, explication
-    except Exception as e:
-        print(f"  🚫 [{fname}] API error during validation: {e} → REJECTED (Not validated)")
+    except Exception:
+        logger.error(f"[{fname}] API error during validation → REJECTED", exc_info=True)
         return False, "Erreur API"

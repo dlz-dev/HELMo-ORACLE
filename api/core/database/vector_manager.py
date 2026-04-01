@@ -64,7 +64,7 @@ class VectorManager:
                 try:
                     self.conn.close()
                 except Exception:
-                    pass
+                    logger.warning("VectorManager: Failed to close existing connection before reconnect", exc_info=True)
             conn_string = getattr(self, "_conn_string", None)
             if not conn_string:
                 return False
@@ -90,7 +90,7 @@ class VectorManager:
                 cur.execute("SELECT 1")
             return True
         except Exception:
-            logger.warning("VectorManager: Connection lost, attempting reconnect...")
+            logger.warning("VectorManager: Connection lost, attempting reconnect...", exc_info=True)
             return self._reconnect()
 
     def add_document(self, text: str, metadata: Optional[Dict[str, Any]] = None) -> bool:

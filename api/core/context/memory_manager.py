@@ -11,7 +11,10 @@ from __future__ import annotations
 from typing import Any, Dict, List, Tuple
 
 from core.utils.utils import _SUMMARY_PROMPT
+from core.utils.logger import get_logger
 from llama_index.core.llms import LLM
+
+logger = get_logger(__name__)
 
 
 def _estimate_tokens(text: str) -> int:
@@ -45,8 +48,8 @@ def summarize_messages(messages_to_summarize: List[Dict[str, Any]], existing_sum
     try:
         response = llm.complete(prompt_text)
         return response.text.strip()
-    except Exception as e:
-        print(f"Memory summarization failed: {e}")
+    except Exception:
+        logger.error("Memory summarization failed", exc_info=True)
         return existing_summary
 
 
@@ -100,7 +103,7 @@ class MemoryManager:
         if not to_summarize:
             return session
 
-        print(f"Compressing {len(to_summarize)} messages into summary...")
+        logger.info(f"Compressing {len(to_summarize)} messages into summary...")
 
         new_summary = summarize_messages(
             messages_to_summarize=to_summarize,

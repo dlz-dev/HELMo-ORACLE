@@ -62,12 +62,13 @@ def generate_document_context(
             with open(file_path, "r", encoding="utf-8") as f:
                 sample = f.read(3000)
     except Exception:
+        logger.warning("INGEST | Could not read file sample for context generation", exc_info=True)
         return ""
 
     try:
         response = llm.invoke(_CONTEXT_PROMPT.format(sample=sample))
         context = response.content.strip()
-        print(f"    📝 Context generated: {context[:80]}...")
+        logger.info("INGEST | Context generated: %s...", context[:80])
         return context
     except Exception as e:
         logger.warning("INGEST | Context generation failed: %s", e)
@@ -103,7 +104,6 @@ def seed_database() -> None:
     api_key = load_api_key()
 
     logger.info("INGEST | Reading files from: %s", input_folder)
-    print("─" * 60)
 
     files = sorted(input_folder.iterdir())
     total_accepted = total_rejected = total_chunks = 0
@@ -147,7 +147,7 @@ def seed_database() -> None:
         elif extension == ".pdf":
             extracted_chunks = convert_pdf.process_pdf_file(str(file_path))
         else:
-            print("  🔄 Complex format detected. Calling Unstructured.io...")
+            logger.info("INGEST | Complex format detected, calling Unstructured.io for %s", file_path.name)
             extracted_chunks = convert_unstructured.process_with_unstructured(str(file_path))
 
         # ── Étape 2 : Contexte global ─────────────────────────────────────────
@@ -171,7 +171,6 @@ def seed_database() -> None:
         else:
             logger.warning("INGEST | No text extracted from %s", file_path.name)
 
-    print("\n" + "─" * 60)
     logger.info("INGEST | ✓ Complete")
     logger.info("INGEST | Accepted=%d Rejected=%d Chunks=%d", total_accepted, total_rejected, total_chunks)
 
