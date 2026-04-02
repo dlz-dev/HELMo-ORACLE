@@ -13,9 +13,12 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
+import asyncio
+import json
 import uvicorn
 from fastapi import FastAPI, File, HTTPException, Header, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from langgraph.prebuilt import create_react_agent
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from psycopg import sql
@@ -134,11 +137,19 @@ async def _lifespan(app: FastAPI):
 
 
 app = FastAPI(title="HELMo Oracle API", version="1.0.0", lifespan=_lifespan)
+
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_headers=["Content-Type", "X-API-Key"],
 )
 app.mount("/mcp", _mcp_asgi)
 
@@ -199,7 +210,8 @@ def _run_agent(session: dict, masked_message: str, provider: str, model: str,
     log_user_id = user_id if _is_valid_uuid(user_id) else None
 
     start_retrieval = time.time()
-    search_tool = get_search_tool(vm, k_final=k_final, cot_storage=[])
+    cot_storage = []
+    search_tool = get_search_tool(vm, k_final=k_final, cot_storage=cot_storage)
     retrieval_time = time.time() - start_retrieval
     log_to_db_sync(
         level="INFO", source="RAG_PROFILING",
@@ -225,7 +237,7 @@ def _run_agent(session: dict, masked_message: str, provider: str, model: str,
         metadata={"duration_seconds": generation_time, "provider": provider, "model": model},
         user_id=log_user_id
     )
-    return response_text, []
+    return response_text, cot_storage
 
 
 # --- Routes ---
@@ -374,7 +386,7 @@ def rename_session(session_id: str, body: RenameRequest, user_id: Optional[str] 
 
 
 @app.post("/chat")
-def chat(req: ChatRequest):
+async def chat(req: ChatRequest):
     request_sm = _get_sm(req.user_id)
 
     if req.session_id:
@@ -389,24 +401,54 @@ def chat(req: ChatRequest):
     session.setdefault("messages", []).append({"role": "user", "content": masked_message})
     request_sm.save(session)
 
-    try:
-        response, cot_storage = _run_agent(
-            session=session, masked_message=masked_message, provider=req.provider,
-            model=model, temperature=req.temperature, k_final=req.k_final,
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    async def event_stream():
+        # 1. Envoie le session_id immédiatement comme premier event SSE
+        yield f"data: {json.dumps({'type': 'session_id', 'session_id': session['session_id']})}\n\n"
 
-    session["messages"].append({"role": "assistant", "content": response, "_cot": cot_storage})
-    if mm.needs_summarization(session["messages"], session.get("summary", "")):
-        session = mm.compress(session, get_llm(
-            provider_key=req.provider, model=model,
-            config={**config, "llm": {**config.get("llm", {}), "temperature": req.temperature}},
-        ))
-    session["provider"] = req.provider
-    session["model"] = model
-    request_sm.save(session)
-    return {"session_id": session["session_id"], "response": response, "cot_results": cot_storage}
+        try:
+            response, cot_storage = await asyncio.to_thread(
+                _run_agent,
+                session=session, masked_message=masked_message, provider=req.provider,
+                model=model, temperature=req.temperature, k_final=req.k_final,
+            )
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            return
+
+        # 2. Stream le texte par chunks de ~20 chars pour l'effet visuel
+        chunk_size = 20
+        for i in range(0, len(response), chunk_size):
+            chunk = response[i:i + chunk_size]
+            yield f"data: {json.dumps({'type': 'text', 'content': chunk})}\n\n"
+            await asyncio.sleep(0.01)  # 10ms entre chunks — effet naturel
+
+        # 3. Envoie les résultats CoT (sources RAG)
+        if cot_storage:
+            yield f"data: {json.dumps({'type': 'cot', 'results': cot_storage})}\n\n"
+
+        # 4. Sauvegarde session et signal de fin
+        session["messages"].append({"role": "assistant", "content": response, "_cot": cot_storage})
+        if mm.needs_summarization(session["messages"], session.get("summary", "")):
+            session_updated = mm.compress(session, get_llm(
+                provider_key=req.provider, model=model,
+                config={**config, "llm": {**config.get("llm", {}), "temperature": req.temperature}},
+            ))
+            session.update(session_updated)
+        session["provider"] = req.provider
+        session["model"] = model
+        request_sm.save(session)
+
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "X-Session-Id": session["session_id"],
+        }
+    )
 
 
 @app.get("/archives")
