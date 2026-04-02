@@ -37,8 +37,10 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ error }), { status: backendResponse.status });
   }
 
+  // Capture le session_id depuis les headers du backend
+  const sessionIdFromHeader = backendResponse.headers.get("X-Session-Id") || "";
+
   const enc = new TextEncoder();
-  let sessionId = "";
 
   // Transforme le SSE FastAPI → AI SDK Data Stream Protocol
   const stream = new ReadableStream({
@@ -68,9 +70,7 @@ export async function POST(req: NextRequest) {
               continue;
             }
 
-            if (event.type === "session_id") {
-              sessionId = event.session_id as string;
-            } else if (event.type === "text") {
+            if (event.type === "text") {
               // Format AI SDK Data Stream : "0:\"chunk\"\n"
               controller.enqueue(
                 enc.encode(`0:${JSON.stringify(event.content)}\n`)
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
       "Content-Type": "text/plain; charset=utf-8",
       "X-Vercel-AI-Data-Stream": "v1",
       "Cache-Control": "no-cache",
-      "X-Session-Id": sessionId,
+      "X-Session-Id": sessionIdFromHeader,
     },
   });
 }

@@ -446,6 +446,7 @@ async def chat(req: ChatRequest):
         headers={
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",
+            "X-Session-Id": session["session_id"],
         }
     )
 
