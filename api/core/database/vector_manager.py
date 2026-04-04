@@ -8,9 +8,11 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
+import os
+
 import psycopg
 from core.utils.utils import FTS_LANG, K_BM25, K_FINAL, K_SEMANTIC, RRF_K, load_config
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from langchain_community.embeddings import OllamaEmbeddings
 from pgvector.psycopg import register_vector
 from psycopg import sql
 
@@ -53,8 +55,9 @@ class VectorManager:
             self.db_available = False
             self._conn_string = db_config.get("connection_string", "")
 
-        self.embeddings_model = embeddings_model or HuggingFaceEmbedding(
-            model_name="intfloat/multilingual-e5-base"
+        self.embeddings_model = embeddings_model or OllamaEmbeddings(
+            model="nomic-embed-text",
+            base_url=os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434"),
         )
         # Lazy import to avoid circular dependency (core.pipeline.__init__
         # imports ingestion, which imports VectorManager).
@@ -116,7 +119,7 @@ class VectorManager:
         elif "category" in metadata and "item_name" in metadata:
             text_to_embed = f"Category: {metadata['category']} | Item: {metadata['item_name']}\n\nContent: {text}"
 
-        vector = self.embeddings_model.get_text_embedding(text_to_embed)
+        vector = self.embeddings_model.embed_query(text_to_embed)
         ingested_at = datetime.now(timezone.utc)
 
         with self.conn.cursor() as cur:
@@ -157,7 +160,7 @@ class VectorManager:
         if use_late_chunking and self.late_chunking_embedder is not None:
             vectors = self.late_chunking_embedder.embed_chunks(texts)
         else:
-            vectors = [self.embeddings_model.get_text_embedding(t) for t in texts]
+            vectors = [self.embeddings_model.embed_query(t) for t in texts]
 
         inserted = 0
         ingested_at = datetime.now(timezone.utc)

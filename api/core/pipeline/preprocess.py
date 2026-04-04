@@ -2,11 +2,12 @@
 Handles the preprocessing and embedding of textual queries.
 """
 
+import os
 import string
 from typing import List
 
 import unicodedata
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from langchain_community.embeddings import OllamaEmbeddings
 
 
 class QuestionProcessor:
@@ -16,11 +17,12 @@ class QuestionProcessor:
 
     def __init__(self) -> None:
         """
-        Initializes the HuggingFace embedding model for vectorizing queries.
+        Initializes the Ollama embedding model for vectorizing queries.
         """
         print("🔮 Loading the Oracle embedding model...")
-        self.embeddings_model = HuggingFaceEmbedding(
-            model_name="intfloat/multilingual-e5-base"
+        self.embeddings_model = OllamaEmbeddings(
+            model="nomic-embed-text",
+            base_url=os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434"),
         )
 
     def preprocess_text(self, text: str) -> str:
@@ -50,4 +52,4 @@ class QuestionProcessor:
         Returns:
             List[float]: The generated text embedding compatible with pgvector.
         """
-        return self.embeddings_model.get_query_embedding(text)
+        return self.embeddings_model.embed_query(text)

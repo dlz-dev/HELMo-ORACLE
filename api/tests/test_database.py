@@ -9,7 +9,7 @@ class TestVectorManager(unittest.TestCase):
 
     @patch('core.database.vector_manager.register_vector')
     @patch('core.database.vector_manager.psycopg.connect')
-    @patch('core.database.vector_manager.HuggingFaceEmbedding')
+    @patch('core.database.vector_manager.OllamaEmbeddings')
     @patch('core.database.vector_manager.load_config')
     def setUp(self, mock_load_config, mock_embedding, mock_connect, mock_register):
         mock_load_config.return_value = {
@@ -31,11 +31,11 @@ class TestVectorManager(unittest.TestCase):
     def test_add_document_formatting(self):
         text = "Contenu de test"
         metadata = {"Header 1": "Chapitre 1"}
-        self.mock_embed_model.get_text_embedding.return_value = [0.1, 0.2]
+        self.mock_embed_model.embed_query.return_value = [0.1, 0.2]
 
         self.manager.add_document(text, metadata)
 
-        self.mock_embed_model.get_text_embedding.assert_called_with(
+        self.mock_embed_model.embed_query.assert_called_with(
             "Chapter: Chapitre 1\n\nContent: Contenu de test"
         )
         self.assertTrue(self.mock_cur.execute.called)
