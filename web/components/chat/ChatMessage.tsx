@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { clsx } from "clsx";
 import { User, Sparkles, Copy, Check } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import { Streamdown } from "streamdown";
+import "streamdown/styles.css";
 
 interface Props {
   role: "user" | "assistant";
@@ -88,7 +89,7 @@ export function ChatMessage({
               prose-code:bg-[var(--bg-subtle)] prose-code:px-1.5 prose-code:rounded
               prose-code:text-xs prose-code:before:content-none prose-code:after:content-none"
             >
-              <ReactMarkdown>{content}</ReactMarkdown>
+              <Streamdown>{content}</Streamdown>
             </div>
           )}
         </div>
