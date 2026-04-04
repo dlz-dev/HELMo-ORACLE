@@ -98,7 +98,9 @@ CREATE TABLE IF NOT EXISTS profiles (
   last_name  TEXT
 );
 
-
+-- -------------------------------------------------------------
+-- RLS
+-- -------------------------------------------------------------
 
 -- 1. Activation globale du RLS
 ALTER TABLE public.chat_sessions ENABLE ROW LEVEL SECURITY;
@@ -130,7 +132,9 @@ FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-
+-- -------------------------------------------------------------
+-- Policy
+-- -------------------------------------------------------------
 
 -- 1. Table chat_sessions
 ALTER POLICY "Les utilisateurs gèrent leurs propres sessions"
