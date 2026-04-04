@@ -11,7 +11,7 @@
  * pendant que le traitement IA continue en arrière-plan.
  */
 
-import { getBot } from "~/server/lib/bot";
+import { getBot } from "~~/server/lib/bot";
 
 export default defineEventHandler(async (event) => {
   const platform = getRouterParam(event, "platform") as string;
