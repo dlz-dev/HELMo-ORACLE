@@ -5,6 +5,8 @@ Exposes the RAG pipeline as a REST API so a separate frontend
 (e.g. deployed on Vercel) can call it over HTTP.
 """
 
+import asyncio
+import json
 import os
 import threading as _threading
 import time
@@ -13,18 +15,17 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
-import asyncio
-import json
 import uvicorn
 from fastapi import FastAPI, File, HTTPException, Header, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from langgraph.prebuilt import create_react_agent
 from langchain_community.embeddings import OllamaEmbeddings
+from langgraph.prebuilt import create_react_agent
 from psycopg import sql
 from pydantic import BaseModel
 
 import mcp_server as _mcp_module
+from core.agent.judge import _run_judge_sync
 from core.agent.tools_oracle import get_search_tool
 from core.context.memory_manager import MemoryManager
 from core.context.session_manager import SessionManager
@@ -415,6 +416,8 @@ async def chat(req: ChatRequest):
                 model=model, temperature=req.temperature, k_final=req.k_final,
             )
         except Exception as e:
+            logger.error(f"Erreur critique dans le RAG: {e}", exc_info=True)
+
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
             return
 
@@ -449,7 +452,7 @@ async def chat(req: ChatRequest):
                 query=masked_message,
                 response=response,
                 cot_storage=cot_storage,
-                user_id=log_user_id,
+                user_id=req.user_id,
                 session_id=session["session_id"],
                 config=config
             )

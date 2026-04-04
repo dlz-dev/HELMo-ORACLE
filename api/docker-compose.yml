@@ -18,7 +18,10 @@ services:
       - PYTHONUNBUFFERED=1
       - OLLAMA_BASE_URL=http://embedding_service:11434
     depends_on:
-      - embedding_service
+      embedding_service:
+        condition: service_started
+      embedding_init:
+        condition: service_completed_successfully
 
   embedding_service:
     image: ollama/ollama:latest
@@ -28,8 +31,15 @@ services:
       - ./ollama_data:/root/.ollama
     restart: unless-stopped
 
-  # Service optionnel — démarrer avec : docker compose --profile db up
-  # Par défaut (cloud/Supabase), ce service n'est pas démarré.
+  embedding_init:
+    image: ollama/ollama:latest
+    depends_on:
+      embedding_service:
+        condition: service_started
+    environment:
+      - OLLAMA_HOST=http://embedding_service:11434
+    command: pull nomic-embed-text
+
   db:
     profiles: ["db"]
     image: pgvector/pgvector:pg17
