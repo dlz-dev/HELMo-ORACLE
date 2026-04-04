@@ -55,7 +55,9 @@ export function Section({
           onClick={() => setOpen((v) => !v)}
           className="w-full flex items-center justify-between px-5 py-4 hover:bg-[var(--bg-subtle)] rounded-none h-auto text-left"
         >
-          <span className="text-sm font-medium text-[var(--text)]">{title}</span>
+          <span className="text-sm font-medium text-[var(--text)]">
+            {title}
+          </span>
           {open ? (
             <ChevronUp size={14} className="text-[var(--text-muted)]" />
           ) : (

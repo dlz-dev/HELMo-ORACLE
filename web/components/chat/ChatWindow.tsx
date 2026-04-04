@@ -8,7 +8,12 @@ import { ChatInput } from "./ChatInput";
 import { CotDrawer } from "./CotDrawer";
 import { Sparkles, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CotResult {
   source: string;
@@ -107,28 +112,32 @@ export function ChatWindow({ sessionId, onSessionCreated }: Props) {
 
   const isEmpty = messages.length === 0;
 
-  const cotButton = cotResults.length > 0 ? (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-[var(--gold)] hover:bg-[var(--gold-glow)]"
-              onClick={() => setCotOpen(true)}
-            />
-          }
-        >
-          <BookOpen size={13} />
-        </TooltipTrigger>
-        <TooltipContent side="top">
-          <p className="text-xs">{cotResults.length} source{cotResults.length > 1 ? "s" : ""} consultée{cotResults.length > 1 ? "s" : ""}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  ) : null;
+  const cotButton =
+    cotResults.length > 0 ? (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-[var(--gold)] hover:bg-[var(--gold-glow)]"
+                onClick={() => setCotOpen(true)}
+              />
+            }
+          >
+            <BookOpen size={13} />
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p className="text-xs">
+              {cotResults.length} source{cotResults.length > 1 ? "s" : ""}{" "}
+              consultée{cotResults.length > 1 ? "s" : ""}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    ) : null;
 
   return (
     <div className="flex flex-col h-full">
@@ -189,7 +198,9 @@ export function ChatWindow({ sessionId, onSessionCreated }: Props) {
                   <span className="text-[var(--gold)] text-xs">◈</span>
                 </div>
                 <div className="px-4 py-3 rounded-2xl rounded-tl-sm border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-muted)] flex items-center gap-3">
-                  <span className="text-xs">L'Oracle consulte les archives</span>
+                  <span className="text-xs">
+                    L'Oracle consulte les archives
+                  </span>
                   <span className="flex gap-1">
                     {[0, 1, 2].map((i) => (
                       <span

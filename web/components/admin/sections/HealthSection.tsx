@@ -21,7 +21,8 @@ export function HealthSection({ healthData, healthState, onCheck }: Props) {
       >
         {healthState === "running" ? (
           <>
-            <Loader2 size={13} className="animate-spin" /> Vérification en cours…
+            <Loader2 size={13} className="animate-spin" /> Vérification en
+            cours…
           </>
         ) : (
           <>🔍 Vérifier l'état du système</>

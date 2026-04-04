@@ -9,11 +9,14 @@ export async function POST(req: NextRequest) {
 
   const backendUrl = process.env.BACKEND_API_URL || "http://127.0.0.1:8000";
 
-  const messages: Array<{ role: string; content: string }> = body.messages || [];
+  const messages: Array<{ role: string; content: string }> =
+    body.messages || [];
   const lastUserMessage = messages.filter((m) => m.role === "user").at(-1);
 
   if (!lastUserMessage) {
-    return new Response(JSON.stringify({ error: "No message provided" }), { status: 400 });
+    return new Response(JSON.stringify({ error: "No message provided" }), {
+      status: 400,
+    });
   }
 
   const backendBody = {
@@ -34,7 +37,9 @@ export async function POST(req: NextRequest) {
 
   if (!backendResponse.ok || !backendResponse.body) {
     const error = await backendResponse.text();
-    return new Response(JSON.stringify({ error }), { status: backendResponse.status });
+    return new Response(JSON.stringify({ error }), {
+      status: backendResponse.status,
+    });
   }
 
   // Capture le session_id depuis les headers du backend
@@ -73,19 +78,19 @@ export async function POST(req: NextRequest) {
             if (event.type === "text") {
               // Format AI SDK Data Stream : "0:\"chunk\"\n"
               controller.enqueue(
-                enc.encode(`0:${JSON.stringify(event.content)}\n`)
+                enc.encode(`0:${JSON.stringify(event.content)}\n`),
               );
             } else if (event.type === "cot") {
               const cotResults = event.results as unknown[];
               // Envoie les sources RAG comme data annotation AI SDK : "2:[...]\n"
               controller.enqueue(
-                enc.encode(`2:${JSON.stringify([{ cotResults }])}\n`)
+                enc.encode(`2:${JSON.stringify([{ cotResults }])}\n`),
               );
             } else if (event.type === "done") {
               controller.enqueue(
                 enc.encode(
-                  `d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`
-                )
+                  `d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`,
+                ),
               );
             }
           }
