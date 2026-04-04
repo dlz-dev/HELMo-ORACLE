@@ -31,3 +31,4 @@ web/next-env.d.ts
 .agents
 .claude
 api/ollama_data
+web/package-lock.json
