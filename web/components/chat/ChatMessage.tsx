@@ -13,7 +13,13 @@ interface Props {
   isLoading: boolean;
 }
 
-export function ChatMessage({ role, content, index, isLast, isLoading }: Props) {
+export function ChatMessage({
+  role,
+  content,
+  index,
+  isLast,
+  isLoading,
+}: Props) {
   const isUser = role === "user";
   const [copied, setCopied] = useState(false);
 
@@ -48,7 +54,13 @@ export function ChatMessage({ role, content, index, isLast, isLoading }: Props) 
       </div>
 
       {/* Bubble + actions */}
-      <div className={clsx("flex flex-col gap-1", isUser ? "items-end" : "items-start", "max-w-[75%]")}>
+      <div
+        className={clsx(
+          "flex flex-col gap-1",
+          isUser ? "items-end" : "items-start",
+          "max-w-[75%]",
+        )}
+      >
         <div
           className={clsx(
             "px-4 py-3 rounded-2xl text-sm leading-relaxed",
@@ -69,11 +81,13 @@ export function ChatMessage({ role, content, index, isLast, isLoading }: Props) 
               ))}
             </div>
           ) : (
-            <div className="prose prose-sm dark:prose-invert max-w-none
+            <div
+              className="prose prose-sm dark:prose-invert max-w-none
               prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-headings:my-2
               prose-strong:text-[var(--text)] prose-code:text-[var(--gold)]
               prose-code:bg-[var(--bg-subtle)] prose-code:px-1.5 prose-code:rounded
-              prose-code:text-xs prose-code:before:content-none prose-code:after:content-none">
+              prose-code:text-xs prose-code:before:content-none prose-code:after:content-none"
+            >
               <ReactMarkdown>{content}</ReactMarkdown>
             </div>
           )}
@@ -88,9 +102,13 @@ export function ChatMessage({ role, content, index, isLast, isLoading }: Props) 
                        transition-all duration-150"
           >
             {copied ? (
-              <><Check size={10} className="text-emerald-400" /> Copié</>
+              <>
+                <Check size={10} className="text-emerald-400" /> Copié
+              </>
             ) : (
-              <><Copy size={10} /> Copier</>
+              <>
+                <Copy size={10} /> Copier
+              </>
             )}
           </button>
         )}

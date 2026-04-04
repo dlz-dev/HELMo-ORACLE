@@ -1,7 +1,19 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { MessageSquarePlus, Trash2, Clock, Star, Settings, ChevronDown, ChevronUp, Cpu, Thermometer, Send, CheckCircle2 } from "lucide-react";
+import {
+  MessageSquarePlus,
+  Trash2,
+  Clock,
+  Star,
+  Settings,
+  ChevronDown,
+  ChevronUp,
+  Cpu,
+  Thermometer,
+  Send,
+  CheckCircle2,
+} from "lucide-react";
 import { clsx } from "clsx";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,14 +22,17 @@ import { Separator } from "@/components/ui/separator";
 // ── Feedback ─────────────────────────────────────────────────────────────────
 
 function FeedbackPanel({ sessionId }: { sessionId: string }) {
-  const [hovered, setHovered]   = useState(0);
+  const [hovered, setHovered] = useState(0);
   const [selected, setSelected] = useState(0);
-  const [comment, setComment]   = useState("");
-  const [submitted, setSubmitted]   = useState(false);
+  const [comment, setComment] = useState("");
+  const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    setHovered(0); setSelected(0); setComment(""); setSubmitted(false);
+    setHovered(0);
+    setSelected(0);
+    setComment("");
+    setSubmitted(false);
   }, [sessionId]);
 
   async function handleSubmit() {
@@ -27,24 +42,34 @@ function FeedbackPanel({ sessionId }: { sessionId: string }) {
       await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId, rating: selected, comment: comment.trim() || null }),
+        body: JSON.stringify({
+          session_id: sessionId,
+          rating: selected,
+          comment: comment.trim() || null,
+        }),
       });
       setSubmitted(true);
-    } finally { setSubmitting(false); }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
     return (
       <div className="px-4 py-4 flex flex-col items-center gap-2 text-center animate-fade-up">
         <CheckCircle2 size={20} className="text-emerald-400" />
-        <p className="text-xs text-[var(--text-muted)]">Merci pour ton retour !</p>
+        <p className="text-xs text-[var(--text-muted)]">
+          Merci pour ton retour !
+        </p>
       </div>
     );
   }
 
   return (
     <div className="px-4 py-4 space-y-3">
-      <p className="text-[10px] text-[var(--text-subtle)] uppercase tracking-wider">Évaluer cette conversation</p>
+      <p className="text-[10px] text-[var(--text-subtle)] uppercase tracking-wider">
+        Évaluer cette conversation
+      </p>
 
       {/* Stars */}
       <div className="flex items-center gap-1">
@@ -61,14 +86,24 @@ function FeedbackPanel({ sessionId }: { sessionId: string }) {
             <Star
               size={18}
               className="transition-colors duration-100"
-              fill={(hovered || selected) >= star ? "var(--gold)" : "transparent"}
-              stroke={(hovered || selected) >= star ? "var(--gold)" : "var(--text-subtle)"}
+              fill={
+                (hovered || selected) >= star ? "var(--gold)" : "transparent"
+              }
+              stroke={
+                (hovered || selected) >= star
+                  ? "var(--gold)"
+                  : "var(--text-subtle)"
+              }
             />
           </button>
         ))}
         {selected > 0 && (
           <span className="ml-2 text-xs text-[var(--gold)]">
-            {["", "Mauvais", "Passable", "Correct", "Bien", "Excellent"][selected]}
+            {
+              ["", "Mauvais", "Passable", "Correct", "Bien", "Excellent"][
+                selected
+              ]
+            }
           </span>
         )}
       </div>
@@ -91,7 +126,13 @@ function FeedbackPanel({ sessionId }: { sessionId: string }) {
             size="sm"
             className="w-full h-7 text-xs bg-[var(--gold)]/10 hover:bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30 hover:border-[var(--gold)]/50"
           >
-            {submitting ? "Envoi…" : <><Send size={11} className="mr-1" /> Envoyer</>}
+            {submitting ? (
+              "Envoi…"
+            ) : (
+              <>
+                <Send size={11} className="mr-1" /> Envoyer
+              </>
+            )}
           </Button>
         </div>
       )}
@@ -103,10 +144,10 @@ function FeedbackPanel({ sessionId }: { sessionId: string }) {
 
 function UserPrefsPanel() {
   const [open, setOpen] = useState(false);
-  const [provider, setProvider]   = useState("");
-  const [model, setModel]         = useState("");
+  const [provider, setProvider] = useState("");
+  const [model, setModel] = useState("");
   const [temperature, setTemperature] = useState("");
-  const [kFinal, setKFinal]       = useState("");
+  const [kFinal, setKFinal] = useState("");
 
   useEffect(() => {
     setProvider(localStorage.getItem("oracle_provider") || "groq");
@@ -118,7 +159,7 @@ function UserPrefsPanel() {
   return (
     <div className="border-t border-[var(--border)]">
       <button
-        onClick={() => setOpen(v => !v)}
+        onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-3 text-xs text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors"
       >
         <div className="flex items-center gap-2">
@@ -135,25 +176,38 @@ function UserPrefsPanel() {
               <div className="flex items-center gap-1 text-[9px] text-[var(--text-subtle)] uppercase tracking-wider">
                 <Cpu size={9} /> Provider
               </div>
-              <p className="text-xs font-medium text-[var(--text)] capitalize">{provider}</p>
+              <p className="text-xs font-medium text-[var(--text)] capitalize">
+                {provider}
+              </p>
             </div>
             <div className="bg-[var(--bg-subtle)] rounded-md px-2.5 py-2 space-y-0.5">
               <div className="flex items-center gap-1 text-[9px] text-[var(--text-subtle)] uppercase tracking-wider">
                 <Thermometer size={9} /> Temp.
               </div>
-              <p className="text-xs font-medium text-[var(--text)]">{temperature}</p>
+              <p className="text-xs font-medium text-[var(--text)]">
+                {temperature}
+              </p>
             </div>
           </div>
           <div className="bg-[var(--bg-subtle)] rounded-md px-2.5 py-2 space-y-0.5">
-            <p className="text-[9px] text-[var(--text-subtle)] uppercase tracking-wider">Modèle</p>
-            <p className="text-[11px] font-medium text-[var(--text)] truncate">{model}</p>
+            <p className="text-[9px] text-[var(--text-subtle)] uppercase tracking-wider">
+              Modèle
+            </p>
+            <p className="text-[11px] font-medium text-[var(--text)] truncate">
+              {model}
+            </p>
           </div>
           <div className="bg-[var(--bg-subtle)] rounded-md px-2.5 py-2 space-y-0.5">
-            <p className="text-[9px] text-[var(--text-subtle)] uppercase tracking-wider">Sources RAG (k)</p>
-            <p className="text-xs font-medium text-[var(--text)]">{kFinal} chunks</p>
+            <p className="text-[9px] text-[var(--text-subtle)] uppercase tracking-wider">
+              Sources RAG (k)
+            </p>
+            <p className="text-xs font-medium text-[var(--text)]">
+              {kFinal} chunks
+            </p>
           </div>
           <p className="text-[10px] text-[var(--text-subtle)] text-center">
-            Modifiable dans <span className="text-[var(--gold)]">Administration</span>
+            Modifiable dans{" "}
+            <span className="text-[var(--gold)]">Administration</span>
           </p>
         </div>
       )}
@@ -189,12 +243,18 @@ function timeAgo(iso: string): string {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function SessionSidebar({ activeSessionId, onSelectSession, onNewSession }: Props) {
+export function SessionSidebar({
+  activeSessionId,
+  onSelectSession,
+  onNewSession,
+}: Props) {
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [mounted, setMounted]   = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchSessions = useCallback(async () => {
     try {
@@ -202,11 +262,16 @@ export function SessionSidebar({ activeSessionId, onSelectSession, onNewSession 
       if (!res.ok) throw new Error();
       const data = await res.json();
       setSessions(data.sessions ?? []);
-    } catch { setSessions([]); }
-    finally { setLoading(false); }
+    } catch {
+      setSessions([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { fetchSessions(); }, [fetchSessions]);
+  useEffect(() => {
+    fetchSessions();
+  }, [fetchSessions]);
 
   const deleteSession = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -235,9 +300,12 @@ export function SessionSidebar({ activeSessionId, onSelectSession, onNewSession 
         {loading && (
           <div className="px-4 py-8 text-center">
             <div className="flex justify-center gap-1">
-              {[0, 1, 2].map(i => (
-                <div key={i} className="w-1.5 h-1.5 rounded-full bg-[var(--border)] animate-bounce"
-                  style={{ animationDelay: `${i * 150}ms` }} />
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full bg-[var(--border)] animate-bounce"
+                  style={{ animationDelay: `${i * 150}ms` }}
+                />
               ))}
             </div>
           </div>
@@ -245,8 +313,13 @@ export function SessionSidebar({ activeSessionId, onSelectSession, onNewSession 
 
         {!loading && sessions.length === 0 && (
           <div className="px-4 py-10 text-center space-y-2">
-            <MessageSquarePlus size={24} className="mx-auto text-[var(--text-subtle)] opacity-40" />
-            <p className="text-xs text-[var(--text-subtle)]">Aucune conversation</p>
+            <MessageSquarePlus
+              size={24}
+              className="mx-auto text-[var(--text-subtle)] opacity-40"
+            />
+            <p className="text-xs text-[var(--text-subtle)]">
+              Aucune conversation
+            </p>
           </div>
         )}
 
@@ -264,10 +337,14 @@ export function SessionSidebar({ activeSessionId, onSelectSession, onNewSession 
               style={{ animationDelay: `${i * 30}ms` }}
             >
               {/* Title */}
-              <p className={clsx(
-                "text-[13px] truncate pr-6 leading-snug",
-                activeSessionId === s.session_id ? "text-[var(--text)] font-medium" : "text-[var(--text)]",
-              )}>
+              <p
+                className={clsx(
+                  "text-[13px] truncate pr-6 leading-snug",
+                  activeSessionId === s.session_id
+                    ? "text-[var(--text)] font-medium"
+                    : "text-[var(--text)]",
+                )}
+              >
                 {s.title || "Conversation sans titre"}
               </p>
 
@@ -278,7 +355,10 @@ export function SessionSidebar({ activeSessionId, onSelectSession, onNewSession 
                   {mounted ? timeAgo(s.updated_at) : "…"}
                 </span>
                 {s.provider && (
-                  <Badge variant="outline" className="text-[9px] h-4 px-1 border-[var(--border)] text-[var(--text-subtle)] ml-auto">
+                  <Badge
+                    variant="outline"
+                    className="text-[9px] h-4 px-1 border-[var(--border)] text-[var(--text-subtle)] ml-auto"
+                  >
                     {s.provider}
                   </Badge>
                 )}

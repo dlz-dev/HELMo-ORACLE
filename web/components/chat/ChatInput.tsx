@@ -13,7 +13,13 @@ interface Props {
   children?: React.ReactNode; // Pour injecter le bouton CoT depuis ChatWindow
 }
 
-export function ChatInput({ value, onChange, onSubmit, isLoading, children }: Props) {
+export function ChatInput({
+  value,
+  onChange,
+  onSubmit,
+  isLoading,
+  children,
+}: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -37,8 +43,10 @@ export function ChatInput({ value, onChange, onSubmit, isLoading, children }: Pr
 
   return (
     <form onSubmit={onSubmit} className="relative">
-      <div className="flex items-end gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)]
-                      focus-within:border-[var(--gold)]/40 transition-colors duration-150 px-3 py-2">
+      <div
+        className="flex items-end gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)]
+                      focus-within:border-[var(--gold)]/40 transition-colors duration-150 px-3 py-2"
+      >
         <Textarea
           ref={textareaRef}
           value={value}
@@ -65,7 +73,11 @@ export function ChatInput({ value, onChange, onSubmit, isLoading, children }: Pr
                      text-[#0a0c10] disabled:opacity-30"
           aria-label="Envoyer"
         >
-          {isLoading ? <Loader2 size={13} className="animate-spin" /> : <ArrowUp size={13} strokeWidth={2.5} />}
+          {isLoading ? (
+            <Loader2 size={13} className="animate-spin" />
+          ) : (
+            <ArrowUp size={13} strokeWidth={2.5} />
+          )}
         </Button>
       </div>
       <p className="text-center text-xs text-[var(--text-subtle)] mt-1.5">
