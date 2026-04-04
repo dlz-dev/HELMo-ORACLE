@@ -28,3 +28,6 @@ api/logs
 web/.next/
 web/node_modules/
 web/next-env.d.ts
+.agents
+.claude
+api/ollama_data
