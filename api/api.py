@@ -443,6 +443,18 @@ async def chat(req: ChatRequest):
 
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
+        asyncio.create_task(
+            asyncio.to_thread(
+                _run_judge_sync,
+                query=masked_message,
+                response=response,
+                cot_storage=cot_storage,
+                user_id=log_user_id,
+                session_id=session["session_id"],
+                config=config
+            )
+        )
+
     return StreamingResponse(
         event_stream(),
         media_type="text/event-stream",
