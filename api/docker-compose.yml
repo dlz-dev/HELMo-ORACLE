@@ -31,7 +31,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./config/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./config/schema_docker.sql:/docker-entrypoint-initdb.d/schema_docker.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d oracle"]
       interval: 5s

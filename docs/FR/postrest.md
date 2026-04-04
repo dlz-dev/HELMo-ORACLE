@@ -16,9 +16,9 @@ HELMo Oracle repose sur une architecture hybride séparant le moteur d'Intellige
 
 ## 2. Base de Données et Sécurité (PostgreSQL & RLS)
 
-Le schéma de base de données (`schema.sql`) intègre la sécurité directement au niveau de la donnée grâce au **Row Level Security (RLS)**.
+Le schéma de base de données (`schema_docker.sql`) intègre la sécurité directement au niveau de la donnée grâce au **Row Level Security (RLS)**.
 
-> ⚠️ **Note sur les environnements** : Le fichier `schema.sql` fourni correspond au mode **Docker/hors-Supabase** (sans foreign key vers `auth.users`). En production Supabase, la fonction `auth.uid()` est disponible car `auth.users` est géré nativement — les politiques RLS ci-dessous s'appliquent donc uniquement en contexte Supabase.
+> ⚠️ **Note sur les environnements** : Le fichier `schema_docker.sql` fourni correspond au mode **Docker/hors-Supabase** (sans foreign key vers `auth.users`). En production Supabase, la fonction `auth.uid()` est disponible car `auth.users` est géré nativement — les politiques RLS ci-dessous s'appliquent donc uniquement en contexte Supabase.
 
 ### 2.1. Séparation des Privilèges
 

@@ -136,14 +136,24 @@ def seed_database() -> None:
 
         convert_csv, convert_markdown, convert_text, convert_json, convert_pdf, convert_unstructured = _import_converters()
 
+        # Unstructured.io handles .md, .pdf and .docx natively with superior
+        # layout understanding. Use it when an API key is configured; fall
+        # back to the LlamaIndex converters otherwise.
+        _unst_cfg = config.get("llm", {}).get("unstructured", {})
+        _unst_available = bool(_unst_cfg.get("api_key"))
+        _UNSTRUCTURED_EXTS = {".md", ".pdf", ".docx"}
+
         if extension == ".csv":
             extracted_chunks = convert_csv.load_csv_data(str(file_path))
-        elif extension == ".md":
-            extracted_chunks = convert_markdown.parse_markdown(str(file_path))
         elif extension == ".txt":
             extracted_chunks = convert_text.process_text_file(str(file_path))
         elif extension == ".json":
             extracted_chunks = convert_json.parse_json(str(file_path))
+        elif extension in _UNSTRUCTURED_EXTS and _unst_available:
+            print(f"  🔄 Unstructured.io → {extension} ...")
+            extracted_chunks = convert_unstructured.process_with_unstructured(str(file_path))
+        elif extension == ".md":
+            extracted_chunks = convert_markdown.parse_markdown(str(file_path))
         elif extension == ".pdf":
             extracted_chunks = convert_pdf.process_pdf_file(str(file_path))
         else:
@@ -160,14 +170,18 @@ def seed_database() -> None:
         if doc_context:
             base_metadata["global_context"] = doc_context
 
-        # ── Étape 3 : Vectorisation ───────────────────────────────────────────
+        # ── Étape 3 : Vectorisation (late chunking) ───────────────────────────
         if extracted_chunks:
-            for text_chunk, specific_metadata in extracted_chunks:
-                merged_metadata = {**base_metadata, **specific_metadata}
-                db_manager.add_document(text_chunk, metadata=merged_metadata)
-
+            batch = [
+                (text_chunk, {**base_metadata, **specific_metadata})
+                for text_chunk, specific_metadata in extracted_chunks
+            ]
+            inserted = db_manager.add_documents_batch(batch, use_late_chunking=True)
             total_chunks += len(extracted_chunks)
-            logger.info("INGEST | OK — %d chunks inserted from %s", len(extracted_chunks), file_path.name)
+            logger.info(
+                "INGEST | OK — %d/%d chunks inserted from %s (late chunking)",
+                inserted, len(extracted_chunks), file_path.name,
+            )
         else:
             logger.warning("INGEST | No text extracted from %s", file_path.name)
 
