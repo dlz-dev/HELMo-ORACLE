@@ -35,6 +35,7 @@ La démo tourne sur le lore de **Dofus** (MMORPG d'Ankama), mais l'architecture 
     -   Validation automatique du contenu par un LLM (**Guardian**).
     -   Détection des doublons grâce au **hachage des chunks**.
     -   Support multi-format (`.pdf`, `.docx`, `.md`, `.csv`, `.json`, `.txt`).
+    -   **Late chunking contextuel** : chaque chunk est embedé avec le contexte de ses voisins grâce à `nomic-embed-text` via Ollama (8 192 tokens de contexte).
     -   [Plus de détails sur le pipeline d'ingestion](docs/FR/ingestion.md)
 
 -   **Recherche Hybride Performante** :
@@ -58,12 +59,14 @@ La démo tourne sur le lore de **Dofus** (MMORPG d'Ankama), mais l'architecture 
 
 ## Prérequis
 
--   **Python 3.12**
+-   **Python 3.12** (mode local uniquement)
 -   **Node.js 22+**
--   **Docker & Docker Compose**
+-   **Docker & Docker Compose** (requis pour le backend en production)
 -   **Clés API** :
     -   Au minimum, une clé **Groq** (gratuite) est nécessaire pour faire fonctionner l'agent.
     -   Pour l'ingestion de fichiers `.pdf` ou `.docx`, une clé **Unstructured.io** est fortement recommandée.
+
+> Le modèle d'embedding (`nomic-embed-text`) est téléchargé automatiquement dans un conteneur Ollama dédié. Aucune installation manuelle de modèle n'est requise.
 
 ---
 
@@ -116,28 +119,96 @@ Ce mode utilise **ChromaDB** comme base vectorielle locale et ne nécessite **au
 
 Votre Oracle est maintenant accessible sur `http://localhost:3000`.
 
-### Option 2 : Mode Cloud (avec Supabase et PostgreSQL)
+### Option 2 : Mode Cloud avec Docker (recommandé pour la production)
 
-Ce mode utilise une base de données PostgreSQL (locale ou distante) pour les vecteurs et Supabase pour l'authentification, les sessions et les logs.
+Ce mode utilise **Docker Compose** pour orchestrer le backend et le service d'embedding, avec Supabase pour la base vectorielle, l'authentification et les logs.
 
-1.  **Configurer la base vectorielle (PostgreSQL + pgvector)**
-    -   **Option A (Docker local)** : `cd api && docker compose --profile db up -d`
-    -   **Option B (Base distante)** : Assurez-vous que l'extension `pgvector` est activée et exécutez le script `api/config/schema_docker.sql`.
+#### 1. Configurer Supabase
 
-2.  **Configurer Supabase**
-    -   Créez un projet sur [supabase.com](https://supabase.com).
-    -   Exécutez le contenu du fichier `api/config/schema_supabase.sql` dans l'éditeur SQL de Supabase pour créer les tables `chat_sessions`, `logs`, etc.
+-   Créez un projet sur [supabase.com](https://supabase.com).
+-   Activez l'extension `vector` : **Settings > Database > Extensions > vector**.
+-   Exécutez `api/config/schema_supabase.sql` dans l'éditeur SQL de Supabase.
 
-3.  **Configurer le backend (`api/.env`)**
-    -   Remplissez `DATABASE_URL` avec l'URL de votre base PostgreSQL.
-    -   Remplissez `SUPABASE_URL`, `SUPABASE_ANON_KEY`, et `LOG_DATABASE_URL` avec les informations de votre projet Supabase.
-    -   Renseignez les clés API (`GROQ_API_KEY`, etc.).
+> **Si la colonne `vecteur` existait déjà avec une autre dimension**, exécutez d'abord ce script de migration avant de lancer l'ingestion :
+> ```sql
+> DROP INDEX IF EXISTS idx_documents_cosine;
+> TRUNCATE TABLE public.documents;
+> ALTER TABLE public.documents ALTER COLUMN vecteur TYPE vector(768);
+> CREATE INDEX idx_documents_cosine
+>   ON public.documents USING ivfflat (vecteur vector_cosine_ops) WITH (lists = 100);
+> ```
 
-4.  **Configurer le frontend (`web/.env.local`)**
-    -   `NEXT_PUBLIC_LOCAL_MODE=false`
-    -   Remplissez `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+#### 2. Configurer les variables d'environnement
 
-5.  **Lancez les applications** comme décrit dans le mode local.
+```bash
+cd api
+cp .env.example .env
+```
+
+Dans `api/.env`, renseignez :
+-   `DATABASE_URL` — URL PostgreSQL de Supabase (onglet **Settings > Database**).
+-   `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `LOG_DATABASE_URL`.
+-   `GROQ_API_KEY` (et autres clés LLM selon vos besoins).
+-   `API_SECRET_KEY` — clé secrète pour protéger les routes d'administration.
+
+#### 3. Construire et démarrer les conteneurs
+
+```bash
+cd api
+docker compose up --build -d
+```
+
+Cela démarre deux conteneurs :
+-   `backend` — l'API FastAPI sur le port `8000`.
+-   `embedding_service` — Ollama sur le port `11434`, avec persistance dans `./ollama_data/`.
+
+#### 4. Télécharger le modèle d'embedding (première fois uniquement)
+
+```bash
+docker exec embedding_service ollama pull nomic-embed-text
+```
+
+Le modèle est persisté dans le volume `./ollama_data/` — cette commande n'est à exécuter qu'**une seule fois**.
+
+#### 5. Vérifier que tout fonctionne
+
+```bash
+# Santé globale de l'API
+curl http://localhost:8000/health
+
+# Test du service Ollama
+curl http://localhost:11434/api/tags
+```
+
+#### 6. Configurer et lancer le frontend
+
+```bash
+cd ../web
+npm install
+cp .env.local.example .env.local
+```
+
+Dans `web/.env.local` :
+-   `NEXT_PUBLIC_LOCAL_MODE=false`
+-   `BACKEND_API_URL=http://localhost:8000`
+-   `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+
+```bash
+npm run dev
+```
+
+---
+
+### Commandes Docker utiles
+
+| Commande | Description |
+|----------|-------------|
+| `docker compose up --build -d` | Build et démarrage complet |
+| `docker compose up -d` | Démarrage sans rebuild |
+| `docker compose down` | Arrêt des conteneurs |
+| `docker compose logs backend -f` | Logs du backend en temps réel |
+| `docker exec embedding_service ollama pull nomic-embed-text` | (Re)télécharger le modèle |
+| `docker exec embedding_service ollama list` | Lister les modèles installés |
 
 ---
 
