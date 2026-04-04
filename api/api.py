@@ -13,14 +13,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
-import asyncio
-import json
 import uvicorn
 from fastapi import FastAPI, File, HTTPException, Header, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 from langgraph.prebuilt import create_react_agent
-from langchain_community.embeddings import OllamaEmbeddings
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from psycopg import sql
 from pydantic import BaseModel
 
@@ -30,8 +27,7 @@ from core.context.memory_manager import MemoryManager
 from core.context.session_manager import SessionManager
 from core.database.vector_manager import VectorManager
 from core.pipeline.pii_manager import PIIManager
-# Import logger and utils from the corrected logger module
-from core.utils.logger import logger, set_shared_conn, log_to_db_sync
+from core.utils.logger import logger, set_shared_conn, log_to_db_sync, _LOG_FILE
 from core.utils.utils import load_config, load_base_prompt, format_response
 from providers import get_llm, get_available_models
 
@@ -43,11 +39,8 @@ logger.info("━" * 50)
 logger.info("Oracle API démarrage...")
 
 # --- Service Initialization ---
-_embeddings = OllamaEmbeddings(
-    model="nomic-embed-text",
-    base_url=os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434"),
-)
-logger.info("Modèle embeddings chargé : nomic-embed-text (Ollama)")
+_embeddings = HuggingFaceEmbedding(model_name="intfloat/multilingual-e5-base")
+logger.info("Modèle embeddings chargé : intfloat/multilingual-e5-base")
 
 vm = VectorManager(embeddings_model=_embeddings)
 
@@ -83,14 +76,13 @@ def _ensure_log_conn() -> bool:
                 cur.execute("SELECT 1")
             return True
         except Exception:
-            pass
-    # Reconnect
+            logger.warning("_ensure_log_conn: Ping failed, will attempt reconnect", exc_info=True)
     try:
         if _log_conn is not None and not _log_conn.closed:
             try:
                 _log_conn.close()
             except Exception:
-                pass
+                logger.warning("_ensure_log_conn: Failed to close stale connection", exc_info=True)
         _log_conn = _psycopg.connect(_LOG_DB_URL, autocommit=False, connect_timeout=10)
         set_shared_conn(_log_conn)
         logger.info("Connexion Supabase (logs) reconnectée.")
@@ -141,11 +133,7 @@ async def _lifespan(app: FastAPI):
 
 app = FastAPI(title="HELMo Oracle API", version="1.0.0", lifespan=_lifespan)
 
-ALLOWED_ORIGINS = [
-    o.strip()
-    for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
-    if o.strip()
-]
+ALLOWED_ORIGINS = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -166,6 +154,20 @@ class ChatRequest(BaseModel):
     model: Optional[str] = None
     temperature: float = float(config.get("llm", {}).get("temperature", 0.0))
     k_final: int = config.get("search", {}).get("k_final", 5)
+    # Set to False to skip RAGAS retry and get a faster (single-attempt) response.
+    enable_retry: bool = True
+
+
+class EvaluateRequest(BaseModel):
+    """On-demand RAGAS evaluation of a question/answer/contexts triple."""
+    question: str
+    answer: str
+    # Raw context strings — use this when you already have text chunks.
+    contexts: Optional[list[str]] = None
+    # Alternatively, pass cot_storage dicts (as returned by /chat).
+    cot_storage: Optional[list[dict]] = None
+    provider: str = config.get("llm", {}).get("default_provider", "groq")
+    model: Optional[str] = None
 
 
 class RenameRequest(BaseModel):
@@ -208,12 +210,20 @@ def _build_lc_history(history_tuples, masked_message):
 
 def _run_agent(session: dict, masked_message: str, provider: str, model: str,
                temperature: float, k_final: int) -> tuple[str, list]:
+    """
+    Runs the LangGraph RAG agent for a single attempt.
+
+    Returns:
+        Tuple of (response_text, cot_storage) where cot_storage is the list of
+        retrieved chunks populated by the search tool during this invocation.
+    """
     user_id = session.get("user_id")
-    # Correction: S'assurer que user_id est un UUID valide ou None
     log_user_id = user_id if _is_valid_uuid(user_id) else None
 
+    # cot_storage is populated in-place by the search tool during agent execution.
+    cot_storage: list = []
+
     start_retrieval = time.time()
-    cot_storage = []
     search_tool = get_search_tool(vm, k_final=k_final, cot_storage=cot_storage)
     retrieval_time = time.time() - start_retrieval
     log_to_db_sync(
@@ -248,7 +258,6 @@ def _run_agent(session: dict, masked_message: str, provider: str, model: str,
 def health():
     checks = {}
 
-    # Database
     if vm.is_db_available():
         try:
             with vm.conn.cursor() as cur:
@@ -260,8 +269,7 @@ def health():
     else:
         checks["database"] = {"status": "error", "error": "Connexion indisponible"}
 
-    # Embeddings
-    checks["embeddings"] = {"status": "ok", "model": "nomic-embed-text"}
+    checks["embeddings"] = {"status": "ok", "model": "intfloat/multilingual-e5-base"}
 
     return {"status": "ok", "checks": checks}
 
@@ -294,10 +302,10 @@ def health_full():
     # ── Modèle embeddings ─────────────────────────────────────────
     try:
         start = time.time()
-        _embeddings.embed_query("test")
+        _embeddings.get_text_embedding("test")
         results["embeddings"] = {
             "status": "ok",
-            "model": "nomic-embed-text",
+            "model": "intfloat/multilingual-e5-base",
             "latency_ms": round((time.time() - start) * 1000),
         }
     except Exception as e:
@@ -332,10 +340,7 @@ def health_full():
         except Exception as e:
             results[provider_name] = {"status": "error", "error": str(e)[:120]}
 
-    has_error = any(
-        v.get("status") == "error"
-        for v in results.values()
-    )
+    has_error = any(v.get("status") == "error" for v in results.values())
     return {
         "status": "degraded" if has_error else "ok",
         "checks": results,
@@ -389,7 +394,9 @@ def rename_session(session_id: str, body: RenameRequest, user_id: Optional[str] 
 
 
 @app.post("/chat")
-async def chat(req: ChatRequest):
+def chat(req: ChatRequest):
+    from core.utils.retry_manager import run_agent_with_retry, RetryExhaustedError
+
     request_sm = _get_sm(req.user_id)
 
     if req.session_id:
@@ -404,54 +411,108 @@ async def chat(req: ChatRequest):
     session.setdefault("messages", []).append({"role": "user", "content": masked_message})
     request_sm.save(session)
 
-    async def event_stream():
-        # 1. Envoie le session_id immédiatement comme premier event SSE
-        yield f"data: {json.dumps({'type': 'session_id', 'session_id': session['session_id']})}\n\n"
+    retry_meta: dict = {}
 
-        try:
-            response, cot_storage = await asyncio.to_thread(
-                _run_agent,
-                session=session, masked_message=masked_message, provider=req.provider,
-                model=model, temperature=req.temperature, k_final=req.k_final,
+    try:
+        if req.enable_retry:
+            # ── Retry path: run agent with RAGAS quality gate ─────────────
+            response, cot_storage, retry_meta = run_agent_with_retry(
+                session=session,
+                masked_message=masked_message,
+                provider=req.provider,
+                model=model,
+                temperature=req.temperature,
+                k_final=req.k_final,
+                agent_func=_run_agent,
+                config=config,
             )
-        except Exception as e:
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
-            return
+        else:
+            # ── Fast path: single attempt, no quality check ───────────────
+            response, cot_storage = _run_agent(
+                session=session,
+                masked_message=masked_message,
+                provider=req.provider,
+                model=model,
+                temperature=req.temperature,
+                k_final=req.k_final,
+            )
 
-        # 2. Stream le texte par chunks de ~20 chars pour l'effet visuel
-        chunk_size = 20
-        for i in range(0, len(response), chunk_size):
-            chunk = response[i:i + chunk_size]
-            yield f"data: {json.dumps({'type': 'text', 'content': chunk})}\n\n"
-            await asyncio.sleep(0.01)  # 10ms entre chunks — effet naturel
+    except RetryExhaustedError as e:
+        logger.warning(
+            "CHAT | All retry attempts exhausted — session=%s attempts=%d last_scores=%s",
+            session.get("session_id"), e.attempts, e.last_scores,
+        )
+        raise HTTPException(status_code=422, detail={
+            "message": str(e),
+            "attempts": e.attempts,
+            "last_scores": e.last_scores,
+        })
+    except Exception as e:
+        logger.error("CHAT | Agent execution failed", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
-        # 3. Envoie les résultats CoT (sources RAG)
-        if cot_storage:
-            yield f"data: {json.dumps({'type': 'cot', 'results': cot_storage})}\n\n"
+    session["messages"].append({"role": "assistant", "content": response, "_cot": cot_storage})
+    if mm.needs_summarization(session["messages"], session.get("summary", "")):
+        session = mm.compress(session, get_llm(
+            provider_key=req.provider, model=model,
+            config={**config, "llm": {**config.get("llm", {}), "temperature": req.temperature}},
+        ))
+    session["provider"] = req.provider
+    session["model"] = model
+    request_sm.save(session)
 
-        # 4. Sauvegarde session et signal de fin
-        session["messages"].append({"role": "assistant", "content": response, "_cot": cot_storage})
-        if mm.needs_summarization(session["messages"], session.get("summary", "")):
-            session_updated = mm.compress(session, get_llm(
-                provider_key=req.provider, model=model,
-                config={**config, "llm": {**config.get("llm", {}), "temperature": req.temperature}},
-            ))
-            session.update(session_updated)
-        session["provider"] = req.provider
-        session["model"] = model
-        request_sm.save(session)
+    return {
+        "session_id": session["session_id"],
+        "response": response,
+        "cot_results": cot_storage,
+        # retry_meta is empty ({}) when enable_retry=False
+        "retry_meta": retry_meta,
+    }
 
-        yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
-    return StreamingResponse(
-        event_stream(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-            "X-Session-Id": session["session_id"],
-        }
+@app.post("/evaluate")
+def evaluate_endpoint(req: EvaluateRequest):
+    """
+    On-demand RAGAS evaluation of a question / answer / context triple.
+
+    Accepts either:
+      - ``contexts``   : list of raw text strings
+      - ``cot_storage``: list of dicts with a 'content' key (as returned by /chat)
+
+    The shared embeddings singleton (_embeddings) is passed to avoid loading
+    the HuggingFace model a second time.
+
+    Returns the same dict shape as evaluate_rag_response().
+    """
+    from core.utils.ragas_evaluator import evaluate_rag_response
+
+    model = req.model or config.get("llm", {}).get("default_model", "llama-3.3-70b-versatile")
+
+    # Normalise inputs to cot_storage format expected by evaluate_rag_response
+    if req.cot_storage is not None:
+        cot_storage = req.cot_storage
+    elif req.contexts is not None:
+        cot_storage = [{"content": c} for c in req.contexts]
+    else:
+        raise HTTPException(
+            status_code=422,
+            detail="Provide either 'contexts' (list[str]) or 'cot_storage' (list[dict]).",
+        )
+
+    result = evaluate_rag_response(
+        question=req.question,
+        answer=req.answer,
+        cot_storage=cot_storage,
+        provider=req.provider,
+        model=model,
+        config=config,
+        shared_embeddings=_embeddings,   # reuse the already-loaded model
     )
+
+    if result.get("error") and result.get("faithfulness") is None:
+        raise HTTPException(status_code=500, detail=result["error"])
+
+    return result
 
 
 @app.get("/archives")
@@ -550,7 +611,7 @@ def _run_ingestion(file_paths: list):
         accepted = total - rejected_files
         if rejected_files == total:
             _ingest_status = {"running": False, "last_status": "warning",
-                              "last_message": f"Fichier refusé — déplacé en quarantaine."}
+                              "last_message": "Fichier refusé — déplacé en quarantaine."}
         elif rejected_files > 0:
             _ingest_status = {"running": False, "last_status": "warning",
                               "last_message": f"{accepted} fichier(s) ajouté(s) — {new_chunks} chunks ajoutés, {duplicate_chunks} doublons. {rejected_files} refusé(s) et déplacé(s) en quarantaine."}
@@ -575,7 +636,7 @@ async def trigger_ingest(files: list[UploadFile] = File(...)):
 
     saved_paths = []
     for file in files:
-        safe_name = Path(file.filename).name  # strip any subdirectory prefix (webkitdirectory)
+        safe_name = Path(file.filename).name
         dest = NEW_FILES_DIR / safe_name
         contents = await file.read()
         with open(dest, "wb") as f:
@@ -641,7 +702,7 @@ def get_logs(lines: int = 100, offset: int = 0, level: Optional[str] = None, sou
             ]
             return {"logs": logs_list}
     except Exception as e:
-        logger.error("[GET_LOGS] Failed to fetch logs from DB.", exc_info=True)  # Log the full exception
+        logger.error("[GET_LOGS] Failed to fetch logs from DB.", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Erreur interne du serveur lors de la récupération des logs: {e}")
 
 

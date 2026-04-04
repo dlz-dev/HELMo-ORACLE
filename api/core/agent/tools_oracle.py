@@ -52,7 +52,7 @@ def get_search_tool(vm: VectorManager, k_final: int = 5, cot_storage: Optional[l
         if not query:
             return "<archives_sacrees>\nEmpty query.\n</archives_sacrees>"
 
-        query_vector = vm.embeddings_model.embed_query(query)
+        query_vector = vm.embeddings_model.get_text_embedding(query)
         results = vm.search_hybrid(query=query, query_vector=query_vector, k_final=k_final)
 
         if not results:
