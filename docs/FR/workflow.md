@@ -34,7 +34,7 @@ flowchart LR
 
     subgraph INFRA ["⚙️ Services Communs"]
         direction TB
-        EMBED["HuggingFace\nmultilingual-e5-base\n(local)"]
+        EMBED["Ollama\nnomic-embed-text\n(conteneur embedding_service)"]
         UNSTRUCT["Unstructured.io\n(PDF · DOCX)"]
     end
 
@@ -89,9 +89,9 @@ flowchart TD
 
     HASH --> EMBED
 
-    subgraph EMBED ["⚡ Embeddings — local"]
-        E1["intfloat/multilingual-e5-base\n768 dimensions · HuggingFace"]
-        E2["get_text_embedding(chunk)"]
+    subgraph EMBED ["⚡ Embeddings — Ollama (embedding_service)"]
+        E1["nomic-embed-text\n768 dimensions · late chunking contextuel"]
+        E2["embed_documents(chunks)"]
         E1 --> E2
     end
 
@@ -164,7 +164,7 @@ flowchart TD
     A2 -->|"tool_call: search_knowledge_base"| TOOL
 
     subgraph TOOL ["🔧 tools_oracle.py"]
-        T1["get_query_embedding(query)"]
+        T1["embed_query(query)"]
         T2["search()"]
         T3["<archives_sacrees>...</archives_sacrees>"]
         T1 --> T2 --> T3
