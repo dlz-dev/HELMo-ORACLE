@@ -119,12 +119,13 @@ class TestIngestionPipeline(unittest.TestCase):
         mock_db_instance = MagicMock()
         mock_db.return_value = mock_db_instance
 
-        with patch("core.pipeline.ingestion._import_providers", return_value=lambda: None), \
+        with patch("core.pipeline.ingestion._import_providers", return_value=lambda **kwargs: None), \
                 patch('shutil.move'):
             seed_database()
 
-        mock_db_instance.add_document.assert_called_once_with(
-            "Contenu chunk", metadata={"source": "lore_iroise.txt", "page": 1}
+        mock_db_instance.add_documents_batch.assert_called_once_with(
+            [("Contenu chunk", {"source": "lore_iroise.txt", "page": 1})],
+            use_late_chunking=True
         )
         mock_valid.assert_called_once()
         mock_conv.assert_called_once()
