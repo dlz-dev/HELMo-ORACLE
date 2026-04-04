@@ -122,11 +122,11 @@ Ce mode utilise une base de données PostgreSQL (locale ou distante) pour les ve
 
 1.  **Configurer la base vectorielle (PostgreSQL + pgvector)**
     -   **Option A (Docker local)** : `cd api && docker compose --profile db up -d`
-    -   **Option B (Base distante)** : Assurez-vous que l'extension `pgvector` est activée et exécutez le script `api/config/schema.sql`.
+    -   **Option B (Base distante)** : Assurez-vous que l'extension `pgvector` est activée et exécutez le script `api/config/schema_docker.sql`.
 
 2.  **Configurer Supabase**
     -   Créez un projet sur [supabase.com](https://supabase.com).
-    -   Exécutez le contenu du fichier `api/config/supabase_schema.sql` dans l'éditeur SQL de Supabase pour créer les tables `chat_sessions`, `logs`, etc.
+    -   Exécutez le contenu du fichier `api/config/schema_supabase.sql` dans l'éditeur SQL de Supabase pour créer les tables `chat_sessions`, `logs`, etc.
 
 3.  **Configurer le backend (`api/.env`)**
     -   Remplissez `DATABASE_URL` avec l'URL de votre base PostgreSQL.
