@@ -18,9 +18,9 @@ RÉPONSE DE L'IA :
 ---
 
 Réponds UNIQUEMENT avec un objet JSON valide au format suivant, sans aucun autre texte ou markdown autour :
-{
+{{
   "context_relevance": <int>,
   "faithfulness": <int>,
   "answer_relevance": <int>,
   "reasoning": "<une phrase courte expliquant tes notes>"
-}
+}}
