@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Loader2,
   AlertTriangle,
@@ -189,24 +190,24 @@ export function LogsSection() {
       <div className="flex items-center justify-between mt-3">
         <span className="text-xs text-muted-fg">Page {page + 1}</span>
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setPage((p) => p - 1)}
             disabled={page === 0 || loading}
-            className="flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-default
-                       text-muted-fg hover:text-main hover:border-gold/40 disabled:opacity-30
-                       disabled:cursor-not-allowed transition-colors duration-150"
+            className="h-7 px-2 text-xs border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--gold)]/40 disabled:opacity-30"
           >
             <ChevronLeft size={13} /> Précédent
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setPage((p) => p + 1)}
             disabled={!hasNext || loading}
-            className="flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-default
-                       text-muted-fg hover:text-main hover:border-gold/40 disabled:opacity-30
-                       disabled:cursor-not-allowed transition-colors duration-150"
+            className="h-7 px-2 text-xs border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--gold)]/40 disabled:opacity-30"
           >
             Suivant <ChevronRight size={13} />
-          </button>
+          </Button>
         </div>
       </div>
     </Section>

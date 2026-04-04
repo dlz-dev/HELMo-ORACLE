@@ -57,7 +57,6 @@ FOR INSERT
 TO authenticated
 WITH CHECK (auth.uid() = user_id);
 ```
-
 ### 4.3 Table logs (Journalisation système)
 Le frontend peut envoyer des logs d'erreurs vers la base de données (INSERT), mais la lecture de ces logs est strictement réservée au backend ou aux administrateurs.
 
