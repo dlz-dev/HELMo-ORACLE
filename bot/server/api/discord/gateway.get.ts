@@ -11,7 +11,7 @@
  * Durée max : ~10 minutes (limite des fonctions serverless Vercel).
  */
 
-import { getBot } from "~/server/lib/bot";
+import { getBot } from "../../lib/bot";
 
 export default defineEventHandler(async (event) => {
   const bot = getBot();

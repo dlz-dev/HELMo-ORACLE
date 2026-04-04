@@ -3,7 +3,7 @@
  * Initialise le bot avec les secrets du runtimeConfig.
  */
 
-import { initBot } from "~/server/lib/bot";
+import { initBot } from '~~/server/lib/bot';
 
 export default defineNitroPlugin(async () => {
   const config = useRuntimeConfig();
