@@ -1,5 +1,5 @@
 services:
-  oracle-backend:
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
@@ -16,6 +16,17 @@ services:
     restart: unless-stopped
     environment:
       - PYTHONUNBUFFERED=1
+      - OLLAMA_BASE_URL=http://embedding_service:11434
+    depends_on:
+      - embedding_service
+
+  embedding_service:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama_data:/root/.ollama
+    restart: unless-stopped
 
   # Service optionnel — démarrer avec : docker compose --profile db up
   # Par défaut (cloud/Supabase), ce service n'est pas démarré.

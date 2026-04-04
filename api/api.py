@@ -20,7 +20,7 @@ from fastapi import FastAPI, File, HTTPException, Header, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from langgraph.prebuilt import create_react_agent
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from langchain_community.embeddings import OllamaEmbeddings
 from psycopg import sql
 from pydantic import BaseModel
 
@@ -43,8 +43,11 @@ logger.info("━" * 50)
 logger.info("Oracle API démarrage...")
 
 # --- Service Initialization ---
-_embeddings = HuggingFaceEmbedding(model_name="intfloat/multilingual-e5-base")
-logger.info("Modèle embeddings chargé : intfloat/multilingual-e5-base")
+_embeddings = OllamaEmbeddings(
+    model="nomic-embed-text",
+    base_url=os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434"),
+)
+logger.info("Modèle embeddings chargé : nomic-embed-text (Ollama)")
 
 vm = VectorManager(embeddings_model=_embeddings)
 
@@ -258,7 +261,7 @@ def health():
         checks["database"] = {"status": "error", "error": "Connexion indisponible"}
 
     # Embeddings
-    checks["embeddings"] = {"status": "ok", "model": "intfloat/multilingual-e5-base"}
+    checks["embeddings"] = {"status": "ok", "model": "nomic-embed-text"}
 
     return {"status": "ok", "checks": checks}
 
@@ -291,10 +294,10 @@ def health_full():
     # ── Modèle embeddings ─────────────────────────────────────────
     try:
         start = time.time()
-        _embeddings.get_text_embedding("test")
+        _embeddings.embed_query("test")
         results["embeddings"] = {
             "status": "ok",
-            "model": "intfloat/multilingual-e5-base",
+            "model": "nomic-embed-text",
             "latency_ms": round((time.time() - start) * 1000),
         }
     except Exception as e:
