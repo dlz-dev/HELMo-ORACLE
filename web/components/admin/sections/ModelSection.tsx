@@ -8,6 +8,7 @@ import {
   PROVIDERS,
   PROVIDER_MODELS,
 } from "./shared";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   provider: string;
@@ -98,9 +99,9 @@ export function ModelSection({
         />
       </Field>
 
-      <button
+      <Button
         onClick={onSave}
-        className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-gold text-white text-sm font-medium hover:bg-gold-light transition-colors duration-150"
+        className="w-full bg-[var(--gold)] hover:bg-[var(--gold-light)] text-[#0a0c10] text-sm font-medium"
       >
         {saveStatus === "saved" ? (
           <>
@@ -111,7 +112,7 @@ export function ModelSection({
             <Save size={13} /> Sauvegarder la configuration
           </>
         )}
-      </button>
+      </Button>
     </Section>
   );
 }

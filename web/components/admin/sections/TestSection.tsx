@@ -3,6 +3,7 @@
 import { Loader2 } from "lucide-react";
 import { clsx } from "clsx";
 import { Section, Field, inputClass } from "./shared";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   provider: string;
@@ -34,10 +35,10 @@ export function TestSection({
           className={clsx(inputClass, "resize-none h-20")}
         />
       </Field>
-      <button
+      <Button
         onClick={onTest}
         disabled={testState === "running"}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-gold text-white text-sm font-medium hover:bg-gold-light disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150"
+        className="w-full bg-[var(--gold)] hover:bg-[var(--gold-light)] text-[#0a0c10] text-sm font-medium disabled:opacity-40"
       >
         {testState === "running" ? (
           <>
@@ -46,7 +47,7 @@ export function TestSection({
         ) : (
           <>🧪 Tester le provider</>
         )}
-      </button>
+      </Button>
       {testState !== "idle" && (
         <div
           className={clsx(
