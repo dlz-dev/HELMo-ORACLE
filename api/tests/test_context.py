@@ -12,7 +12,7 @@ class TestMemoryManager(unittest.TestCase):
         self.max_tokens = 1200
         self.mm = MemoryManager(max_recent_tokens=self.max_tokens, min_recent_messages=2)
         self.mock_llm = MagicMock()
-        self.mock_llm.complete.return_value.text = "Résumé de test"
+        self.mock_llm.invoke.return_value.content = "Résumé de test"
 
     def test_estimate_tokens(self):
         from core.context.memory_manager import _estimate_tokens
@@ -43,8 +43,8 @@ class TestMemoryManager(unittest.TestCase):
             self.assertEqual(updated_session["summary"], "Résumé de test")
             self.assertEqual(updated_session["messages"][0]["content"], "M2")
             # Vérifie que le LLM a bien été appelé pour générer le résumé
-            self.mock_llm.complete.assert_called_once()
-            call_args = self.mock_llm.complete.call_args[0][0]
+            self.mock_llm.invoke.assert_called_once()
+            call_args = self.mock_llm.invoke.call_args[0][0]
             self.assertIn("M1", call_args)
             self.assertIn("R1", call_args)
 

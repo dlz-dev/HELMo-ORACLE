@@ -54,13 +54,12 @@ Cette phase a été marquée par la volonté d'améliorer la pertinence des rés
     * *Enrichissement :* Ajout de **métadonnées** associées aux *chunks* directement dans notre base de données Supabase. Cela ouvre la porte à des recherches hybrides et à des filtres plus précis.
 * **Fiabilisation du projet : Ajout de tests**
     * *Évolution :* Mise en place de tests automatisés pour vérifier le bon fonctionnement de notre pipeline et prévenir les régressions lors des futurs développements.
-* **Expérimentation : Aller-retour sur le "Late Chunking"**
-    * *Essai :* Nous avons expérimenté l'approche du *Late Chunking* pour tenter d'améliorer la qualité et le contexte de nos embeddings.
-    * *Marche arrière (Revert) :* Après évaluation de l'impact sur notre système, nous avons décidé de faire un *revert* de cette fonctionnalité, l'approche ne s'étant pas avérée concluante.
-* **Le goulet d'étranglement : Gestion du modèle HuggingFace**
-    * *Erreur critique de performance :* Malgré nos améliorations, le système souffrait d'une latence anormale lors des requêtes. 
-    * *La cause :* Nous nous sommes rendu compte que nous chargions le modèle HuggingFace (pour les embeddings ou l'inférence) en mémoire à **chaque nouvelle question** posée par l'utilisateur. 
-    * *Apprentissage :* Une erreur classique mais très coûteuse en temps d'exécution, qui souligne l'importance de l'initialisation unique (mise en cache) des modèles lourds au démarrage de l'application.
+* **Expérimentation : Late Chunking contextuel via Ollama**
+    * *Essai initial :* Nous avons expérimenté le *Late Chunking* token-level avec `intfloat/multilingual-e5-base` (HuggingFace local), mais ce modèle était limité à 512 tokens, ce qui rendait l'approche inefficace sur de longs documents.
+    * *Solution retenue :* Migration vers **`nomic-embed-text`** servi via un conteneur **Ollama** dédié (`embedding_service`). Ce modèle supporte 8 192 tokens de contexte. Le late chunking est implémenté en préfixant chaque chunk des chunks précédents avant embedding — une approximation textuelle efficace sans limite matérielle de séquence.
+* **Découplage du service d'embedding**
+    * *Problème :* Le modèle HuggingFace était chargé en mémoire dans le processus Python du backend, alourdissant le démarrage et rendant le scaling difficile.
+    * *Solution :* L'embedding est désormais délégué à un **conteneur Ollama indépendant**, interrogé via HTTP (`OLLAMA_BASE_URL`). Le backend reste léger ; le modèle est persisté dans un volume Docker (`./ollama_data`).
 
 ---
 
@@ -83,7 +82,7 @@ Pour répondre aux nouvelles exigences de robustesse et aux directives technolog
     * *Orchestration & UI :* Maintien de **LangChain**, ajout de **LlamaIndex** spécifiquement optimisé pour l'ingestion complexe, et préparation à l'utilisation de **Vercel** pour le streaming de l'interface.
     * *Nettoyage (Data Parsing) :* Abandon définitif de certains de nos parsers maison au profit de **Unstructured.io**. Nous avons délibérément choisi de **ne pas utiliser LlamaParse**. Unstructured s'est avéré amplement suffisant pour traiter nos fichiers aux structures complexes, et l'empilement de ces deux outils aurait considérablement ralenti notre pipeline d'ingestion. Par ailleurs, afin d'éviter de surcharger l'API, nous avons décidé de conserver nos parsers maison pour les formats plus légers (txt, csv et json).
     * *Bases Vectorielles :* Nous utilisions déjà Supabase avec l'extension **pgvector** donc nous respections déjà cette consigne de Markus.
-    * *Embeddings (Le Cerveau) :* Adoption du modèle open-source **intfloat/multilingual-e5-base**. À l'usage, nous l'avons trouvé nettement plus performant que la solution **OpenAI text-embedding-3-small** initialement envisagée, tout en nous garantissant une flexibilité totale vis-à-vis des autres leaders du *HuggingFace MTEB Leaderboard*.
+    * *Embeddings (Le Cerveau) :* Adoption du modèle open-source **`nomic-embed-text`** servi via **Ollama**. Par rapport à `intfloat/multilingual-e5-base` initialement utilisé, ce modèle lève la limite de 512 tokens (contexte de 8 192 tokens), s'exécute dans un conteneur isolé et permet un vrai late chunking contextuel.
 
 ---
 

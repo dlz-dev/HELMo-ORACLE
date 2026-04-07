@@ -48,8 +48,9 @@ Ce `chunk_hash` sert d'identifiant et permet d'éviter l'ingestion de contenu du
 
 Chaque chunk de texte (préfixé de sa description globale) est ensuite transformé en un vecteur numérique, ou **embedding**.
 
--   **Modèle utilisé** : `intfloat/multilingual-e5-base`, un modèle d'embedding multilingue performant et exécuté localement via HuggingFace.
+-   **Modèle utilisé** : `nomic-embed-text`, servi via un conteneur **Ollama** dédié (`embedding_service`). Supporte jusqu'à 8 192 tokens de contexte, levant la limite de 512 tokens de l'ancien modèle.
 -   **Dimension** : Chaque vecteur est de 768 dimensions.
+-   **Late chunking contextuel** : chaque chunk est préfixé des chunks précédents avant embedding, capturant le contexte du document plutôt que le chunk isolé.
 
 Ces embeddings capturent la signification sémantique du texte, permettant des recherches basées sur le sens plutôt que sur les mots-clés.
 

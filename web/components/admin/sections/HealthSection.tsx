@@ -3,6 +3,7 @@
 import { Loader2 } from "lucide-react";
 import { clsx } from "clsx";
 import { Section } from "./shared";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   healthData: any;
@@ -13,10 +14,10 @@ interface Props {
 export function HealthSection({ healthData, healthState, onCheck }: Props) {
   return (
     <Section title="Health Check" defaultOpen={false}>
-      <button
+      <Button
         onClick={onCheck}
         disabled={healthState === "running"}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-gold text-white text-sm font-medium hover:bg-gold-light disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150"
+        className="w-full bg-[var(--gold)] hover:bg-[var(--gold-light)] text-[#0a0c10] text-sm font-medium disabled:opacity-40"
       >
         {healthState === "running" ? (
           <>
@@ -26,7 +27,7 @@ export function HealthSection({ healthData, healthState, onCheck }: Props) {
         ) : (
           <>🔍 Vérifier l'état du système</>
         )}
-      </button>
+      </Button>
 
       {healthData && (
         <div className="space-y-2 mt-2">

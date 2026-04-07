@@ -2,19 +2,27 @@
 
 import { type ChangeEvent, type FormEvent, useRef } from "react";
 import { ArrowUp, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Props {
   value: string;
   onChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   isLoading: boolean;
+  children?: React.ReactNode; // Pour injecter le bouton CoT depuis ChatWindow
 }
 
-export function ChatInput({ value, onChange, onSubmit, isLoading }: Props) {
+export function ChatInput({
+  value,
+  onChange,
+  onSubmit,
+  isLoading,
+  children,
+}: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Entrée seule = envoyer, Shift+Entrée = saut de ligne
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (value.trim() && !isLoading) {
@@ -24,7 +32,6 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: Props) {
     }
   };
 
-  // Auto-resize du textarea
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     onChange(e);
     const el = e.target;
@@ -37,29 +44,33 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: Props) {
   return (
     <form onSubmit={onSubmit} className="relative">
       <div
-        className="flex items-end gap-2 rounded-xl border border-default bg-surface
-                      focus-within:border-gold/40 transition-colors duration-150
-                      px-3 py-2"
+        className="flex items-end gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)]
+                      focus-within:border-[var(--gold)]/40 transition-colors duration-150 px-3 py-2"
       >
-        <textarea
+        <Textarea
           ref={textareaRef}
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="Pose ta question sur Dofus…"
+          placeholder="Pose ta question…"
           rows={1}
           disabled={isLoading}
-          className="flex-1 resize-none bg-transparent text-sm text-main placeholder:text-subtle-fg
-                     focus:outline-none disabled:opacity-50 leading-relaxed min-h-[22px]"
+          className="flex-1 resize-none bg-transparent border-0 shadow-none text-sm
+                     text-[var(--text)] placeholder:text-[var(--text-subtle)]
+                     focus-visible:ring-0 focus-visible:ring-offset-0
+                     disabled:opacity-50 leading-relaxed min-h-[22px] p-0"
           style={{ maxHeight: "160px" }}
         />
 
-        <button
+        {/* Slot pour injecter le bouton CoT */}
+        {children}
+
+        <Button
           type="submit"
           disabled={!canSubmit}
-          className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center
-                     bg-gold text-white transition-all duration-150
-                     hover:bg-gold-light disabled:opacity-30 disabled:cursor-not-allowed"
+          size="icon"
+          className="flex-shrink-0 w-7 h-7 rounded-lg bg-[var(--gold)] hover:bg-[var(--gold-light)]
+                     text-[#0a0c10] disabled:opacity-30"
           aria-label="Envoyer"
         >
           {isLoading ? (
@@ -67,10 +78,9 @@ export function ChatInput({ value, onChange, onSubmit, isLoading }: Props) {
           ) : (
             <ArrowUp size={13} strokeWidth={2.5} />
           )}
-        </button>
+        </Button>
       </div>
-
-      <p className="text-center text-xs text-subtle-fg mt-1.5">
+      <p className="text-center text-xs text-[var(--text-subtle)] mt-1.5">
         Entrée pour envoyer · Shift+Entrée pour un saut de ligne
       </p>
     </form>

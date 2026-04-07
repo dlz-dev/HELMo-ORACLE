@@ -10,7 +10,7 @@ class TestOracleTool(unittest.TestCase):
 
     def setUp(self):
         self.mock_vm = MagicMock()
-        self.mock_vm.embeddings_model.get_query_embedding.return_value = [0.1, 0.2, 0.3]
+        self.mock_vm.embeddings_model.embed_query.return_value = [0.1, 0.2, 0.3]
 
     def test_search_high_confidence(self):
         """Vérifie le format XML et le calcul de confiance 'high'."""
@@ -27,7 +27,7 @@ class TestOracleTool(unittest.TestCase):
         self.assertEqual(cot_storage[0]["confidence"], "high")
         self.assertEqual(cot_storage[0]["source"], "bestiaire.json")
         self.mock_vm.search_hybrid.assert_called_once()
-        self.mock_vm.embeddings_model.get_query_embedding.assert_called_once()
+        self.mock_vm.embeddings_model.embed_query.assert_called_once()
 
     def test_search_medium_confidence(self):
         """Vérifie le calcul de confiance 'medium'."""

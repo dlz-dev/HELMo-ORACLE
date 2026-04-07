@@ -8,9 +8,11 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
+import os
+
 import psycopg
 from core.utils.utils import FTS_LANG, K_BM25, K_FINAL, K_SEMANTIC, RRF_K, load_config
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from langchain_community.embeddings import OllamaEmbeddings
 from pgvector.psycopg import register_vector
 from psycopg import sql
 
@@ -53,9 +55,14 @@ class VectorManager:
             self.db_available = False
             self._conn_string = db_config.get("connection_string", "")
 
-        self.embeddings_model = embeddings_model or HuggingFaceEmbedding(
-            model_name="intfloat/multilingual-e5-base"
+        self.embeddings_model = embeddings_model or OllamaEmbeddings(
+            model="nomic-embed-text",
+            base_url=os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434"),
         )
+        # Lazy import to avoid circular dependency (core.pipeline.__init__
+        # imports ingestion, which imports VectorManager).
+        from core.pipeline.late_chunking import LateChunkingEmbedder
+        self.late_chunking_embedder = LateChunkingEmbedder()
 
     def _reconnect(self) -> bool:
         """Attempts to re-establish the database connection."""
@@ -112,7 +119,7 @@ class VectorManager:
         elif "category" in metadata and "item_name" in metadata:
             text_to_embed = f"Category: {metadata['category']} | Item: {metadata['item_name']}\n\nContent: {text}"
 
-        vector = self.embeddings_model.get_text_embedding(text_to_embed)
+        vector = self.embeddings_model.embed_query(text_to_embed)
         ingested_at = datetime.now(timezone.utc)
 
         with self.conn.cursor() as cur:
@@ -123,6 +130,54 @@ class VectorManager:
                 (text, vector, json.dumps(metadata), ingested_at, chunk_hash),
             )
             return cur.rowcount == 1
+
+    def add_documents_batch(
+            self,
+            chunks: List[Tuple[str, Optional[Dict[str, Any]]]],
+            use_late_chunking: bool = True,
+    ) -> int:
+        """
+        Inserts a batch of chunks from the same document.
+
+        When *use_late_chunking* is True (default), all chunk texts are
+        embedded in context using the LateChunkingEmbedder so that each
+        vector captures the surrounding document content.
+
+        Args:
+            chunks: List of (text, metadata) pairs from the same document.
+            use_late_chunking: Use late chunking embedder instead of per-chunk embedding.
+
+        Returns:
+            Number of chunks actually inserted (duplicates are skipped).
+        """
+        if not chunks:
+            return 0
+        if not self.is_db_available():
+            raise ConnectionError("Database is not available.")
+
+        texts = [text for text, _ in chunks]
+
+        if use_late_chunking and self.late_chunking_embedder is not None:
+            vectors = self.late_chunking_embedder.embed_chunks(texts)
+        else:
+            vectors = [self.embeddings_model.embed_query(t) for t in texts]
+
+        inserted = 0
+        ingested_at = datetime.now(timezone.utc)
+
+        with self.conn.cursor() as cur:
+            for (text, metadata), vector in zip(chunks, vectors):
+                metadata = metadata or {}
+                chunk_hash = hashlib.sha256(text.encode()).hexdigest()
+                cur.execute(
+                    """INSERT INTO documents (content, vecteur, metadata, ingested_at, chunk_hash)
+                       VALUES (%s, %s, %s, %s, %s)
+                       ON CONFLICT (chunk_hash) WHERE (chunk_hash IS NOT NULL) DO NOTHING""",
+                    (text, vector, json.dumps(metadata), ingested_at, chunk_hash),
+                )
+                inserted += cur.rowcount
+
+        return inserted
 
     def search_semantic(
             self, query_vector: List[float], k: int = K_SEMANTIC

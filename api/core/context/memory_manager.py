@@ -11,10 +11,6 @@ from __future__ import annotations
 from typing import Any, Dict, List, Tuple
 
 from core.utils.utils import _SUMMARY_PROMPT
-from core.utils.logger import get_logger
-from llama_index.core.llms import LLM
-
-logger = get_logger(__name__)
 
 
 def _estimate_tokens(text: str) -> int:
@@ -35,7 +31,7 @@ def _format_messages_for_summary(messages: List[Dict[str, Any]]) -> str:
     )
 
 
-def summarize_messages(messages_to_summarize: List[Dict[str, Any]], existing_summary: str, llm: LLM) -> str:
+def summarize_messages(messages_to_summarize: List[Dict[str, Any]], existing_summary: str, llm: Any) -> str:
     """
     Calls the LlamaIndex LLM to produce an updated summary combining the
     existing summary with newly overflowing messages.
@@ -46,10 +42,10 @@ def summarize_messages(messages_to_summarize: List[Dict[str, Any]], existing_sum
     )
 
     try:
-        response = llm.complete(prompt_text)
-        return response.text.strip()
-    except Exception:
-        logger.error("Memory summarization failed", exc_info=True)
+        response = llm.invoke(prompt_text)
+        return response.content.strip()
+    except Exception as e:
+        print(f"Memory summarization failed: {e}")
         return existing_summary
 
 
@@ -90,7 +86,7 @@ class MemoryManager:
 
         return recent
 
-    def compress(self, session: Dict[str, Any], llm: LLM) -> Dict[str, Any]:
+    def compress(self, session: Dict[str, Any], llm: Any) -> Dict[str, Any]:
         """
         Compresses session memory by summarizing overflowing messages.
         Updates the session dictionary in place and returns it.
@@ -103,7 +99,7 @@ class MemoryManager:
         if not to_summarize:
             return session
 
-        logger.info(f"Compressing {len(to_summarize)} messages into summary...")
+        print(f"Compressing {len(to_summarize)} messages into summary...")
 
         new_summary = summarize_messages(
             messages_to_summarize=to_summarize,
