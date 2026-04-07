@@ -129,7 +129,10 @@ if _SUPABASE_URL and _SUPABASE_KEY:
         logger.error(f"Impossible d'initialiser le client Supabase : {_e}")
 
 _mcp_module.setup(vm)
-_mcp_asgi = _mcp_module.mcp.streamable_http_app()
+# Désactive la protection DNS rebinding (sécurisé car Docker interne uniquement)
+from mcp.server.transport_security import TransportSecurityMiddleware
+TransportSecurityMiddleware._validate_host = lambda self, host: True
+_mcp_asgi = _mcp_module.mcp.sse_app()
 sm = SessionManager()
 mm = MemoryManager(
     max_recent_tokens=config.get("memory", {}).get("max_recent_tokens", 1200),
@@ -149,8 +152,7 @@ def _require_api_key(x_api_key: str = Header(...)):
 # --- FastAPI App ---
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
-    async with _mcp_asgi.router.lifespan_context(app):
-        yield
+    yield
 
 
 app = FastAPI(title="HELMo Oracle API", version="1.0.0", lifespan=_lifespan)

@@ -21,7 +21,7 @@ export default defineNuxtConfig({
     redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
     groqApiKey: process.env.GROQ_API_KEY ?? '',
     anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? '', // optionnel
-    mcpServerUrl: process.env.MCP_SERVER_URL ?? 'http://localhost:8000/mcp',
+    mcpServerUrl: process.env.MCP_SERVER_URL ?? 'http://localhost:8000/mcp/sse',
   },
 })
 
