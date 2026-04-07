@@ -447,27 +447,41 @@ async def chat(req: ChatRequest):
 
         # 4. Sauvegarde session et signal de fin
         session["messages"].append({"role": "assistant", "content": response, "_cot": cot_storage})
-        if mm.needs_summarization(session["messages"], session.get("summary", "")):
-            session_updated = mm.compress(session, get_llm(
-                provider_key=req.provider, model=model,
-                config={**config, "llm": {**config.get("llm", {}), "temperature": req.temperature}},
-            ))
-            session.update(session_updated)
         session["provider"] = req.provider
         session["model"] = model
         request_sm.save(session)
 
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
+        # Compression mémoire en arrière-plan (non-bloquant)
+        if mm.needs_summarization(session["messages"], session.get("summary", "")):
+            async def _compress_session():
+                try:
+                    session_updated = await asyncio.to_thread(
+                        mm.compress, session, get_llm(
+                            provider_key=req.provider, model=model,
+                            config={**config, "llm": {**config.get("llm", {}), "temperature": req.temperature}},
+                        )
+                    )
+                    session.update(session_updated)
+                    request_sm.save(session)
+                except Exception as _e:
+                    logger.error(f"Erreur compression mémoire : {_e}", exc_info=True)
+            asyncio.create_task(_compress_session())
+
+        # Judge en arrière-plan avec timeout
         asyncio.create_task(
-            asyncio.to_thread(
-                _run_judge_sync,
-                query=masked_message,
-                response=response,
-                cot_storage=cot_storage,
-                user_id=req.user_id,
-                session_id=session["session_id"],
-                config=config
+            asyncio.wait_for(
+                asyncio.to_thread(
+                    _run_judge_sync,
+                    query=masked_message,
+                    response=response,
+                    cot_storage=cot_storage,
+                    user_id=req.user_id,
+                    session_id=session["session_id"],
+                    config=config
+                ),
+                timeout=20.0
             )
         )
 
