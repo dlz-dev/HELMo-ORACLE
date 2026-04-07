@@ -38,3 +38,4 @@ bot/node_modules/
 bot/.nuxt/
 bot/.output/
 bot/package-lock.json
+docs/DEPLOY_BOT.md

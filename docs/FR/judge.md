@@ -26,7 +26,7 @@ Le modèle Juge analyse les données fournies et doit obligatoirement répondre 
 -   `answer_relevance` : La réponse répond-elle directement à la question de l'utilisateur ?
 -   `context_coverage` : La réponse exploite-t-elle correctement les informations pertinentes du contexte ?
 
-Le script nettoie ensuite la sortie du LLM (retrait des éventuelles balises Markdown ` ```json `) et valide rigoureusement la présence et le type de ces clés pour éviter les erreurs de parsing.
+Le script nettoie ensuite la sortie du LLM (retrait des éventuelles balises Markdown ` json `) et valide rigoureusement la présence et le type de ces clés pour éviter les erreurs de parsing.
 
 ### Étape 3 : Traçabilité (`log_to_db_sync`)
 
