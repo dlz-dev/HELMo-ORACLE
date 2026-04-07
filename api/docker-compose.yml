@@ -66,7 +66,6 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - MCP_SERVER_URL=${MCP_SERVER_URL}
       - NUXT_MCP_SERVER_URL=${MCP_SERVER_URL}
-      - NUXT_MCP_SERVER_URL=${MCP_SERVER_URL}
 
   db:
     profiles: ["db"]
@@ -76,8 +75,9 @@ services:
       POSTGRES_DB: oracle
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./config/schema_server.sql:/docker-entrypoint-initdb.d/schema_server.sql
