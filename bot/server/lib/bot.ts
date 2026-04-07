@@ -15,7 +15,7 @@ import { createDiscordAdapter } from "@chat-adapter/discord";
 import { createRedisState } from "@chat-adapter/state-redis";
 import { createGroq } from "@ai-sdk/groq";
 import { createAnthropic } from "@ai-sdk/anthropic";
-import { experimental_createMCPClient as createMCPClient, streamText } from "ai";
+import { experimental_createMCPClient as createMCPClient, streamText, type CoreMessage } from "ai";
 
 // ── Singleton ──────────────────────────────────────────────────────────────────
 let _bot: Chat | null = null;
@@ -88,7 +88,7 @@ export async function initBot(config: {
         "Tu es HELMo Oracle, expert en Dofus. " +
         "Utilise search_knowledge_base pour interroger la base de connaissances avant de répondre. " +
         "Sois précis, concis, et cite tes sources.",
-      messages: history,
+      messages: history as unknown as CoreMessage[],
       tools: mcpTools,         // ← outils MCP : search_knowledge_base, list_sources
       maxSteps: 5,              // permet plusieurs appels d'outils en chaîne
     });

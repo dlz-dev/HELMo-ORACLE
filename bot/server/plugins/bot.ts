@@ -8,11 +8,19 @@ import { initBot } from '~~/server/lib/bot';
 export default defineNitroPlugin(async () => {
   const config = useRuntimeConfig();
 
-  await initBot({
+  const bot = await initBot({
     mcpServerUrl: config.mcpServerUrl,
     groqApiKey: config.groqApiKey,
     anthropicApiKey: config.anthropicApiKey || undefined,
   });
+
+  // Sur Digital Ocean (process persistant), on démarre la gateway immédiatement
+  const discordAdapter = (bot as any).adapters?.discord;
+  if (discordAdapter?.startGateway) {
+    discordAdapter.startGateway().catch((err: unknown) => {
+      console.error("[HELMo Oracle Bot] Gateway error:", err);
+    });
+  }
 
   console.log("[HELMo Oracle Bot] Initialized ✓");
 });
