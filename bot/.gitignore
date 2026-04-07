@@ -1,7 +1,0 @@
-node_modules/
-.nuxt/
-.output/
-dist/
-.env
-*.local
-package-lock.json
