@@ -150,6 +150,12 @@ Dans `api/.env`, renseignez :
 -   `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `LOG_DATABASE_URL`.
 -   `GROQ_API_KEY` (et autres clés LLM selon vos besoins).
 -   `API_SECRET_KEY` — clé secrète pour protéger les routes d'administration.
+-   `ENV` — environnement d'exécution de votre application (`local` pour utiliser des sessions JSON, `production` pour utiliser Supabase).
+-   `ALLOWED_ORIGINS` — liste des domaines autorisés à communiquer avec l'API (gestion du CORS, ex: votre frontend et localhost).
+-   `LLM_DEFAULT_PROVIDER` et `LLM_DEFAULT_MODEL` — le fournisseur et le modèle par défaut pour la génération de texte (ex: `groq` avec `llama-3.3-70b-versatile`).
+-   `GUARDIAN_*` et `JUDGE_*` — configuration spécifique des modèles dédiés à la modération (Guardian) et à l'évaluation des réponses (Judge).
+-   `UNSTRUCTURED_API_KEY` — clé pour le service d'extraction de documents Unstructured.io.
+-   `SYSTEM_PROMPT` (optionnel) — permet d'injecter votre prompt système directement ici (à laisser vide si vous préférez utiliser le fichier dédié `config/prompt.txt`).
 
 #### 3. Construire et démarrer les conteneurs
 
@@ -222,6 +228,7 @@ Pour faire de l'Oracle un expert sur un autre sujet, **aucune modification de co
     -   `prompt_guardian.txt`: Décrit les **critères de pertinence** pour accepter ou rejeter un document lors de l'ingestion.
     -   `prompt_context.txt`: Guide le LLM pour générer une **description globale** de chaque document.
     -   `prompt_summary.txt`: Instruction pour résumer les conversations et maintenir une mémoire à long terme.
+    -   `prompt_judge.txt`: Instruction à l'agent qui regarde si la réponse du RAG est bonne ou non.
 3.  **Lancez une ingestion** depuis le panel d'administration (`/admin`).
 
 ---
