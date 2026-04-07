@@ -94,7 +94,9 @@ export async function POST(req: NextRequest) {
               );
             } else if (event.type === "error") {
               controller.enqueue(
-                enc.encode(`3:${JSON.stringify((event.message as string) || "Erreur serveur")}\n`),
+                enc.encode(
+                  `3:${JSON.stringify((event.message as string) || "Erreur serveur")}\n`,
+                ),
               );
             }
           }
