@@ -17,15 +17,15 @@ export default defineEventHandler(async (event) => {
   const bot = getBot();
   const discordAdapter = (bot as any).adapters?.discord;
 
-  if (!discordAdapter?.startGateway) {
+  if (!discordAdapter?.startGatewayListener) {
     throw createError({
       statusCode: 503,
       message: "Discord adapter not available or does not support gateway mode.",
     });
   }
 
-  // startGateway maintient la connexion WS ouverte jusqu'au timeout serverless
-  event.waitUntil(discordAdapter.startGateway());
+  // startGatewayListener maintient la connexion WS ouverte jusqu'au timeout serverless
+  event.waitUntil(discordAdapter.startGatewayListener(event));
 
   return { status: "Gateway started" };
 });

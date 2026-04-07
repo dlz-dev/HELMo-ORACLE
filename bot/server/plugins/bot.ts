@@ -18,11 +18,12 @@ export default defineNitroPlugin(async () => {
   });
 
   // Sur Digital Ocean (process persistant), on démarre la gateway immédiatement
-  const discordAdapter = (bot as any).adapters?.discord;
-  if (discordAdapter?.startGateway) {
-    discordAdapter.startGateway().catch((err: unknown) => {
-      console.error("[HELMo Oracle Bot] Gateway error:", err);
-    });
+  await (bot as any).ensureInitialized();
+  const discordAdapter = (bot as any).getAdapter('discord');
+  if (discordAdapter?.startGatewayListener) {
+    const fakeEvent = { waitUntil: (p: Promise<any>) => p.catch((e: unknown) => console.error('[Gateway]', e)) };
+    const result = discordAdapter.startGatewayListener(fakeEvent);
+    if (result instanceof Response) result.text().then((t: string) => console.log('[Gateway response]', t));
   }
 
   console.log("[HELMo Oracle Bot] Initialized ✓");

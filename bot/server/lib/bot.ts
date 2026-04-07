@@ -85,7 +85,7 @@ export async function initBot(config: {
     const { messages: raw } = await thread.adapter.fetchMessages(thread.id, {
       limit: 20,
     });
-    const history = await toAiMessages(raw);
+    const history = (await toAiMessages(raw)).filter((m: any) => m.content && m.content.trim() !== "...");
 
     // Stream Groq avec les outils MCP injectés directement
     const result = await streamText({
