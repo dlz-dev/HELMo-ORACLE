@@ -43,11 +43,26 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     command: redis-server --requirepass ${REDIS_PASSWORD}
     volumes:
       - redisdata:/data
+
+  bot:
+    build:
+      context: ../bot
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - redis
+    environment:
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - DISCORD_PUBLIC_KEY=${DISCORD_PUBLIC_KEY}
+      - DISCORD_APPLICATION_ID=${DISCORD_APPLICATION_ID}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - MCP_SERVER_URL=${MCP_SERVER_URL}
 
   db:
     profiles: ["db"]
