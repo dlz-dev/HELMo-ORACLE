@@ -1,8 +1,25 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { MessageSquarePlus, Trash2, Clock } from "lucide-react";
+import {
+  MessageSquarePlus,
+  Trash2,
+  Clock,
+  Star,
+  Settings,
+  ChevronDown,
+  ChevronUp,
+  Cpu,
+  Thermometer,
+  Send,
+  CheckCircle2,
+} from "lucide-react";
 import { clsx } from "clsx";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+
+// ── Feedback ─────────────────────────────────────────────────────────────────
 
 function FeedbackPanel({ sessionId }: { sessionId: string }) {
   const [hovered, setHovered] = useState(0);
@@ -11,7 +28,6 @@ function FeedbackPanel({ sessionId }: { sessionId: string }) {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Réinitialise si la session change
   useEffect(() => {
     setHovered(0);
     setSelected(0);
@@ -40,17 +56,22 @@ function FeedbackPanel({ sessionId }: { sessionId: string }) {
 
   if (submitted) {
     return (
-      <div className="px-3 py-3 text-center text-xs text-muted-fg">
-        Merci pour ton retour ✦
+      <div className="px-4 py-4 flex flex-col items-center gap-2 text-center animate-fade-up">
+        <CheckCircle2 size={20} className="text-emerald-400" />
+        <p className="text-xs text-[var(--text-muted)]">
+          Merci pour ton retour !
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="px-3 py-3 space-y-2">
-      <p className="text-xs text-subtle-fg">Noter cette conversation</p>
+    <div className="px-4 py-4 space-y-3">
+      <p className="text-[10px] text-[var(--text-subtle)] uppercase tracking-wider">
+        Évaluer cette conversation
+      </p>
 
-      {/* Étoiles */}
+      {/* Stars */}
       <div className="flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
@@ -59,47 +80,142 @@ function FeedbackPanel({ sessionId }: { sessionId: string }) {
             onMouseEnter={() => setHovered(star)}
             onMouseLeave={() => setHovered(0)}
             onClick={() => setSelected(star)}
-            className="text-lg leading-none transition-colors duration-100"
+            className="transition-transform hover:scale-110 duration-100"
             aria-label={`Note ${star}`}
           >
-            <span
-              className={clsx(
+            <Star
+              size={18}
+              className="transition-colors duration-100"
+              fill={
+                (hovered || selected) >= star ? "var(--gold)" : "transparent"
+              }
+              stroke={
                 (hovered || selected) >= star
-                  ? "text-gold"
-                  : "text-muted-fg opacity-30",
-              )}
-            >
-              ★
-            </span>
+                  ? "var(--gold)"
+                  : "var(--text-subtle)"
+              }
+            />
           </button>
         ))}
+        {selected > 0 && (
+          <span className="ml-2 text-xs text-[var(--gold)]">
+            {
+              ["", "Mauvais", "Passable", "Correct", "Bien", "Excellent"][
+                selected
+              ]
+            }
+          </span>
+        )}
       </div>
 
-      {/* Commentaire + bouton */}
+      {/* Comment + submit */}
       {selected > 0 && (
-        <div className="flex flex-col gap-1.5 animate-fade-up">
+        <div className="space-y-2 animate-fade-up">
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Un commentaire ? (optionnel)"
+            placeholder="Commentaire optionnel…"
             rows={2}
-            className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-default bg-surface-alt
-                       text-main placeholder:text-subtle-fg focus:outline-none focus:border-gold/50
-                       resize-none transition-colors duration-150"
+            className="w-full px-2.5 py-2 text-xs rounded-lg border border-[var(--border)] bg-[var(--bg-subtle)]
+                       text-[var(--text)] placeholder:text-[var(--text-subtle)] focus:outline-none
+                       focus:border-[var(--gold)]/50 resize-none transition-colors"
           />
-          <button
+          <Button
             onClick={handleSubmit}
             disabled={submitting}
-            className="self-start px-3 py-1 text-xs rounded-lg bg-gold/10 border border-gold/30
-                       text-gold hover:bg-gold/20 transition-colors duration-150 disabled:opacity-50"
+            size="sm"
+            className="w-full h-7 text-xs bg-[var(--gold)]/10 hover:bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30 hover:border-[var(--gold)]/50"
           >
-            {submitting ? "Envoi…" : "Envoyer"}
-          </button>
+            {submitting ? (
+              "Envoi…"
+            ) : (
+              <>
+                <Send size={11} className="mr-1" /> Envoyer
+              </>
+            )}
+          </Button>
         </div>
       )}
     </div>
   );
 }
+
+// ── User preferences (model info) ────────────────────────────────────────────
+
+function UserPrefsPanel() {
+  const [open, setOpen] = useState(false);
+  const [provider, setProvider] = useState("");
+  const [model, setModel] = useState("");
+  const [temperature, setTemperature] = useState("");
+  const [kFinal, setKFinal] = useState("");
+
+  useEffect(() => {
+    setProvider(localStorage.getItem("oracle_provider") || "groq");
+    setModel(localStorage.getItem("oracle_model") || "llama-3.3-70b-versatile");
+    setTemperature(localStorage.getItem("oracle_temperature") || "0");
+    setKFinal(localStorage.getItem("oracle_k_final") || "5");
+  }, []);
+
+  return (
+    <div className="border-t border-[var(--border)]">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 text-xs text-[var(--text-subtle)] hover:text-[var(--text)] transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Settings size={12} />
+          <span>Paramètres actifs</span>
+        </div>
+        {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+      </button>
+
+      {open && (
+        <div className="px-4 pb-3 space-y-2 animate-fade-up">
+          <div className="grid grid-cols-2 gap-1.5">
+            <div className="bg-[var(--bg-subtle)] rounded-md px-2.5 py-2 space-y-0.5">
+              <div className="flex items-center gap-1 text-[9px] text-[var(--text-subtle)] uppercase tracking-wider">
+                <Cpu size={9} /> Provider
+              </div>
+              <p className="text-xs font-medium text-[var(--text)] capitalize">
+                {provider}
+              </p>
+            </div>
+            <div className="bg-[var(--bg-subtle)] rounded-md px-2.5 py-2 space-y-0.5">
+              <div className="flex items-center gap-1 text-[9px] text-[var(--text-subtle)] uppercase tracking-wider">
+                <Thermometer size={9} /> Temp.
+              </div>
+              <p className="text-xs font-medium text-[var(--text)]">
+                {temperature}
+              </p>
+            </div>
+          </div>
+          <div className="bg-[var(--bg-subtle)] rounded-md px-2.5 py-2 space-y-0.5">
+            <p className="text-[9px] text-[var(--text-subtle)] uppercase tracking-wider">
+              Modèle
+            </p>
+            <p className="text-[11px] font-medium text-[var(--text)] truncate">
+              {model}
+            </p>
+          </div>
+          <div className="bg-[var(--bg-subtle)] rounded-md px-2.5 py-2 space-y-0.5">
+            <p className="text-[9px] text-[var(--text-subtle)] uppercase tracking-wider">
+              Sources RAG (k)
+            </p>
+            <p className="text-xs font-medium text-[var(--text)]">
+              {kFinal} chunks
+            </p>
+          </div>
+          <p className="text-[10px] text-[var(--text-subtle)] text-center">
+            Modifiable dans{" "}
+            <span className="text-[var(--gold)]">Administration</span>
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Session {
   session_id: string;
@@ -119,12 +235,13 @@ function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
   if (m < 1) return "à l'instant";
-  if (m < 60) return `il y a ${m} min`;
+  if (m < 60) return `il y a ${m}min`;
   const h = Math.floor(m / 60);
   if (h < 24) return `il y a ${h}h`;
-  const d = Math.floor(h / 24);
-  return `il y a ${d}j`;
+  return `il y a ${Math.floor(h / 24)}j`;
 }
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export function SessionSidebar({
   activeSessionId,
@@ -135,138 +252,143 @@ export function SessionSidebar({
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
-  // Évite les erreurs d'hydratation côté serveur (Next.js)
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Fonction mémorisée pour éviter de la recréer à chaque rendu
   const fetchSessions = useCallback(async () => {
     try {
       const res = await fetch("/api/sessions");
-      if (!res.ok) throw new Error("Erreur réseau");
+      if (!res.ok) throw new Error();
       const data = await res.json();
       setSessions(data.sessions ?? []);
-    } catch (e) {
-      console.error(e);
+    } catch {
       setSessions([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // On charge les sessions uniquement au montage du composant
   useEffect(() => {
     fetchSessions();
   }, [fetchSessions]);
 
   const deleteSession = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Empêche le clic de sélectionner la session
-
-    // Ajout d'une confirmation pour éviter les suppressions accidentelles
-    if (
-      !window.confirm("Êtes-vous sûr de vouloir supprimer cette conversation ?")
-    ) {
-      return;
-    }
-
+    e.stopPropagation();
+    if (!window.confirm("Supprimer cette conversation ?")) return;
     await fetch(`/api/sessions/${id}`, { method: "DELETE" });
     setSessions((prev) => prev.filter((s) => s.session_id !== id));
-
-    // Si la session supprimée était celle active, on en ouvre une nouvelle
-    if (activeSessionId === id) {
-      onNewSession();
-    }
+    if (activeSessionId === id) onNewSession();
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-[var(--surface)]">
       {/* Header */}
-      <div className="p-3 border-b border-default">
-        <button
+      <div className="p-3 border-b border-[var(--border)]">
+        <Button
           onClick={onNewSession}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md
-                     text-sm font-medium text-gold border border-gold/30 bg-gold-glow
-                     hover:bg-gold/10 transition-all duration-150"
+          className="w-full bg-[var(--gold-glow)] hover:bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 hover:border-[var(--gold)]/50 font-medium text-sm gap-2"
+          variant="outline"
         >
           <MessageSquarePlus size={14} />
           Nouvelle conversation
-        </button>
+        </Button>
       </div>
 
-      {/* Liste */}
+      {/* Sessions list */}
       <div className="flex-1 overflow-y-auto py-2 min-h-0">
         {loading && (
-          <div className="px-4 py-8 text-center text-subtle-fg text-sm animate-pulse">
-            Chargement…
+          <div className="px-4 py-8 text-center">
+            <div className="flex justify-center gap-1">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full bg-[var(--border)] animate-bounce"
+                  style={{ animationDelay: `${i * 150}ms` }}
+                />
+              ))}
+            </div>
           </div>
         )}
 
         {!loading && sessions.length === 0 && (
-          <div className="px-4 py-8 text-center text-subtle-fg text-sm">
-            Aucune conversation
+          <div className="px-4 py-10 text-center space-y-2">
+            <MessageSquarePlus
+              size={24}
+              className="mx-auto text-[var(--text-subtle)] opacity-40"
+            />
+            <p className="text-xs text-[var(--text-subtle)]">
+              Aucune conversation
+            </p>
           </div>
         )}
 
-        {sessions.map((s, i) => (
-          <div
-            key={s.session_id}
-            onClick={() => onSelectSession(s.session_id)}
-            className={clsx(
-              "group relative mx-2 mb-0.5 px-3 py-2.5 rounded-md cursor-pointer transition-all duration-150",
-              "animate-fade-up",
-              activeSessionId === s.session_id
-                ? "bg-gold-glow border border-gold/20"
-                : "hover:bg-subtle border border-transparent",
-            )}
-            style={{ animationDelay: `${i * 30}ms` }}
-          >
-            {/* Titre */}
-            <p
+        <div className="space-y-0.5 px-2">
+          {sessions.map((s, i) => (
+            <div
+              key={s.session_id}
+              onClick={() => onSelectSession(s.session_id)}
               className={clsx(
-                "text-sm truncate pr-6 leading-snug",
+                "group relative px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150 animate-fade-up",
                 activeSessionId === s.session_id
-                  ? "text-main font-medium"
-                  : "text-main",
+                  ? "bg-[var(--gold-glow)] border border-[var(--gold)]/20"
+                  : "hover:bg-[var(--bg-subtle)] border border-transparent",
               )}
+              style={{ animationDelay: `${i * 30}ms` }}
             >
-              {s.title || "Conversation sans titre"}
-            </p>
+              {/* Title */}
+              <p
+                className={clsx(
+                  "text-[13px] truncate pr-6 leading-snug",
+                  activeSessionId === s.session_id
+                    ? "text-[var(--text)] font-medium"
+                    : "text-[var(--text)]",
+                )}
+              >
+                {s.title || "Conversation sans titre"}
+              </p>
 
-            {/* Méta */}
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <Clock size={10} className="text-subtle-fg" />
-              {/* Utilisation de mounted pour l'hydratation de l'heure locale */}
-              <span className="text-xs text-subtle-fg">
-                {mounted ? timeAgo(s.updated_at) : "..."}
-              </span>
-              {s.provider && (
-                <span className="text-xs text-subtle-fg opacity-60">
-                  · {s.provider}
+              {/* Meta */}
+              <div className="flex items-center gap-1.5 mt-1">
+                <Clock size={9} className="text-[var(--text-subtle)]" />
+                <span className="text-[10px] text-[var(--text-subtle)]">
+                  {mounted ? timeAgo(s.updated_at) : "…"}
                 </span>
-              )}
-            </div>
+                {s.provider && (
+                  <Badge
+                    variant="outline"
+                    className="text-[9px] h-4 px-1 border-[var(--border)] text-[var(--text-subtle)] ml-auto"
+                  >
+                    {s.provider}
+                  </Badge>
+                )}
+              </div>
 
-            {/* Supprimer */}
-            <button
-              onClick={(e) => deleteSession(e, s.session_id)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded opacity-0
-                         group-hover:opacity-100 text-subtle-fg hover:text-red-400
-                         transition-all duration-150"
-              aria-label="Supprimer"
-            >
-              <Trash2 size={12} />
-            </button>
-          </div>
-        ))}
+              {/* Delete */}
+              <button
+                onClick={(e) => deleteSession(e, s.session_id)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded opacity-0
+                           group-hover:opacity-100 text-[var(--text-subtle)] hover:text-red-400
+                           transition-all duration-150"
+                aria-label="Supprimer"
+              >
+                <Trash2 size={11} />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Feedback — affiché uniquement quand une session est active */}
+      {/* Feedback */}
       {activeSessionId && (
-        <div className="border-t border-default">
+        <>
+          <Separator className="bg-[var(--border)]" />
           <FeedbackPanel sessionId={activeSessionId} />
-        </div>
+        </>
       )}
+
+      {/* User prefs */}
+      <UserPrefsPanel />
     </div>
   );
 }

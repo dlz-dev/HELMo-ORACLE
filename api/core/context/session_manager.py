@@ -98,9 +98,9 @@ class _SupabaseBackend:
     def __init__(self, user_id: str) -> None:
         from supabase import create_client
         url = os.environ.get("SUPABASE_URL")
-        key = os.environ.get("SUPABASE_ANON_KEY")
+        key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
         if not url or not key:
-            raise RuntimeError("SUPABASE_URL and SUPABASE_ANON_KEY must be set.")
+            raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.")
         self._client = create_client(url, key)
         self._user_id = user_id
 

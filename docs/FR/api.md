@@ -156,7 +156,7 @@ Vérifie l'état de base du service (connexion base de données, modèle d'embed
   "status": "ok",
   "database": "connected",
   "documents_count": 142,
-  "embeddings_model": "multilingual-e5-base"
+  "embeddings_model": "nomic-embed-text"
 }
 ```
 
@@ -436,7 +436,7 @@ files: <fichier2.md>
 2. **Conversion** — parsers spécifiques par format (ou Unstructured.io)
 3. **Contextualisation** — résumé global généré par LLM
 4. **Chunking** — découpage en segments
-5. **Embeddings** — `multilingual-e5-base` (768 dimensions)
+5. **Embeddings** — `nomic-embed-text` via Ollama (768 dimensions, late chunking contextuel)
 6. **Vectorisation** — stockage dans Supabase pgvector
 
 **Réponse 202 :**

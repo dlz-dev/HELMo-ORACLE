@@ -63,10 +63,10 @@ class TestPIIManager(unittest.TestCase):
 class TestQuestionProcessor(unittest.TestCase):
     """Tests pour le prétraitement et la vectorisation."""
 
-    @patch("core.pipeline.preprocess.HuggingFaceEmbedding")
-    def setUp(self, mock_hf):
+    @patch("core.pipeline.preprocess.OllamaEmbeddings")
+    def setUp(self, mock_ollama):
         self.mock_model = MagicMock()
-        mock_hf.return_value = self.mock_model
+        mock_ollama.return_value = self.mock_model
         self.processor = QuestionProcessor()
 
     def test_preprocess_text_logic(self):
@@ -76,10 +76,10 @@ class TestQuestionProcessor(unittest.TestCase):
         self.assertEqual(self.processor.preprocess_text(raw), expected)
 
     def test_vectorize_text(self):
-        self.mock_model.get_query_embedding.return_value = [0.1, 0.2, 0.3]
+        self.mock_model.embed_query.return_value = [0.1, 0.2, 0.3]
         result = self.processor.vectorize_text("test")
         self.assertEqual(result, [0.1, 0.2, 0.3])
-        self.mock_model.get_query_embedding.assert_called_once_with("test")
+        self.mock_model.embed_query.assert_called_once_with("test")
 
     def test_preprocess_without_spaces(self):
         """Vérifie le comportement si les mots sont séparés par de la ponctuation sans espaces."""
@@ -119,12 +119,13 @@ class TestIngestionPipeline(unittest.TestCase):
         mock_db_instance = MagicMock()
         mock_db.return_value = mock_db_instance
 
-        with patch("core.pipeline.ingestion._import_providers", return_value=lambda: None), \
+        with patch("core.pipeline.ingestion._import_providers", return_value=lambda **kwargs: None), \
                 patch('shutil.move'):
             seed_database()
 
-        mock_db_instance.add_document.assert_called_once_with(
-            "Contenu chunk", metadata={"source": "lore_iroise.txt", "page": 1}
+        mock_db_instance.add_documents_batch.assert_called_once_with(
+            [("Contenu chunk", {"source": "lore_iroise.txt", "page": 1})],
+            use_late_chunking=True
         )
         mock_valid.assert_called_once()
         mock_conv.assert_called_once()

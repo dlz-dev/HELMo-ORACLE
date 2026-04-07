@@ -1,5 +1,5 @@
 services:
-  oracle-backend:
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
@@ -16,9 +16,30 @@ services:
     restart: unless-stopped
     environment:
       - PYTHONUNBUFFERED=1
+      - OLLAMA_BASE_URL=http://embedding_service:11434
+    depends_on:
+      embedding_service:
+        condition: service_started
+      embedding_init:
+        condition: service_completed_successfully
 
-  # Service optionnel — démarrer avec : docker compose --profile db up
-  # Par défaut (cloud/Supabase), ce service n'est pas démarré.
+  embedding_service:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama_data:/root/.ollama
+    restart: unless-stopped
+
+  embedding_init:
+    image: ollama/ollama:latest
+    depends_on:
+      embedding_service:
+        condition: service_started
+    environment:
+      - OLLAMA_HOST=http://embedding_service:11434
+    command: pull nomic-embed-text
+
   db:
     profiles: ["db"]
     image: pgvector/pgvector:pg17
@@ -31,7 +52,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./config/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./config/schema_server.sql:/docker-entrypoint-initdb.d/schema_server.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d oracle"]
       interval: 5s

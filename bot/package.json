@@ -1,0 +1,27 @@
+{
+  "name": "bot",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "nuxt": "^4.4.2",
+    "vue": "^3.5.31",
+    "vue-router": "^5.0.4",
+    "chat": "latest",
+    "@chat-adapter/discord": "latest",
+    "@chat-adapter/whatsapp": "latest",
+    "@chat-adapter/state-redis": "latest",
+    "ai": "^4.0.0",
+    "@ai-sdk/groq": "^1.0.0",
+    "@ai-sdk/anthropic": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0"
+  }
+}

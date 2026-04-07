@@ -56,7 +56,7 @@ def search_knowledge_base(query: str, k: int = 5) -> str:
     if not query:
         return "Requête vide."
 
-    query_vector = _vm.embeddings_model.get_query_embedding(query)
+    query_vector = _vm.embeddings_model.embed_query(query)
     results = _vm.search_hybrid(query=query, query_vector=query_vector, k_final=k)
 
     if not results:
@@ -106,9 +106,13 @@ def list_sources() -> str:
 
 # ── Lancement standalone (test local) ─────────────────────────────────────────
 if __name__ == "__main__":
-    from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+    import os
+    from langchain_community.embeddings import OllamaEmbeddings
     from core.database.vector_manager import VectorManager
 
-    _embeddings = HuggingFaceEmbedding(model_name="intfloat/multilingual-e5-base")
+    _embeddings = OllamaEmbeddings(
+        model="nomic-embed-text",
+        base_url=os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434"),
+    )
     setup(VectorManager(embeddings_model=_embeddings))
     mcp.run()

@@ -29,10 +29,11 @@ QUARANTINE_DIR = DATA_DIR / "quarantine"
 
 STORAGE_DIR = BASE_DIR / "storage" / "sessions"
 PIPELINE_DIR = CURRENT_DIR
-PROMPT_PATH         = BASE_DIR / "config" / "prompt.txt"
-PROMPT_CONTEXT_PATH = BASE_DIR / "config" / "prompt_context.txt"
-PROMPT_GUARDIAN_PATH= BASE_DIR / "config" / "prompt_guardian.txt"
-PROMPT_SUMMARY_PATH = BASE_DIR / "config" / "prompt_summary.txt"
+PROMPT_PATH         =  BASE_DIR / "config" / "prompt.txt"
+PROMPT_CONTEXT_PATH =  BASE_DIR / "config" / "prompt_context.txt"
+PROMPT_GUARDIAN_PATH = BASE_DIR / "config" / "prompt_guardian.txt"
+PROMPT_SUMMARY_PATH =  BASE_DIR / "config" / "prompt_summary.txt"
+PROMPT_JUDGE_PATH =    BASE_DIR / "config" / "prompt_judge.txt"
 
 # Ensure the base directory is in the system path for module imports
 if str(BASE_DIR) not in sys.path:
@@ -62,11 +63,14 @@ def load_guardian_prompt() -> str:
 def load_summary_prompt() -> str:
     return _load_prompt_file(PROMPT_SUMMARY_PATH, "SUMMARY_PROMPT")
 
+@lru_cache(maxsize=1)
+def load_judge_prompt() -> str:
+    return _load_prompt_file(PROMPT_JUDGE_PATH, "JUDGE_PROMPT")
 
 _CONTEXT_PROMPT  = load_context_prompt()
 _GUARDIAN_PROMPT = load_guardian_prompt()
 _SUMMARY_PROMPT  = load_summary_prompt()
-
+_JUDGE_PROMPT = load_judge_prompt()
 
 @lru_cache(maxsize=1)
 def load_config() -> Dict[str, Any]:
