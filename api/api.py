@@ -31,14 +31,26 @@ from core.context.memory_manager import MemoryManager
 from core.context.session_manager import SessionManager
 from core.database.vector_manager import VectorManager
 from core.pipeline.pii_manager import PIIManager
-# Import logger and utils from the corrected logger module
-from core.utils.logger import logger, set_shared_conn, log_to_db_sync
+from core.utils.logger import logger, set_shared_conn, log_to_db_sync, _LOG_FILE
 from core.utils.utils import load_config, load_base_prompt, format_response
 from providers import get_llm, get_available_models
 
 # --- Configuration Loading ---
 config = load_config()
 BASE_SYSTEM_PROMPT = load_base_prompt()
+
+# Surcharge la section "judge" avec les variables d'environnement du .env
+_judge_provider = os.getenv("JUDGE_PROVIDER")
+_judge_model = os.getenv("JUDGE_MODEL")
+_judge_temp = os.getenv("JUDGE_TEMP")
+if _judge_provider or _judge_model or _judge_temp:
+    config.setdefault("judge", {})
+    if _judge_provider:
+        config["judge"]["provider"] = _judge_provider
+    if _judge_model:
+        config["judge"]["model"] = _judge_model
+    if _judge_temp is not None:
+        config["judge"]["temperature"] = float(_judge_temp)
 
 logger.info("━" * 50)
 logger.info("Oracle API démarrage...")
@@ -110,6 +122,7 @@ _SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY", "")
 if _SUPABASE_URL and _SUPABASE_KEY:
     try:
         from supabase import create_client as _create_supabase_client
+
         _supabase = _create_supabase_client(_SUPABASE_URL, _SUPABASE_KEY)
         logger.info("Client Supabase initialisé.")
     except Exception as _e:
