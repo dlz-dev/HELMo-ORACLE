@@ -37,9 +37,23 @@ def _run_judge_sync(query: str, response: str, cot_storage: list, user_id: str, 
         # Nettoyer et parser le JSON
         raw_json = result.content.strip()
         if raw_json.startswith("```json"):
-            raw_json = raw_json[7:-3].strip()
+            raw_json = raw_json[7:].strip()
+            if raw_json.endswith("```"):
+                raw_json = raw_json[:-3].strip()
+        elif raw_json.startswith("```"):
+            raw_json = raw_json[3:].strip()
+            if raw_json.endswith("```"):
+                raw_json = raw_json[:-3].strip()
 
         evaluation = json.loads(raw_json)
+
+        # Valider la structure attendue
+        required_keys = {"context_relevance", "faithfulness", "answer_relevance"}
+        if not required_keys.issubset(evaluation.keys()):
+            raise ValueError(f"JSON du Judge incomplet — clés manquantes : {required_keys - evaluation.keys()}")
+        for key in required_keys:
+            if not isinstance(evaluation[key], int) or not (1 <= evaluation[key] <= 5):
+                raise ValueError(f"Score invalide pour '{key}': {evaluation[key]}")
 
         # Logguer dans la base de données
         log_to_db_sync(
