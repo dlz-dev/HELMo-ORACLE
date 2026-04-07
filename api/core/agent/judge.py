@@ -21,12 +21,14 @@ def _run_judge_sync(query: str, response: str, cot_storage: list, user_id: str, 
             response=response
         )
 
-        # Instancier un LLM rapide, fiable et avec température 0
-        judge_provider = "groq"
-        judge_model = config.get("guardian", {}).get("model", "llama-3.3-70b-versatile")
+        # Lire la configuration du judge
+        judge_cfg = config.get("judge", {})
+        judge_provider = judge_cfg.get("provider", "groq")
+        judge_model = judge_cfg.get("model", "llama-3.3-70b-versatile")
+        judge_temperature = float(judge_cfg.get("temperature", 0.0))
 
-        # Surcharge de la configuration pour forcer la température à 0
-        judge_config = {**config, "llm": {**config.get("llm", {}), "temperature": 0.0}}
+        # Surcharge de la configuration avec la température du judge
+        judge_config = {**config, "llm": {**config.get("llm", {}), "temperature": judge_temperature}}
         llm = get_llm(provider_key=judge_provider, model=judge_model, config=judge_config)
 
         # Invoquer le LLM
