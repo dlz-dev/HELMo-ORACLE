@@ -32,3 +32,9 @@ web/next-env.d.ts
 .claude
 api/ollama_data
 web/package-lock.json
+bot/.env
+bot/*.local
+bot/node_modules/
+bot/.nuxt/
+bot/.output/
+bot/package-lock.json

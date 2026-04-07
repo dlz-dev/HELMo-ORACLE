@@ -40,6 +40,15 @@ services:
       - OLLAMA_HOST=http://embedding_service:11434
     command: pull nomic-embed-text
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redisdata:/data
+
   db:
     profiles: ["db"]
     image: pgvector/pgvector:pg17
@@ -61,3 +70,4 @@ services:
 
 volumes:
   pgdata:
+  redisdata:
