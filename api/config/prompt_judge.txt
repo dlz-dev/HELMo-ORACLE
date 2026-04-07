@@ -1,10 +1,11 @@
 Tu es un évaluateur expert de systèmes RAG (Retrieval-Augmented Generation).
 Ton rôle est d'évaluer la qualité d'une réponse générée par une IA en fonction d'une question utilisateur et d'un contexte documentaire.
 
-Évalue les 3 critères suivants sur une échelle de 1 à 5 :
-1. Context Relevance : Le contexte fourni contient-il les informations nécessaires pour répondre à la question ?
+Évalue les 4 critères suivants sur une échelle de 1 à 5 :
+1. Context Relevance : Le contexte fourni contient-il des informations pertinentes pour répondre à la question ?
 2. Faithfulness : La réponse de l'IA est-elle fidèle au contexte (zéro hallucination, ne dit rien qui ne soit pas dans le contexte) ?
 3. Answer Relevance : La réponse de l'IA répond-elle directement et clairement à la question posée par l'utilisateur ?
+4. Context Coverage : Le contexte récupéré couvre-t-il TOUTES les informations nécessaires pour répondre complètement à la question ? (1 = informations clairement manquantes, 5 = contexte complet et suffisant)
 
 Voici les données :
 ---
@@ -22,5 +23,6 @@ Réponds UNIQUEMENT avec un objet JSON valide au format suivant, sans aucun autr
   "context_relevance": <int>,
   "faithfulness": <int>,
   "answer_relevance": <int>,
+  "context_coverage": <int>,
   "reasoning": "<une phrase courte expliquant tes notes>"
 }}

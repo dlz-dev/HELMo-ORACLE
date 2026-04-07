@@ -48,7 +48,7 @@ def _run_judge_sync(query: str, response: str, cot_storage: list, user_id: str, 
         evaluation = json.loads(raw_json)
 
         # Valider la structure attendue
-        required_keys = {"context_relevance", "faithfulness", "answer_relevance"}
+        required_keys = {"context_relevance", "faithfulness", "answer_relevance", "context_coverage"}
         if not required_keys.issubset(evaluation.keys()):
             raise ValueError(f"JSON du Judge incomplet — clés manquantes : {required_keys - evaluation.keys()}")
         for key in required_keys:
