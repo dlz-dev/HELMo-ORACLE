@@ -63,6 +63,7 @@ services:
       - GROQ_API_KEY=${GROQ_API_KEY}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - MCP_SERVER_URL=${MCP_SERVER_URL}
+      - NUXT_MCP_SERVER_URL=${MCP_SERVER_URL}
 
   db:
     profiles: ["db"]
