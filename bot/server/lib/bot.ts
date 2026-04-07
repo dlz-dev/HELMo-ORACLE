@@ -45,13 +45,19 @@ export async function initBot(config: {
   // ── MCP Client → outils HELMo Oracle ────────────────────────────────────────
   // Le client MCP se connecte au serveur FastAPI exposé sur /mcp.
   // Il expose automatiquement search_knowledge_base et list_sources comme tools.
-  const mcpClient = await createMCPClient({
-    transport: {
-      type: "sse",
-      url: config.mcpServerUrl,
-    },
-  });
-  const mcpTools = await mcpClient.tools();
+  let mcpTools = {};
+  try {
+    const mcpClient = await createMCPClient({
+      transport: {
+        type: "sse",
+        url: config.mcpServerUrl,
+      },
+    });
+    mcpTools = await mcpClient.tools();
+    console.log("[HELMo Oracle Bot] MCP connecté ✓");
+  } catch (err) {
+    console.warn("[HELMo Oracle Bot] MCP indisponible au démarrage, le bot continue sans outils RAG :", err);
+  }
 
   // ── Chat SDK ─────────────────────────────────────────────────────────────────
   _bot = new Chat({
