@@ -92,6 +92,12 @@ export async function POST(req: NextRequest) {
                   `d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`,
                 ),
               );
+            } else if (event.type === "error") {
+              controller.enqueue(
+                enc.encode(
+                  `3:${JSON.stringify((event.message as string) || "Erreur serveur")}\n`,
+                ),
+              );
             }
           }
         }
