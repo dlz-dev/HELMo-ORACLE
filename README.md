@@ -5,6 +5,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white)
 ![LangGraph](https://img.shields.io/badge/LangGraph-ReAct-FF6B6B?logo=langchain&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-20.10-2496ED?logo=docker&logoColor=white)
+![Plotly Dash](https://img.shields.io/badge/Dash-2.18-0080FF?logo=plotly&logoColor=white)
 ![License](https://img.shields.io/badge/License-Proprietary-red)
 
 **HELMo Oracle** est un moteur RAG *(Retrieval-Augmented Generation)* générique développé dans le cadre d'un projet académique à **HELMo** (Haute École Libre Mosane).
