@@ -9,7 +9,10 @@ from unstructured_client.models import shared, operations
 
 # Import delayed to avoid circular dependency issues
 def _get_load_config():
-    from ..core.utils.utils import load_config
+    try:
+        from ..core.utils.utils import load_config
+    except ImportError:
+        from core.utils.utils import load_config
     return load_config
 
 
