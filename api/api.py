@@ -133,11 +133,7 @@ if _SUPABASE_URL and _SUPABASE_KEY:
 # --- Redis Stream (monitoring dashboard) ---
 _redis = None
 try:
-    _redis = _redis_lib.Redis(
-        host=os.getenv("REDIS_HOST", "redis"),
-        port=int(os.getenv("REDIS_PORT", 6379)),
-        decode_responses=True,
-    )
+    _redis = _redis_lib.from_url(os.getenv("REDIS_URL", "redis://redis:6379"), decode_responses=True)
     _redis.ping()
     logger.info("Redis connecté (monitoring stream).")
 except Exception as _e:
