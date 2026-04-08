@@ -23,6 +23,7 @@ La démo tourne sur le lore de **Dofus** (MMORPG d'Ankama), mais l'architecture 
 | Interface de chat | https://oracle.dlzteam.com |
 | Page vitrine | https://tritech.dlzteam.com |
 | API backend | https://api.dlzteam.com/docs |
+| Dashboards | https://dashboard.dlzteam.com/ |
 
 ---
 
