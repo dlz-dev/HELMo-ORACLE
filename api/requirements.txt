@@ -22,3 +22,4 @@ python-multipart==0.0.12
 pytest
 pytest-asyncio
 mcp
+redis==5.2.1
