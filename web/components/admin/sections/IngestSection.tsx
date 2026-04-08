@@ -239,36 +239,36 @@ export function IngestSection({
                 Progression
               </CardTitle>
               <div className="flex items-center gap-2">
-              {isRunning && (
-                <>
-                  <Badge className="bg-[var(--gold-glow)] text-[var(--gold)] border-[var(--gold)]/20 text-[10px] animate-pulse">
-                    En cours
+                {isRunning && (
+                  <>
+                    <Badge className="bg-[var(--gold-glow)] text-[var(--gold)] border-[var(--gold)]/20 text-[10px] animate-pulse">
+                      En cours
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onCancel}
+                      className="h-6 px-2 text-[10px] border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                    >
+                      <StopCircle size={11} className="mr-1" /> Arrêter
+                    </Button>
+                  </>
+                )}
+                {ingestState === "success" && (
+                  <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-[10px]">
+                    Terminé
                   </Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onCancel}
-                    className="h-6 px-2 text-[10px] border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
-                  >
-                    <StopCircle size={11} className="mr-1" /> Arrêter
-                  </Button>
-                </>
-              )}
-              {ingestState === "success" && (
-                <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-[10px]">
-                  Terminé
-                </Badge>
-              )}
-              {ingestState === "warning" && (
-                <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/20 text-[10px]">
-                  Avertissement
-                </Badge>
-              )}
-              {ingestState === "error" && (
-                <Badge className="bg-red-500/15 text-red-400 border-red-500/20 text-[10px]">
-                  Erreur
-                </Badge>
-              )}
+                )}
+                {ingestState === "warning" && (
+                  <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/20 text-[10px]">
+                    Avertissement
+                  </Badge>
+                )}
+                {ingestState === "error" && (
+                  <Badge className="bg-red-500/15 text-red-400 border-red-500/20 text-[10px]">
+                    Erreur
+                  </Badge>
+                )}
               </div>
             </div>
           </CardHeader>

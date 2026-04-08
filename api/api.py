@@ -293,7 +293,7 @@ def health():
     if vm.is_db_available():
         try:
             with vm.conn.cursor() as cur:
-                cur.execute("SELECT COUNT(*) FROM documents")
+                cur.execute("SELECT COUNT(DISTINCT metadata->>'source') FROM documents")
                 count = cur.fetchone()[0]
             checks["database"] = {"status": "ok", "documents": count}
         except Exception as e:
@@ -320,7 +320,7 @@ def health_full():
         try:
             start = time.time()
             with vm.conn.cursor() as cur:
-                cur.execute("SELECT COUNT(*) FROM documents")
+                cur.execute("SELECT COUNT(DISTINCT metadata->>'source') FROM documents")
                 count = cur.fetchone()[0]
             results["database"] = {
                 "status": "ok",

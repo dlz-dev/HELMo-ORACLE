@@ -452,7 +452,7 @@ export function AdminPanel() {
                               {healthData.checks.database.documents.toLocaleString(
                                 "fr",
                               )}{" "}
-                              docs
+                              fichiers
                             </p>
                             <p className="text-[10px] text-[var(--text-subtle)] mt-0.5">
                               {healthData.checks.database.latency_ms}ms latence
@@ -550,7 +550,7 @@ export function AdminPanel() {
                               {val.latency_ms
                                 ? `${val.latency_ms}ms`
                                 : val.documents !== undefined
-                                  ? `${val.documents} docs`
+                                  ? `${val.documents} fichiers`
                                   : val.status === "not_configured"
                                     ? "Non configuré"
                                     : val.error
