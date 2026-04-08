@@ -68,6 +68,18 @@ services:
       - MCP_SERVER_URL=${MCP_SERVER_URL}
       - NUXT_MCP_SERVER_URL=${MCP_SERVER_URL}
 
+  dashboard:
+    build:
+      context: ../dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "8050:8050"
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      - API_URL=http://backend:8000
+
   db:
     profiles: ["db"]
     image: pgvector/pgvector:pg17

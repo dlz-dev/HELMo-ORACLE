@@ -595,13 +595,14 @@ def list_archives():
 
 
 # --- Ingestion ---
-_ingest_status = {"running": False, "last_status": "idle", "last_message": ""}
+_ingest_status = {"running": False, "last_status": "idle", "last_message": "", "files": {}}
 _ingest_cancel = _threading.Event()
 
 
 def _run_ingestion(file_paths: list):
     global _ingest_status
     from pathlib import Path
+    from concurrent.futures import ThreadPoolExecutor, as_completed
     from core.agent.guardian import is_valid_lore_file
     from core.utils.utils import ARCHIVE_DIR, QUARANTINE_DIR, load_api_key
     from converters import convert_csv, convert_markdown, convert_text, convert_json, convert_pdf
@@ -626,85 +627,120 @@ def _run_ingestion(file_paths: list):
     duplicate_chunks = 0
     rejected_files = 0
 
+    # Statut par fichier exposé via /ingest/status — dict mis à jour depuis les threads (safe GIL CPython)
+    file_statuses: dict = {Path(fp).name: "pending" for fp in file_paths}
+    _ingest_status["files"] = file_statuses
+
+    def _process_file(fp):
+        """Étapes 1-3 (Guardian → Convert → Context) pour un fichier. S'exécute dans un thread worker."""
+        fp = Path(fp)
+        name = fp.name
+
+        if _ingest_cancel.is_set():
+            return fp, None, "annulé"
+
+        # 1. Guardian
+        file_statuses[name] = "validating"
+        try:
+            valid, reason = is_valid_lore_file(str(fp), api_key)
+        except RuntimeError as e:
+            raise RuntimeError(f"Guardian indisponible: {e}")
+
+        if not valid:
+            file_statuses[name] = "rejected"
+            return fp, None, reason
+
+        # 2. Conversion
+        file_statuses[name] = "converting"
+        ext = fp.suffix.lower()
+        if ext == ".csv":
+            chunks = convert_csv.load_csv_data(str(fp))
+        elif ext == ".md":
+            chunks = convert_markdown.parse_markdown(str(fp))
+        elif ext == ".txt":
+            chunks = convert_text.process_text_file(str(fp))
+        elif ext == ".json":
+            chunks = convert_json.parse_json(str(fp))
+        elif ext == ".pdf":
+            chunks = convert_pdf.process_pdf_file(str(fp))
+        else:
+            chunks = process_with_unstructured(str(fp))
+
+        # 3. Contexte global
+        file_statuses[name] = "contextualizing"
+        doc_context = ""
+        if context_llm is not None:
+            doc_context = generate_document_context(fp, context_llm, chunks)
+
+        base_metadata = {"source": name}
+        if doc_context:
+            base_metadata["global_context"] = doc_context
+
+        file_statuses[name] = "vectorizing"
+        return fp, chunks, base_metadata
+
     try:
-        for i, fp in enumerate(file_paths):
-            if _ingest_cancel.is_set():
-                _ingest_status = {"running": False, "last_status": "warning",
-                                  "last_message": "Ingestion annulée par l'administrateur."}
-                return
+        if _ingest_cancel.is_set():
+            _ingest_status = {"running": False, "last_status": "warning",
+                              "last_message": "Ingestion annulée par l'administrateur.", "files": file_statuses}
+            return
 
-            fp = Path(fp)
-            _ingest_status["last_message"] = f"Fichier {i + 1}/{total} — Validation de {fp.name}…"
+        max_workers = min(4, total)
+        _ingest_status["last_message"] = f"Traitement parallèle de {total} fichier(s)…"
 
-            # 1. Guardian
-            try:
-                valid, reason = is_valid_lore_file(str(fp), api_key)
-            except RuntimeError as e:
-                _ingest_status = {"running": False, "last_status": "error",
-                                  "last_message": f"Guardian indisponible: {e}"}
-                return
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_fp = {executor.submit(_process_file, fp): fp for fp in file_paths}
 
-            if not valid:
-                shutil.move(str(fp), str(QUARANTINE_DIR / fp.name))
-                logger.warning("INGEST | Rejeté : %s — %s", fp.name, reason)
-                _push_event("ingest_guardian", filename=fp.name, status="rejected", reason=reason[:100])
-                rejected_files += 1
-                continue
+            for future in as_completed(future_to_fp):
+                try:
+                    fp, chunks, base_or_reason = future.result()
+                except RuntimeError as e:
+                    _ingest_status = {"running": False, "last_status": "error",
+                                      "last_message": str(e), "files": file_statuses}
+                    return
 
-            _push_event("ingest_guardian", filename=fp.name, status="accepted")
+                fp = Path(fp)
 
-            # 2. Conversion
-            _ingest_status["last_message"] = f"Fichier {i + 1}/{total} — Conversion de {fp.name}…"
-            ext = fp.suffix.lower()
-            if ext == ".csv":
-                chunks = convert_csv.load_csv_data(str(fp))
-            elif ext == ".md":
-                chunks = convert_markdown.parse_markdown(str(fp))
-            elif ext == ".txt":
-                chunks = convert_text.process_text_file(str(fp))
-            elif ext == ".json":
-                chunks = convert_json.parse_json(str(fp))
-            elif ext == ".pdf":
-                chunks = convert_pdf.process_pdf_file(str(fp))
-            else:
-                chunks = process_with_unstructured(str(fp))
+                if chunks is None:
+                    reason = base_or_reason
+                    if reason != "annulé":
+                        shutil.move(str(fp), str(QUARANTINE_DIR / fp.name))
+                        logger.warning("INGEST | Rejeté : %s — %s", fp.name, reason)
+                        _push_event("ingest_guardian", filename=fp.name, status="rejected", reason=reason[:100])
+                    rejected_files += 1
+                    continue
 
-            # 3. Contexte global
-            doc_context = ""
-            if context_llm is not None:
-                doc_context = generate_document_context(fp, context_llm, chunks)
+                base_metadata = base_or_reason
+                _push_event("ingest_guardian", filename=fp.name, status="accepted")
 
-            base_metadata = {"source": fp.name}
-            if doc_context:
-                base_metadata["global_context"] = doc_context
+                # 4. Vectorisation en batch (séquentiel — connexion psycopg non thread-safe)
+                batch = [(text, {**meta, **base_metadata}) for text, meta in chunks]
+                inserted = vm.add_documents_batch(batch, use_late_chunking=True)
+                file_dup = len(batch) - inserted
+                new_chunks += inserted
+                duplicate_chunks += file_dup
 
-            # 4. Vectorisation
-            _ingest_status["last_message"] = f"Fichier {i + 1}/{total} — Vectorisation de {fp.name}…"
-            for text, meta in chunks:
-                inserted = vm.add_document(text, metadata={**meta, **base_metadata})
-                if inserted:
-                    new_chunks += 1
-                else:
-                    duplicate_chunks += 1
-
-            # 5. Archive
-            shutil.move(str(fp), str(ARCHIVE_DIR / fp.name))
-            logger.info("INGEST | OK — %s (%d nouveaux, %d doublons)", fp.name, new_chunks, duplicate_chunks)
-            _push_event("ingest_complete", filename=fp.name, new_chunks=new_chunks, duplicate_chunks=duplicate_chunks)
+                # 5. Archive
+                file_statuses[fp.name] = "done"
+                shutil.move(str(fp), str(ARCHIVE_DIR / fp.name))
+                logger.info("INGEST | OK — %s (%d nouveaux, %d doublons)", fp.name, inserted, file_dup)
+                _push_event("ingest_complete", filename=fp.name, new_chunks=inserted, duplicate_chunks=file_dup)
 
         accepted = total - rejected_files
         if rejected_files == total:
             _ingest_status = {"running": False, "last_status": "warning",
-                              "last_message": f"Fichier refusé — déplacé en quarantaine."}
+                              "last_message": "Fichier refusé — déplacé en quarantaine.", "files": file_statuses}
         elif rejected_files > 0:
             _ingest_status = {"running": False, "last_status": "warning",
-                              "last_message": f"{accepted} fichier(s) ajouté(s) — {new_chunks} chunks ajoutés, {duplicate_chunks} doublons. {rejected_files} refusé(s) et déplacé(s) en quarantaine."}
+                              "last_message": f"{accepted} fichier(s) ajouté(s) — {new_chunks} chunks ajoutés, {duplicate_chunks} doublons. {rejected_files} refusé(s) et déplacé(s) en quarantaine.",
+                              "files": file_statuses}
         else:
             _ingest_status = {"running": False, "last_status": "success",
-                              "last_message": f"Fichier ajouté ! {new_chunks} chunks ajoutés, {duplicate_chunks} doublons ignorés."}
+                              "last_message": f"Fichier ajouté ! {new_chunks} chunks ajoutés, {duplicate_chunks} doublons ignorés.",
+                              "files": file_statuses}
 
     except Exception as e:
-        _ingest_status = {"running": False, "last_status": "error", "last_message": str(e)}
+        _ingest_status = {"running": False, "last_status": "error", "last_message": str(e), "files": file_statuses}
         logger.error("INGEST | Erreur : %s", e, exc_info=True)
         _push_event("ingest_error", error=str(e)[:120])
 

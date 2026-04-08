@@ -10,6 +10,11 @@ import {
   FileText,
   FolderOpen,
   StopCircle,
+  Shield,
+  FileSearch,
+  Sparkles,
+  Layers,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,82 +25,53 @@ import {
   ProgressTrack,
   ProgressIndicator,
 } from "@/components/ui/progress";
-import type { IngestStatus } from "@/lib/api";
+import type { IngestStatus, FileIngestStatus } from "@/lib/api";
 
 interface Props {
   files: FileList | null;
   ingestState: IngestStatus["last_status"];
   ingestMsg: string;
+  ingestFiles?: IngestStatus["files"];
   onFilesChange: (files: FileList | null) => void;
   onIngest: () => void;
   onCancel: () => void;
 }
 
-const STEPS = [
-  {
-    id: "upload",
-    label: "Envoi",
-    desc: "Transfert des fichiers vers le serveur",
-  },
-  {
-    id: "validate",
-    label: "Validation",
-    desc: "Guardian — vérification du contenu",
-  },
-  {
-    id: "convert",
-    label: "Conversion",
-    desc: "Transformation en chunks exploitables",
-  },
-  {
-    id: "vectorize",
-    label: "Vectorisation",
-    desc: "Génération des embeddings",
-  },
-  { id: "archive", label: "Archivage", desc: "Déplacement vers les archives" },
-];
-
-function getActiveStep(msg: string): number {
-  if (msg.includes("Vectorisation")) return 3;
-  if (msg.includes("Conversion")) return 2;
-  if (msg.includes("Validation")) return 1;
-  if (msg.includes("Envoi")) return 0;
-  return 0;
-}
+const FILE_STATUS_META: Record<
+  FileIngestStatus,
+  { label: string; color: string; icon: React.ElementType; spin?: boolean }
+> = {
+  pending:        { label: "En attente",      color: "text-[var(--text-subtle)]",  icon: Clock },
+  validating:     { label: "Validation",      color: "text-amber-400",             icon: Shield,     spin: true },
+  converting:     { label: "Conversion",      color: "text-blue-400",              icon: FileSearch, spin: true },
+  contextualizing:{ label: "Contextualisation",color: "text-purple-400",           icon: Sparkles,   spin: true },
+  vectorizing:    { label: "Vectorisation",   color: "text-[var(--gold)]",         icon: Layers,     spin: true },
+  done:           { label: "Terminé",         color: "text-emerald-400",           icon: CheckCircle2 },
+  rejected:       { label: "Rejeté",          color: "text-red-400",               icon: XCircle },
+};
 
 function parseProgress(
-  msg: string,
+  files: IngestStatus["files"],
   isRunning: boolean,
   isDone: boolean,
 ): number {
   if (isDone) return 100;
-  if (!isRunning) return 0;
-  const match = msg.match(/Fichier (\d+)\/(\d+)/);
-  if (!match) return 5; // envoi = 5%
-  const current = parseInt(match[1]);
-  const total = parseInt(match[2]);
-  const step = getActiveStep(msg);
-  const totalSteps = total * 4;
-  const done = (current - 1) * 4 + step;
-  return Math.min(Math.round((done / totalSteps) * 95) + 5, 98);
-}
-
-function parseFileInfo(
-  msg: string,
-): { current: number; total: number; filename: string } | null {
-  const match = msg.match(/Fichier (\d+)\/(\d+) — .+ de (.+)…/);
-  if (!match) return null;
-  return {
-    current: parseInt(match[1]),
-    total: parseInt(match[2]),
-    filename: match[3],
+  if (!isRunning || !files) return 5;
+  const entries = Object.values(files);
+  if (entries.length === 0) return 5;
+  const weight: Record<FileIngestStatus, number> = {
+    pending: 0, validating: 1, converting: 2, contextualizing: 3, vectorizing: 4, done: 5, rejected: 5,
   };
+  const total = entries.length * 5;
+  const done = entries.reduce((sum, s) => sum + (weight[s] ?? 0), 0);
+  return Math.min(Math.round((done / total) * 95) + 5, 98);
 }
 
 export function IngestSection({
   files,
   ingestState,
   ingestMsg,
+  ingestFiles = {},
   onFilesChange,
   onIngest,
   onCancel,
@@ -103,9 +79,8 @@ export function IngestSection({
   const inputRef = useRef<HTMLInputElement>(null);
   const isRunning = ingestState === "running";
   const isDone = ["success", "warning", "error"].includes(ingestState);
-  const progress = parseProgress(ingestMsg, isRunning, isDone);
-  const activeStep = isRunning ? getActiveStep(ingestMsg) : isDone ? 4 : -1;
-  const fileInfo = isRunning ? parseFileInfo(ingestMsg) : null;
+  const progress = parseProgress(ingestFiles, isRunning, isDone);
+  const fileEntries = Object.entries(ingestFiles ?? {});
 
   return (
     <div className="space-y-5">
@@ -277,8 +252,8 @@ export function IngestSection({
             <div className="space-y-1.5">
               <div className="flex justify-between text-[10px] text-[var(--text-subtle)]">
                 <span>
-                  {fileInfo
-                    ? `Fichier ${fileInfo.current}/${fileInfo.total}`
+                  {fileEntries.length > 0
+                    ? `${fileEntries.filter(([, s]) => s === "done" || s === "rejected").length}/${fileEntries.length} fichiers`
                     : "Initialisation"}
                 </span>
                 <span>{progress}%</span>
@@ -299,79 +274,42 @@ export function IngestSection({
               </Progress>
             </div>
 
-            {/* Steps */}
-            <div className="space-y-2">
-              {STEPS.map((step, i) => {
-                const isPast = isDone || i < activeStep;
-                const isCurrent = isRunning && i === activeStep;
-                const isFuture = !isDone && i > activeStep;
-                return (
-                  <div
-                    key={step.id}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300",
-                      isCurrent
-                        ? "bg-[var(--gold-glow)] border border-[var(--gold)]/20"
-                        : isPast
-                          ? "bg-[var(--bg-subtle)]"
-                          : "opacity-40",
-                    )}
-                  >
-                    {/* Icon */}
+            {/* Per-file parallel status */}
+            {fileEntries.length > 0 && (
+              <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                {fileEntries.map(([filename, status]) => {
+                  const meta = FILE_STATUS_META[status] ?? FILE_STATUS_META.pending;
+                  const Icon = meta.icon;
+                  const isActive = !["done", "rejected", "pending"].includes(status);
+                  return (
                     <div
+                      key={filename}
                       className={cn(
-                        "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs",
-                        isCurrent
-                          ? "bg-[var(--gold)] text-[#0a0c10]"
-                          : isPast
-                            ? "bg-emerald-500/20 text-emerald-400"
-                            : "bg-[var(--bg-muted)] text-[var(--text-subtle)]",
+                        "flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-300 border",
+                        isActive
+                          ? "bg-[var(--gold-glow)] border-[var(--gold)]/20"
+                          : status === "done"
+                            ? "bg-emerald-500/5 border-emerald-500/15"
+                            : status === "rejected"
+                              ? "bg-red-500/5 border-red-500/15"
+                              : "bg-[var(--bg-subtle)] border-transparent opacity-50",
                       )}
                     >
-                      {isCurrent ? (
-                        <Loader2 size={12} className="animate-spin" />
-                      ) : isPast ? (
-                        <CheckCircle2 size={12} />
-                      ) : (
-                        <span>{i + 1}</span>
-                      )}
-                    </div>
-                    {/* Label */}
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={cn(
-                          "text-xs font-medium",
-                          isCurrent
-                            ? "text-[var(--gold)]"
-                            : isPast
-                              ? "text-[var(--text)]"
-                              : "text-[var(--text-subtle)]",
-                        )}
-                      >
-                        {step.label}
-                        {isCurrent && fileInfo && (
-                          <span className="font-normal text-[var(--text-muted)]">
-                            {" "}
-                            — {fileInfo.filename}
-                          </span>
-                        )}
-                      </p>
-                      {isCurrent && (
-                        <p className="text-[10px] text-[var(--text-subtle)] mt-0.5">
-                          {step.desc}
-                        </p>
-                      )}
-                    </div>
-                    {/* Status badge */}
-                    {isPast && !isCurrent && (
-                      <span className="text-[10px] text-emerald-400 shrink-0">
-                        ✓
+                      <Icon
+                        size={13}
+                        className={cn(meta.color, isActive && "animate-spin")}
+                      />
+                      <span className="text-xs text-[var(--text)] truncate flex-1 min-w-0">
+                        {filename}
                       </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                      <span className={cn("text-[10px] shrink-0 font-medium", meta.color)}>
+                        {meta.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Final message */}
             {isDone && (

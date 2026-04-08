@@ -2,7 +2,8 @@
 HELMo Oracle — Configuration centralisée
 """
 
-API_URL = "https://api.dlzteam.com"
+import os
+API_URL = os.environ.get("API_URL", "https://api.dlzteam.com")
 
 # ── Couleurs ───────────────────────────────────────────────────────────────────
 COLORS = {

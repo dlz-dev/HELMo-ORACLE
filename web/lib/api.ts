@@ -6,10 +6,20 @@ export interface Source {
   ingested_at: string;
 }
 
+export type FileIngestStatus =
+  | "pending"
+  | "validating"
+  | "converting"
+  | "contextualizing"
+  | "vectorizing"
+  | "done"
+  | "rejected";
+
 export interface IngestStatus {
   last_status: "idle" | "running" | "success" | "error" | "warning";
   last_message: string;
   running: boolean;
+  files?: Record<string, FileIngestStatus>;
 }
 
 // ─── Fonctions API ──────────────────────────────────────────────────

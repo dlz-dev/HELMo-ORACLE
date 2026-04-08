@@ -69,6 +69,7 @@ export function AdminPanel() {
   const [ingestState, setIngestState] =
     useState<IngestStatus["last_status"]>("idle");
   const [ingestMsg, setIngestMsg] = useState("");
+  const [ingestFiles, setIngestFiles] = useState<IngestStatus["files"]>({});
 
   // ── Init localStorage ─────────────────────────────────────────────
   useEffect(() => {
@@ -159,6 +160,7 @@ export function AdminPanel() {
           const status = await r.json();
           pollErrors = 0;
           setIngestMsg(status.last_message || "En cours…");
+          setIngestFiles(status.files ?? {});
           if (!status.running) {
             clearInterval(poll);
             setIngestState(
@@ -574,6 +576,7 @@ export function AdminPanel() {
                 files={files}
                 ingestState={ingestState}
                 ingestMsg={ingestMsg}
+                ingestFiles={ingestFiles}
                 onFilesChange={setFiles}
                 onIngest={handleTriggerIngest}
                 onCancel={handleCancelIngest}
