@@ -17,13 +17,25 @@ export default defineNitroPlugin(async () => {
     anthropicApiKey: config.anthropicApiKey || undefined,
   });
 
-  // Sur Digital Ocean (process persistant), on démarre la gateway immédiatement
+  // Sur Digital Ocean (process persistant), on démarre la gateway en boucle
   await (bot as any).ensureInitialized();
   const discordAdapter = (bot as any).getAdapter('discord');
   if (discordAdapter?.startGatewayListener) {
-    const fakeEvent = { waitUntil: (p: Promise<any>) => p.catch((e: unknown) => console.error('[Gateway]', e)) };
-    const result = discordAdapter.startGatewayListener(fakeEvent);
-    if (result instanceof Response) result.text().then((t: string) => console.log('[Gateway response]', t));
+    const keepGatewayAlive = async () => {
+      while (true) {
+        try {
+          console.log('[Gateway] Démarrage...');
+          const fakeEvent = { waitUntil: (p: Promise<any>) => p.catch((e: unknown) => console.error('[Gateway]', e)) };
+          await discordAdapter.startGatewayListener(fakeEvent);
+          console.log('[Gateway] Session terminée, reconnexion dans 2s...');
+        } catch (e) {
+          console.error('[Gateway] Erreur, reconnexion dans 5s...', e);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    };
+    keepGatewayAlive();
   }
 
   console.log("[HELMo Oracle Bot] Initialized ✓");

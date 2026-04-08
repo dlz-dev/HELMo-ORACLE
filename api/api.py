@@ -24,6 +24,8 @@ from langgraph.prebuilt import create_react_agent
 from psycopg import sql
 from pydantic import BaseModel
 
+import redis as _redis_lib
+
 import mcp_server as _mcp_module
 from core.agent.judge import _run_judge_sync
 from core.agent.tools_oracle import get_search_tool
@@ -128,7 +130,30 @@ if _SUPABASE_URL and _SUPABASE_KEY:
     except Exception as _e:
         logger.error(f"Impossible d'initialiser le client Supabase : {_e}")
 
-_mcp_module.setup(vm)
+# --- Redis Stream (monitoring dashboard) ---
+_redis = None
+try:
+    _redis = _redis_lib.from_url(os.getenv("REDIS_URL", "redis://redis:6379"), decode_responses=True)
+    _redis.ping()
+    logger.info("Redis connecté (monitoring stream).")
+except Exception as _e:
+    logger.warning(f"Redis indisponible, monitoring désactivé : {_e}")
+    _redis = None
+
+REDIS_STREAM = "oracle:events"
+REDIS_MAX_LEN = 500  # garde les 500 derniers events
+
+
+def _push_event(event_type: str, **kwargs):
+    if _redis is None:
+        return
+    try:
+        _redis.xadd(REDIS_STREAM, {"type": event_type, **{k: str(v) for k, v in kwargs.items()}}, maxlen=REDIS_MAX_LEN)
+    except Exception:
+        pass
+
+
+_mcp_module.setup(vm, redis=_redis)
 # Désactive la protection DNS rebinding (sécurisé car Docker interne uniquement)
 from mcp.server.transport_security import TransportSecurityMiddleware
 TransportSecurityMiddleware._validate_host = lambda self, host: True
@@ -358,6 +383,47 @@ def health_full():
     }
 
 
+@app.get("/metrics")
+def get_metrics():
+    """Retourne les stats en temps réel depuis le Redis Stream pour le dashboard de monitoring."""
+    if _redis is None:
+        return {"available": False, "events": [], "stats": {}}
+
+    try:
+        raw = _redis.xrevrange(REDIS_STREAM, count=100)
+    except Exception as e:
+        return {"available": False, "error": str(e), "events": [], "stats": {}}
+
+    events = []
+    for entry_id, fields in raw:
+        ts_ms = int(entry_id.split("-")[0])
+        events.append({
+            "id": entry_id,
+            "ts": ts_ms / 1000,
+            "type": fields.get("type"),
+            "question": fields.get("question", ""),
+            "provider": fields.get("provider", ""),
+            "model": fields.get("model", ""),
+            "latency_ms": int(fields.get("latency_ms", 0)),
+            "source": fields.get("source", "web"),
+        })
+
+    now = time.time()
+    last_minute = [e for e in events if now - e["ts"] < 60]
+    last_hour = [e for e in events if now - e["ts"] < 3600]
+    latencies = [e["latency_ms"] for e in events if e["latency_ms"] > 0]
+
+    stats = {
+        "total_queries": len(raw),
+        "queries_last_minute": len(last_minute),
+        "queries_last_hour": len(last_hour),
+        "avg_latency_ms": round(sum(latencies) / len(latencies)) if latencies else 0,
+        "db_ok": vm.is_db_available(),
+    }
+
+    return {"available": True, "events": events, "stats": stats}
+
+
 @app.get("/providers/{provider}/models")
 def list_models(provider: str):
     try:
@@ -421,6 +487,7 @@ async def chat(req: ChatRequest):
     request_sm.save(session)
 
     async def event_stream():
+        _chat_start = time.time()
         # 1. Envoie le session_id immédiatement comme premier event SSE
         yield f"data: {json.dumps({'type': 'session_id', 'session_id': session['session_id']})}\n\n"
 
@@ -435,6 +502,16 @@ async def chat(req: ChatRequest):
 
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
             return
+
+        # Log dans Redis Stream pour le dashboard de monitoring
+        _push_event(
+            "chat",
+            question=masked_message[:120],
+            provider=req.provider,
+            model=model,
+            latency_ms=round((time.time() - _chat_start) * 1000),
+            source="discord" if req.user_id == "discord" else "web",
+        )
 
         # 2. Stream le texte par chunks de ~20 chars pour l'effet visuel
         chunk_size = 20

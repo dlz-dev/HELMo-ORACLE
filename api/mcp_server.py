@@ -23,14 +23,30 @@ mcp = FastMCP(
     ),
 )
 
-# Référence partagée vers le VectorManager (injectée par api.py au démarrage)
+# Références partagées (injectées par api.py au démarrage)
 _vm = None
+_redis = None
 
 
-def setup(vm) -> None:
-    """Injecte le VectorManager partagé depuis api.py."""
-    global _vm
+def setup(vm, redis=None) -> None:
+    """Injecte le VectorManager et le client Redis depuis api.py."""
+    global _vm, _redis
     _vm = vm
+    _redis = redis
+
+
+def _log_query(query: str):
+    if _redis is None:
+        return
+    try:
+        import time
+        _redis.xadd(
+            "oracle:events",
+            {"type": "chat", "question": query[:120], "provider": "groq", "model": "discord-bot", "latency_ms": "0", "source": "discord"},
+            maxlen=500,
+        )
+    except Exception:
+        pass
 
 
 # ── Outil 1 : Recherche hybride ────────────────────────────────────────────────
@@ -56,6 +72,7 @@ def search_knowledge_base(query: str, k: int = 5) -> str:
     if not query:
         return "Requête vide."
 
+    _log_query(query)
     query_vector = _vm.embeddings_model.embed_query(query)
     results = _vm.search_hybrid(query=query, query_vector=query_vector, k_final=k)
 
