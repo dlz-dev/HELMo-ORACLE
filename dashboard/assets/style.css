@@ -1,0 +1,128 @@
+/* ── Reset ──────────────────────────────────────────────────────────────────── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #react-entry-point, ._dash-loading, .dash-renderer { height: 100%; width: 100%; }
+body { background: #0f1117; font-family: "DM Sans", sans-serif; color: #e2e8f0; }
+html { scroll-behavior: smooth; }
+
+/* ── Wrapper ────────────────────────────────────────────────────────────────── */
+.wrapper { display: flex; min-height: 100vh; width: 100%; }
+
+/* ── Sidebar ────────────────────────────────────────────────────────────────── */
+.sidebar {
+    width: 220px; min-height: 100vh; background: #1a1d27;
+    border-right: 1px solid #2a2d3e; display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; z-index: 100;
+}
+.sidebar-logo {
+    padding: 20px; border-bottom: 1px solid #2a2d3e;
+    font-size: 16px; font-weight: 600; text-decoration: none;
+    color: #e2e8f0; display: block;
+}
+.sidebar-logo span { color: #6c63ff; }
+.sidebar-logo-sub {
+    font-size: 10px; color: #8892a4;
+    font-family: "DM Mono", monospace; margin-top: 3px;
+}
+.sidebar-section {
+    padding: 16px 12px 8px; font-size: 10px; color: #8892a4;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    font-family: "DM Mono", monospace;
+}
+.sidebar-item {
+    padding: 10px 20px; font-size: 13px; color: #8892a4; cursor: pointer;
+    border-radius: 6px; margin: 2px 8px; display: flex; align-items: center;
+    gap: 10px; text-decoration: none; transition: all 0.15s;
+}
+.sidebar-item:hover { background: #2a2d3e; color: #e2e8f0; }
+.sidebar-item.active {
+    background: rgba(108,99,255,0.15); color: #6c63ff;
+    border-left: 3px solid #6c63ff;
+}
+.sidebar-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.sidebar-footer {
+    margin-top: auto; padding: 16px 20px; border-top: 1px solid #2a2d3e;
+    font-size: 10px; color: #2a2d3e;
+    font-family: "DM Mono", monospace; line-height: 1.6;
+}
+
+/* ── Main ───────────────────────────────────────────────────────────────────── */
+.main { margin-left: 220px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+.header {
+    padding: 16px 28px; border-bottom: 1px solid #2a2d3e;
+    display: flex; justify-content: space-between; align-items: center;
+    background: #1a1d27; position: sticky; top: 0; z-index: 99;
+}
+.header-title { font-size: 18px; font-weight: 600; }
+.header-sub { font-size: 11px; color: #8892a4; margin-top: 2px; font-family: "DM Mono", monospace; }
+
+.status-badge {
+    background: rgba(81,207,102,0.1); border: 1px solid rgba(81,207,102,0.25);
+    color: #51cf66; padding: 6px 14px; border-radius: 20px;
+    font-size: 11px; font-family: "DM Mono", monospace;
+}
+.status-badge.error {
+    background: rgba(255,107,107,0.1);
+    border-color: rgba(255,107,107,0.25);
+    color: #ff6b6b;
+}
+
+/* ── Content ────────────────────────────────────────────────────────────────── */
+.content { padding: 24px 28px; flex: 1; }
+
+/* ── KPI cards ──────────────────────────────────────────────────────────────── */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.kpi-card {
+    background: #1a1d27; border: 1px solid #2a2d3e; border-radius: 8px;
+    padding: 18px; position: relative; overflow: hidden;
+}
+.kpi-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.kpi-card.blue::before  { background: #6c63ff; }
+.kpi-card.green::before { background: #51cf66; }
+.kpi-card.amber::before { background: #fcc419; }
+.kpi-card.red::before   { background: #ff6b6b; }
+
+.kpi-label {
+    font-size: 10px; color: #8892a4; text-transform: uppercase;
+    letter-spacing: 1px; font-family: "DM Mono", monospace; margin-bottom: 8px;
+}
+.kpi-value       { font-size: 30px; font-weight: 600; line-height: 1; }
+.kpi-value.blue  { color: #6c63ff; }
+.kpi-value.green { color: #51cf66; }
+.kpi-value.amber { color: #fcc419; }
+.kpi-value.red   { color: #ff6b6b; }
+.kpi-sub { font-size: 10px; color: #8892a4; margin-top: 6px; font-family: "DM Mono", monospace; }
+
+/* ── Chart cards ────────────────────────────────────────────────────────────── */
+.charts-grid-2    { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.charts-grid-full { margin-bottom: 14px; }
+.chart-card { background: #1a1d27; border: 1px solid #2a2d3e; border-radius: 8px; padding: 18px; }
+.chart-title {
+    font-size: 10px; color: #8892a4; letter-spacing: 1.5px; text-transform: uppercase;
+    font-family: "DM Mono", monospace; margin-bottom: 14px; padding-bottom: 12px;
+    border-bottom: 1px solid #2a2d3e;
+}
+
+/* ── Live feed ──────────────────────────────────────────────────────────────── */
+.feed-item {
+    padding: 10px 0; border-bottom: 1px solid #1e2130;
+    display: flex; align-items: flex-start; gap: 10px;
+}
+.feed-item:last-child { border-bottom: none; }
+.feed-time  { font-size: 10px; color: #8892a4; font-family: "DM Mono", monospace; white-space: nowrap; padding-top: 2px; }
+.feed-question { font-size: 12px; color: #e2e8f0; line-height: 1.5; }
+
+/* ── Badges ─────────────────────────────────────────────────────────────────── */
+.badge {
+    padding: 3px 8px; border-radius: 4px; font-size: 10px;
+    font-family: "DM Mono", monospace; display: inline-block; white-space: nowrap;
+}
+.badge.web     { background: rgba(108,99,255,0.15); color: #6c63ff; border: 1px solid rgba(108,99,255,0.3); }
+.badge.discord { background: rgba(88,101,242,0.15);  color: #5865f2; border: 1px solid rgba(88,101,242,0.3); }
+.badge.groq    { background: rgba(81,207,102,0.1);   color: #51cf66; border: 1px solid rgba(81,207,102,0.3); }
+.badge.openai  { background: rgba(252,196,25,0.1);   color: #fcc419; border: 1px solid rgba(252,196,25,0.3); }
+
+/* ── Latency bar ────────────────────────────────────────────────────────────── */
+.latency-bar-wrap { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.latency-bar { height: 4px; border-radius: 2px; background: #6c63ff; transition: width 0.5s; }
