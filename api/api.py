@@ -153,7 +153,7 @@ def _push_event(event_type: str, **kwargs):
         pass
 
 
-_mcp_module.setup(vm)
+_mcp_module.setup(vm, redis=_redis)
 # Désactive la protection DNS rebinding (sécurisé car Docker interne uniquement)
 from mcp.server.transport_security import TransportSecurityMiddleware
 TransportSecurityMiddleware._validate_host = lambda self, host: True
