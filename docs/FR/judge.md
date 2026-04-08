@@ -39,3 +39,48 @@ Si l'évaluation est valide, les scores sont enregistrés de manière persistant
 -   **Agnostique et Modulaire** : L'architecture nous permet de facilement changer le "fournisseur" ou le "modèle" du Juge via le fichier de configuration (par exemple, utiliser un modèle plus lourd spécifiquement pour l'évaluation, indépendamment du modèle de conversation).
 
 En intégrant ce LLM Judge, nous transformons une boîte noire générative en un système mesurable et traçable, répondant ainsi aux standards d'ingénierie et de sécurité requis pour la production.
+
+## 4. Schéma du Flux
+
+```mermaid
+flowchart TD
+    USER([Utilisateur]) -->|Question| GW[Gateway FastAPI]
+    GW -->|query + session_id + user_id| AGENT[LoreKeeper Agent]
+    AGENT -->|Recherche hybride RRF| VDB[(Supabase\nVecteur DB)]
+    VDB -->|cot_storage\nextraits documentaires| AGENT
+    AGENT -->|Réponse streamée| GW
+    GW -->|Stream SSE| USER
+
+    AGENT -->|asyncio.create_task\nfire & forget| JUDGE_TASK
+
+    subgraph JUDGE_TASK ["Tâche de fond - _run_judge_sync - timeout 20s"]
+        direction TB
+        J1[Compilation du contexte\nquery + response + cot_storage]
+        J2[Formatage du prompt\nload_judge_prompt]
+        J3["LLM Juge\nllama-3.3-70b-versatile @ Groq\ntemperature=0.0"]
+        J4[Nettoyage & parsing JSON\nretrait balises Markdown]
+        J5{Validation\ndes scores\n1 à 5}
+        J6["log_to_db_sync\nSupabase - LLM_JUDGE"]
+        J7[logger.error\nsilencieux]
+
+        J1 --> J2 --> J3 --> J4 --> J5
+        J5 -->|Valide| J6
+        J5 -->|"Invalide ou Erreur"| J7
+    end
+
+    J6 -->|Métadonnées persistées| DB[(Supabase\nLogs DB)]
+
+    subgraph SCORES ["Métriques évaluées /5"]
+        S1[context_relevance]
+        S2[faithfulness]
+        S3[answer_relevance]
+        S4[context_coverage]
+    end
+
+    J6 -.->|scores| SCORES
+
+    style JUDGE_TASK fill:#1e1e2e,stroke:#7c3aed,color:#e2e8f0
+    style SCORES fill:#1e1e2e,stroke:#0ea5e9,color:#e2e8f0
+    style DB fill:#1e1e2e,stroke:#10b981,color:#e2e8f0
+    style VDB fill:#1e1e2e,stroke:#10b981,color:#e2e8f0
+```
