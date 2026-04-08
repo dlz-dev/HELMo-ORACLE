@@ -9,6 +9,7 @@ import {
   Loader2,
   FileText,
   FolderOpen,
+  StopCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ interface Props {
   ingestMsg: string;
   onFilesChange: (files: FileList | null) => void;
   onIngest: () => void;
+  onCancel: () => void;
 }
 
 const STEPS = [
@@ -96,6 +98,7 @@ export function IngestSection({
   ingestMsg,
   onFilesChange,
   onIngest,
+  onCancel,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const isRunning = ingestState === "running";
@@ -235,10 +238,21 @@ export function IngestSection({
               <CardTitle className="text-sm text-[var(--text)]">
                 Progression
               </CardTitle>
+              <div className="flex items-center gap-2">
               {isRunning && (
-                <Badge className="bg-[var(--gold-glow)] text-[var(--gold)] border-[var(--gold)]/20 text-[10px] animate-pulse">
-                  En cours
-                </Badge>
+                <>
+                  <Badge className="bg-[var(--gold-glow)] text-[var(--gold)] border-[var(--gold)]/20 text-[10px] animate-pulse">
+                    En cours
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onCancel}
+                    className="h-6 px-2 text-[10px] border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                  >
+                    <StopCircle size={11} className="mr-1" /> Arrêter
+                  </Button>
+                </>
               )}
               {ingestState === "success" && (
                 <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-[10px]">
@@ -255,6 +269,7 @@ export function IngestSection({
                   Erreur
                 </Badge>
               )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="px-5 pb-5 space-y-5">

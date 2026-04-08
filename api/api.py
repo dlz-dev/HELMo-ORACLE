@@ -596,6 +596,7 @@ def list_archives():
 
 # --- Ingestion ---
 _ingest_status = {"running": False, "last_status": "idle", "last_message": ""}
+_ingest_cancel = _threading.Event()
 
 
 def _run_ingestion(file_paths: list):
@@ -627,6 +628,11 @@ def _run_ingestion(file_paths: list):
 
     try:
         for i, fp in enumerate(file_paths):
+            if _ingest_cancel.is_set():
+                _ingest_status = {"running": False, "last_status": "warning",
+                                  "last_message": "Ingestion annulée par l'administrateur."}
+                return
+
             fp = Path(fp)
             _ingest_status["last_message"] = f"Fichier {i + 1}/{total} — Validation de {fp.name}…"
 
@@ -723,6 +729,7 @@ async def trigger_ingest(files: list[UploadFile] = File(...)):
         saved_paths.append(dest)
         logger.info("INGEST | Fichier reçu : %s", safe_name)
 
+    _ingest_cancel.clear()
     _ingest_status.update({"running": True, "last_status": "idle", "last_message": "Démarrage…"})
     t = _threading.Thread(target=_run_ingestion, args=[saved_paths], daemon=True)
     t.start()
@@ -732,6 +739,14 @@ async def trigger_ingest(files: list[UploadFile] = File(...)):
 @app.get("/ingest/status")
 def ingest_status():
     return _ingest_status
+
+
+@app.post("/ingest/cancel", dependencies=[Depends(_require_api_key)])
+def cancel_ingest():
+    if not _ingest_status.get("running"):
+        return {"cancelled": False, "detail": "Aucune ingestion en cours."}
+    _ingest_cancel.set()
+    return {"cancelled": True}
 
 
 # --- Logs ---

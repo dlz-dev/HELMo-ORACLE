@@ -34,7 +34,6 @@ export const LS = {
   model: "oracle_model",
   temperature: "oracle_temperature",
   k_final: "oracle_k_final",
-  apiKeys: "oracle_api_keys",
 };
 
 export function Section({

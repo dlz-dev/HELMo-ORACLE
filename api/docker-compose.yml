@@ -16,6 +16,7 @@ services:
     restart: unless-stopped
     environment:
       - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - OLLAMA_BASE_URL=http://embedding_service:11434
     depends_on:
       embedding_service:

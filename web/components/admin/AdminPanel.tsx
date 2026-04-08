@@ -17,7 +17,6 @@ import {
   XCircle,
   Database,
   Cpu,
-  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +27,6 @@ import type { IngestStatus } from "@/lib/api";
 
 import { LS } from "./sections/shared";
 import { ModelSection } from "./sections/ModelSection";
-import { ApiKeysSection } from "./sections/ApiKeysSection";
 import { LogsSection } from "./sections/LogsSection";
 import { HealthSection } from "./sections/HealthSection";
 import { IngestSection } from "./sections/IngestSection";
@@ -60,15 +58,6 @@ export function AdminPanel() {
   const [kFinal, setKFinal] = useState(5);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
 
-  // ── Clés API ──────────────────────────────────────────────────────
-  const [apiKeys, setApiKeys] = useState<Record<string, string>>({
-    groq: "",
-    openai: "",
-    anthropic: "",
-    gemini: "",
-  });
-  const [keySaveStatus, setKeySaveStatus] = useState<"idle" | "saved">("idle");
-
   // ── Health ────────────────────────────────────────────────────────
   const [healthData, setHealthData] = useState<any>(null);
   const [healthState, setHealthState] = useState<"idle" | "running" | "done">(
@@ -87,10 +76,6 @@ export function AdminPanel() {
     setModel(localStorage.getItem(LS.model) || "llama-3.3-70b-versatile");
     setTemperature(parseFloat(localStorage.getItem(LS.temperature) || "0"));
     setKFinal(parseInt(localStorage.getItem(LS.k_final) || "5"));
-    try {
-      const saved = localStorage.getItem(LS.apiKeys);
-      if (saved) setApiKeys(JSON.parse(saved));
-    } catch {}
   }, []);
 
   // ── Auto health check on overview ────────────────────────────────
@@ -131,10 +116,12 @@ export function AdminPanel() {
     setTimeout(() => setSaveStatus("idle"), 2000);
   };
 
-  const handleSaveKeys = () => {
-    localStorage.setItem(LS.apiKeys, JSON.stringify(apiKeys));
-    setKeySaveStatus("saved");
-    setTimeout(() => setKeySaveStatus("idle"), 2000);
+  const handleCancelIngest = async () => {
+    try {
+      await fetch("/api/admin/ingest/cancel", { method: "POST" });
+    } catch {}
+    setIngestState("warning");
+    setIngestMsg("Ingestion annulée par l'administrateur.");
   };
 
   const handleHealthCheck = async () => {
@@ -589,6 +576,7 @@ export function AdminPanel() {
                 ingestMsg={ingestMsg}
                 onFilesChange={setFiles}
                 onIngest={handleTriggerIngest}
+                onCancel={handleCancelIngest}
               />
             </div>
           )}
@@ -607,12 +595,6 @@ export function AdminPanel() {
                 onTemperatureChange={setTemperature}
                 onKFinalChange={setKFinal}
                 onSave={handleSaveConfig}
-              />
-              <ApiKeysSection
-                apiKeys={apiKeys}
-                saveStatus={keySaveStatus}
-                onChange={(p, v) => setApiKeys((k) => ({ ...k, [p]: v }))}
-                onSave={handleSaveKeys}
               />
             </div>
           )}
