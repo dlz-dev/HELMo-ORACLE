@@ -41,13 +41,37 @@ const FILE_STATUS_META: Record<
   FileIngestStatus,
   { label: string; color: string; icon: React.ElementType; spin?: boolean }
 > = {
-  pending:        { label: "En attente",      color: "text-[var(--text-subtle)]",  icon: Clock },
-  validating:     { label: "Validation",      color: "text-amber-400",             icon: Shield,     spin: true },
-  converting:     { label: "Conversion",      color: "text-blue-400",              icon: FileSearch, spin: true },
-  contextualizing:{ label: "Contextualisation",color: "text-purple-400",           icon: Sparkles,   spin: true },
-  vectorizing:    { label: "Vectorisation",   color: "text-[var(--gold)]",         icon: Layers,     spin: true },
-  done:           { label: "Terminé",         color: "text-emerald-400",           icon: CheckCircle2 },
-  rejected:       { label: "Rejeté",          color: "text-red-400",               icon: XCircle },
+  pending: {
+    label: "En attente",
+    color: "text-[var(--text-subtle)]",
+    icon: Clock,
+  },
+  validating: {
+    label: "Validation",
+    color: "text-amber-400",
+    icon: Shield,
+    spin: true,
+  },
+  converting: {
+    label: "Conversion",
+    color: "text-blue-400",
+    icon: FileSearch,
+    spin: true,
+  },
+  contextualizing: {
+    label: "Contextualisation",
+    color: "text-purple-400",
+    icon: Sparkles,
+    spin: true,
+  },
+  vectorizing: {
+    label: "Vectorisation",
+    color: "text-[var(--gold)]",
+    icon: Layers,
+    spin: true,
+  },
+  done: { label: "Terminé", color: "text-emerald-400", icon: CheckCircle2 },
+  rejected: { label: "Rejeté", color: "text-red-400", icon: XCircle },
 };
 
 function parseProgress(
@@ -60,7 +84,13 @@ function parseProgress(
   const entries = Object.values(files);
   if (entries.length === 0) return 5;
   const weight: Record<FileIngestStatus, number> = {
-    pending: 0, validating: 1, converting: 2, contextualizing: 3, vectorizing: 4, done: 5, rejected: 5,
+    pending: 0,
+    validating: 1,
+    converting: 2,
+    contextualizing: 3,
+    vectorizing: 4,
+    done: 5,
+    rejected: 5,
   };
   const total = entries.length * 5;
   const done = entries.reduce((sum, s) => sum + (weight[s] ?? 0), 0);
@@ -278,9 +308,12 @@ export function IngestSection({
             {fileEntries.length > 0 && (
               <div className="space-y-1.5 max-h-64 overflow-y-auto">
                 {fileEntries.map(([filename, status]) => {
-                  const meta = FILE_STATUS_META[status] ?? FILE_STATUS_META.pending;
+                  const meta =
+                    FILE_STATUS_META[status] ?? FILE_STATUS_META.pending;
                   const Icon = meta.icon;
-                  const isActive = !["done", "rejected", "pending"].includes(status);
+                  const isActive = !["done", "rejected", "pending"].includes(
+                    status,
+                  );
                   return (
                     <div
                       key={filename}
@@ -302,7 +335,12 @@ export function IngestSection({
                       <span className="text-xs text-[var(--text)] truncate flex-1 min-w-0">
                         {filename}
                       </span>
-                      <span className={cn("text-[10px] shrink-0 font-medium", meta.color)}>
+                      <span
+                        className={cn(
+                          "text-[10px] shrink-0 font-medium",
+                          meta.color,
+                        )}
+                      >
                         {meta.label}
                       </span>
                     </div>
