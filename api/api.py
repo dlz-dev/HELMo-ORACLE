@@ -406,19 +406,33 @@ def get_metrics():
             "model": fields.get("model", ""),
             "latency_ms": int(fields.get("latency_ms", 0)),
             "source": fields.get("source", "web"),
+            "filename": fields.get("filename", ""),
+            "status": fields.get("status", ""),
+            "reason": fields.get("reason", ""),
+            "new_chunks": int(fields.get("new_chunks", 0)),
+            "duplicate_chunks": int(fields.get("duplicate_chunks", 0)),
+            "error": fields.get("error", ""),
         })
 
     now = time.time()
-    last_minute = [e for e in events if now - e["ts"] < 60]
-    last_hour = [e for e in events if now - e["ts"] < 3600]
-    latencies = [e["latency_ms"] for e in events if e["latency_ms"] > 0]
+    chat_events = [e for e in events if e["type"] == "chat"]
+    ingest_events = [e for e in events if e["type"].startswith("ingest_")]
+    last_minute = [e for e in chat_events if now - e["ts"] < 60]
+    last_hour = [e for e in chat_events if now - e["ts"] < 3600]
+    latencies = [e["latency_ms"] for e in chat_events if e["latency_ms"] > 0]
+    total_chunks = sum(e["new_chunks"] for e in ingest_events if e["type"] == "ingest_complete")
+    accepted = sum(1 for e in ingest_events if e["type"] == "ingest_guardian" and e["status"] == "accepted")
+    rejected = sum(1 for e in ingest_events if e["type"] == "ingest_guardian" and e["status"] == "rejected")
 
     stats = {
-        "total_queries": len(raw),
+        "total_queries": len(chat_events),
         "queries_last_minute": len(last_minute),
         "queries_last_hour": len(last_hour),
         "avg_latency_ms": round(sum(latencies) / len(latencies)) if latencies else 0,
         "db_ok": vm.is_db_available(),
+        "total_chunks_ingested": total_chunks,
+        "files_accepted": accepted,
+        "files_rejected": rejected,
     }
 
     return {"available": True, "events": events, "stats": stats}
@@ -627,8 +641,11 @@ def _run_ingestion(file_paths: list):
             if not valid:
                 shutil.move(str(fp), str(QUARANTINE_DIR / fp.name))
                 logger.warning("INGEST | Rejeté : %s — %s", fp.name, reason)
+                _push_event("ingest_guardian", filename=fp.name, status="rejected", reason=reason[:100])
                 rejected_files += 1
                 continue
+
+            _push_event("ingest_guardian", filename=fp.name, status="accepted")
 
             # 2. Conversion
             _ingest_status["last_message"] = f"Fichier {i + 1}/{total} — Conversion de {fp.name}…"
@@ -667,6 +684,7 @@ def _run_ingestion(file_paths: list):
             # 5. Archive
             shutil.move(str(fp), str(ARCHIVE_DIR / fp.name))
             logger.info("INGEST | OK — %s (%d nouveaux, %d doublons)", fp.name, new_chunks, duplicate_chunks)
+            _push_event("ingest_complete", filename=fp.name, new_chunks=new_chunks, duplicate_chunks=duplicate_chunks)
 
         accepted = total - rejected_files
         if rejected_files == total:
@@ -682,6 +700,7 @@ def _run_ingestion(file_paths: list):
     except Exception as e:
         _ingest_status = {"running": False, "last_status": "error", "last_message": str(e)}
         logger.error("INGEST | Erreur : %s", e, exc_info=True)
+        _push_event("ingest_error", error=str(e)[:120])
 
 
 @app.post("/ingest", dependencies=[Depends(_require_api_key)])
