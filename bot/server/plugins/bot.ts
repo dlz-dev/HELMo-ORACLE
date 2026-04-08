@@ -25,25 +25,15 @@ export default defineNitroPlugin(async () => {
       while (true) {
         try {
           console.log('[Gateway] Démarrage...');
-          // Capturer la vraie promesse de connexion via waitUntil
-          let gatewayPromise: Promise<any> | null = null;
-          const fakeEvent = {
-            waitUntil: (p: Promise<any>) => {
-              gatewayPromise = p.catch((e: unknown) => console.error('[Gateway error]', e));
-            }
-          };
+          const fakeEvent = { waitUntil: (p: Promise<any>) => p.catch((e: unknown) => console.error('[Gateway error]', e)) };
           discordAdapter.startGatewayListener(fakeEvent);
-          if (gatewayPromise) {
-            await gatewayPromise; // attend la vraie fin de session (3 min)
-          } else {
-            await new Promise(resolve => setTimeout(resolve, 180000));
-          }
-          console.log('[Gateway] Session terminée, reconnexion dans 30s...');
+          // Attendre la durée de session (3min) + buffer avant de relancer
+          await new Promise(resolve => setTimeout(resolve, 185000));
+          console.log('[Gateway] Relance de la session...');
         } catch (e) {
           console.error('[Gateway] Erreur, reconnexion dans 60s...', e);
           await new Promise(resolve => setTimeout(resolve, 60000));
         }
-        await new Promise(resolve => setTimeout(resolve, 30000));
       }
     };
     keepGatewayAlive();
