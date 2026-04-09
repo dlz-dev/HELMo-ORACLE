@@ -13,7 +13,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: auto; }
 body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
 .font-heading { font-family: 'Outfit', sans-serif; }
 .text-gold { color: var(--gold); }
@@ -21,10 +21,10 @@ a { text-decoration: none; }
 
 /* ── NOISE ─────────────────────────────────────────────────────────────── */
 .noise-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0.022;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
 
 /* ── HEADER ────────────────────────────────────────────────────────────── */
-.header-inner { background: rgba(8,10,15,0.55); backdrop-filter: blur(24px); border: 1px solid var(--border); transition: background .3s, border-color .3s; }
+.header-inner { background: rgba(8,10,15,0.55); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border); transition: background .3s, border-color .3s; will-change: transform; }
 #site-header.scrolled .header-inner { background: rgba(8,10,15,0.90); border-color: rgba(255,255,255,0.13); }
 .nav-link { color: rgba(240,242,245,0.55); transition: color .2s; }
 .nav-link:hover, .nav-link.active { color: var(--gold); }
@@ -35,7 +35,7 @@ a { text-decoration: none; }
 .text-gradient-hero { background: linear-gradient(135deg,#fff 0%,var(--gold-light) 50%,var(--gold) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
 /* ── ORBS & GRID ──────────────────────────────────────────────────────── */
-.orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+.orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; will-change: transform; }
 .orb-1 { width:600px;height:600px; background:radial-gradient(circle,rgba(201,168,76,.07) 0%,transparent 70%); top:-200px;left:-100px; }
 .orb-2 { width:500px;height:500px; background:radial-gradient(circle,rgba(59,130,246,.05) 0%,transparent 70%); top:100px;right:-100px; }
 .orb-3 { width:400px;height:400px; background:radial-gradient(circle,rgba(139,92,246,.04) 0%,transparent 70%); bottom:0;left:30%; }
@@ -75,7 +75,7 @@ a { text-decoration: none; }
 .glass-card { background:rgba(18,20,28,0.75);border:1px solid var(--border); }
 .glass-card-glow-ultra { background:linear-gradient(135deg,rgba(201,168,76,.08) 0%,rgba(18,20,28,0.85) 100%);border:1px solid var(--border-gold);box-shadow:0 0 40px rgba(201,168,76,.07); }
 /* Only hero chat and header get blur — visible, worth the cost */
-.chat-window { backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px); }
+.chat-window { backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px); will-change: transform; }
 
 /* ── CHAT WINDOW ─────────────────────────────────────────────────────── */
 .chat-msg-user { align-self:flex-end; max-width:60%; }
