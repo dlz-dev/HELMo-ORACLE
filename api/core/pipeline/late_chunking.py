@@ -15,18 +15,21 @@ import logging
 import os
 from typing import List
 
-from langchain_community.embeddings import OllamaEmbeddings
+import requests
 
 logger = logging.getLogger("oracle")
 
 _DEFAULT_MODEL = "nomic-embed-text"
 # Number of neighbouring chunks prepended as context for each chunk
 _CONTEXT_WINDOW = 3
+# Max texts per single /api/embed call (avoid OOM on large batches)
+_EMBED_BATCH_SIZE = 64
 
 
 class LateChunkingEmbedder:
     """
-    Produces contextualised chunk embeddings using OllamaEmbeddings.
+    Produces contextualised chunk embeddings by calling Ollama's /api/embed
+    endpoint directly — one HTTP request per batch instead of one per chunk.
 
     For each chunk i, the text of the preceding _CONTEXT_WINDOW chunks is
     prepended so that the embedding captures surrounding document content.
@@ -42,13 +45,23 @@ class LateChunkingEmbedder:
         base_url: str | None = None,
         context_window: int = _CONTEXT_WINDOW,
     ) -> None:
-        resolved_url = base_url or os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-        self.embeddings = OllamaEmbeddings(model=model, base_url=resolved_url)
+        self.model = model
+        self.base_url = (base_url or os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")).rstrip("/")
         self.context_window = context_window
         logger.info(
             "LateChunkingEmbedder: model '%s' via Ollama at %s (context_window=%d).",
-            model, resolved_url, context_window,
+            model, self.base_url, context_window,
         )
+
+    def _embed_batch(self, texts: List[str]) -> List[List[float]]:
+        """Single HTTP call to Ollama /api/embed for a list of texts."""
+        resp = requests.post(
+            f"{self.base_url}/api/embed",
+            json={"model": self.model, "input": texts},
+            timeout=300,
+        )
+        resp.raise_for_status()
+        return resp.json()["embeddings"]
 
     def embed_chunks(self, chunks: List[str]) -> List[List[float]]:
         """
@@ -76,4 +89,14 @@ class LateChunkingEmbedder:
             else:
                 contextual_texts.append(chunk)
 
-        return self.embeddings.embed_documents(contextual_texts)
+        # Send in batches to avoid overwhelming Ollama with huge payloads
+        all_vectors: List[List[float]] = []
+        for i in range(0, len(contextual_texts), _EMBED_BATCH_SIZE):
+            batch = contextual_texts[i: i + _EMBED_BATCH_SIZE]
+            logger.debug(
+                "Embedding batch %d-%d / %d",
+                i + 1, i + len(batch), len(contextual_texts),
+            )
+            all_vectors.extend(self._embed_batch(batch))
+
+        return all_vectors
