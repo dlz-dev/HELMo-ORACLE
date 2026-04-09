@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Oracle — Comment ça marche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="style.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="noise-overlay" aria-hidden="true"></div>
+
+<header id="site-header" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl">
+  <div class="header-inner flex items-center justify-between px-6 py-3 rounded-full">
+    <a href="index.html" class="flex items-center gap-2"><span class="text-gold text-xl">◈</span><span class="font-heading text-xl font-bold tracking-wide uppercase text-white">Oracle</span></a>
+    <nav class="hidden md:flex space-x-8 text-sm font-semibold">
+      <a class="nav-link" href="index.html">Accueil</a>
+      <a class="nav-link active" href="rag.html">Comment ça marche</a>
+      <a class="nav-link" href="stack.html">La Stack</a>
+      <a class="nav-link" href="abonnements.html">Abonnements</a>
+    </nav>
+    <a class="cta-header px-6 py-2.5 rounded-full font-bold text-sm" href="https://oracle.dlzteam.com/">Accéder au Chat →</a>
+  </div>
+</header>
+
+<main class="relative z-10">
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-5" aria-hidden="true"></div>
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <!-- ── PAGE HERO ──────────────────────────────────────────────────── -->
+  <div class="page-hero relative z-10">
+    <div class="max-w-3xl mx-auto px-4 text-center">
+      <div class="section-tag mx-auto w-fit mb-6 reveal">Comprendre Oracle</div>
+      <h1 class="page-hero-title font-heading mb-6 reveal" style="--delay:.1s">
+        Comment ça <span class="text-gradient-hero">marche ?</span>
+      </h1>
+      <p class="text-white/50 text-lg leading-relaxed reveal" style="--delay:.2s">
+        Pas de jargon. Juste une explication honnête de ce qu'Oracle fait réellement — et pourquoi c'est différent de ChatGPT.
+      </p>
+    </div>
+  </div>
+
+  <div class="max-w-4xl mx-auto px-4 pb-32 space-y-20">
+
+    <!-- ── PARTIE 1 : LE PROBLÈME ────────────────────────────────────── -->
+    <div class="reveal">
+      <h2 class="font-heading text-3xl font-bold text-white mb-8 text-center">Le problème que tout le monde a</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="problem-card">
+          <div class="text-red-400/70 font-heading font-bold text-sm uppercase tracking-widest mb-3">Le bot générique</div>
+          <p class="text-white/60 text-sm leading-relaxed mb-4">Vous utilisez ChatGPT ou Copilot. Vous posez une question sur vos procédures internes. Le bot invente une réponse plausible — mais fausse. Ou pire, il envoie vos données confidentielles sur des serveurs américains.</p>
+          <div class="flex flex-col gap-2">
+            <div class="flex items-start gap-2 text-white/50 text-sm"><span class="text-red-400/70 mt-0.5 flex-shrink-0">✗</span>Ne connaît pas vos documents</div>
+            <div class="flex items-start gap-2 text-white/50 text-sm"><span class="text-red-400/70 mt-0.5 flex-shrink-0">✗</span>Peut inventer des informations</div>
+            <div class="flex items-start gap-2 text-white/50 text-sm"><span class="text-red-400/70 mt-0.5 flex-shrink-0">✗</span>Vos données quittent votre périmètre</div>
+            <div class="flex items-start gap-2 text-white/50 text-sm"><span class="text-red-400/70 mt-0.5 flex-shrink-0">✗</span>Ne peut pas agir dans vos outils</div>
+          </div>
+        </div>
+        <div class="solution-card">
+          <div class="text-gold/80 font-heading font-bold text-sm uppercase tracking-widest mb-3">Oracle</div>
+          <p class="text-white/60 text-sm leading-relaxed mb-4">Oracle ne répond qu'à partir de vos documents. Chaque affirmation est sourcée et vérifiable. Vos données restent sur votre infrastructure. Et Oracle peut agir dans vos outils métiers.</p>
+          <div class="flex flex-col gap-2">
+            <div class="flex items-start gap-2 text-white/50 text-sm"><span class="text-gold/70 mt-0.5 flex-shrink-0">✓</span>Répond uniquement depuis vos documents</div>
+            <div class="flex items-start gap-2 text-white/50 text-sm"><span class="text-gold/70 mt-0.5 flex-shrink-0">✓</span>Chaque réponse est sourcée et évaluée</div>
+            <div class="flex items-start gap-2 text-white/50 text-sm"><span class="text-gold/70 mt-0.5 flex-shrink-0">✓</span>Données sur votre infrastructure</div>
+            <div class="flex items-start gap-2 text-white/50 text-sm"><span class="text-gold/70 mt-0.5 flex-shrink-0">✓</span>Crée des tickets, envoie des emails, génère des documents</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PARTIE 2 : CE QU'EST UN RAG ──────────────────────────────── -->
+    <div class="reveal">
+      <div class="section-tag w-fit mb-6">RAG — Retrieval-Augmented Generation</div>
+      <h2 class="font-heading text-3xl font-bold text-white mb-4">La technologie derrière Oracle</h2>
+      <p class="text-white/50 text-sm leading-relaxed mb-10 max-w-2xl">Le RAG est une technique qui permet à un modèle d'IA de répondre en s'appuyant sur des documents réels plutôt que sur sa seule mémoire. Voici comment ça fonctionne en 5 étapes — sans jargon.</p>
+
+      <div class="space-y-4">
+        <div class="rag-step reveal" style="--delay:.05s">
+          <div class="rag-step-number">1</div>
+          <div class="rag-step-icon bg-gold/10"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div>
+            <h3>Vos documents sont ingérés et mémorisés</h3>
+            <p>Oracle lit tous vos fichiers — PDF, Word, tableurs, règlements internes. Il les découpe en petits morceaux et les convertit en représentations mathématiques (des "vecteurs") qui capturent le sens de chaque passage. C'est comme créer un index ultra-précis de toute votre base documentaire.</p>
+          </div>
+        </div>
+
+        <div class="rag-step reveal" style="--delay:.1s">
+          <div class="rag-step-number">2</div>
+          <div class="rag-step-icon bg-blue-500/10"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+          <div>
+            <h3>Votre question est comprise, pas juste lue</h3>
+            <p>Quand vous posez une question, Oracle ne cherche pas des mots-clés exacts. Il comprend le sens de votre question. "Quelles sont nos garanties de confidentialité ?" trouvera aussi les passages qui parlent de "protection des données" ou "traitement RGPD" — même si ces mots n'apparaissent pas dans votre question.</p>
+          </div>
+        </div>
+
+        <div class="rag-step reveal" style="--delay:.15s">
+          <div class="rag-step-number">3</div>
+          <div class="rag-step-icon bg-purple-500/10"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+          <div>
+            <h3>Les passages les plus pertinents sont sélectionnés</h3>
+            <p>Oracle combine deux méthodes de recherche en parallèle : la recherche par sens (sémantique) et la recherche par mots-clés exacts (BM25). Les résultats sont fusionnés pour que les passages vraiment utiles remontent en priorité — même si un seul des deux moteurs les aurait manqués.</p>
+          </div>
+        </div>
+
+        <div class="rag-step reveal" style="--delay:.2s">
+          <div class="rag-step-number">4</div>
+          <div class="rag-step-icon bg-green-500/10"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+          <div>
+            <h3>Le modèle d'IA rédige la réponse à partir de ces passages</h3>
+            <p>Le modèle de langage (LLM) reçoit votre question + les passages pertinents trouvés à l'étape précédente. Il rédige une réponse cohérente, sourcée, et ancrée dans vos documents. Il ne peut pas inventer d'information qui n'est pas dans les sources fournies.</p>
+          </div>
+        </div>
+
+        <div class="rag-step reveal" style="--delay:.25s">
+          <div class="rag-step-number">5</div>
+          <div class="rag-step-icon bg-gold/10"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          <div>
+            <h3>La réponse est évaluée automatiquement (LLM Judge)</h3>
+            <p>En arrière-plan, un second modèle d'IA analyse la qualité de la réponse sur 4 critères : est-elle fidèle aux sources ? Est-elle pertinente ? Répond-elle à la question ? Exploite-t-elle bien les informations disponibles ? Ce score est enregistré pour améliorer le système en continu.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PARTIE 3 : ORACLE VA PLUS LOIN ───────────────────────────── -->
+    <div class="reveal">
+      <div class="section-tag w-fit mb-6">Au-delà du RAG</div>
+      <h2 class="font-heading text-3xl font-bold text-white mb-4">Ce que les autres ne font pas</h2>
+      <p class="text-white/50 text-sm leading-relaxed mb-8 max-w-2xl">Un système RAG classique répond à des questions. Oracle, lui, est un agent — il peut agir. C'est la différence entre une encyclopédie et un assistant qui fait réellement les choses.</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="glass-card rounded-2xl p-6 reveal" style="--delay:.05s">
+          <div class="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14M15.54 8.46a5 5 0 010 7.07M8.46 8.46a5 5 0 000 7.07"/></svg>
+          </div>
+          <h3 class="font-heading font-bold text-white mb-2">Il agit via MCP</h3>
+          <p class="text-white/50 text-sm leading-relaxed">Créer un ticket, envoyer un email, générer un document, mettre à jour une base de données. Oracle ne se contente pas de répondre — il fait.</p>
+        </div>
+        <div class="glass-card rounded-2xl p-6 reveal" style="--delay:.1s">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3 class="font-heading font-bold text-white mb-2">Il protège vos données</h3>
+          <p class="text-white/50 text-sm leading-relaxed">Vos documents ne quittent jamais votre infrastructure. Les données personnelles sont masquées avant tout traitement. Tout est auditable.</p>
+        </div>
+        <div class="glass-card rounded-2xl p-6 reveal" style="--delay:.15s">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <h3 class="font-heading font-bold text-white mb-2">Il raisonne selon votre contexte</h3>
+          <p class="text-white/50 text-sm leading-relaxed">Les prompts métiers configurent le comportement du bot pour chaque situation. Un étudiant Erasmus et un avocat senior n'obtiennent pas la même réponse.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="text-center reveal">
+      <p class="text-white/40 text-sm mb-6">Vous voulez voir comment Oracle s'intègre techniquement ?</p>
+      <div class="flex flex-col sm:flex-row justify-center gap-4">
+        <a href="stack.html" class="btn-secondary px-8 py-3.5 rounded-full font-semibold inline-block">Voir la Stack technique →</a>
+        <a href="abonnements.html" class="btn-primary px-8 py-3.5 rounded-full font-bold inline-block">Choisir un abonnement</a>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="py-10 border-t border-white/8">
+  <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6">
+    <div class="flex items-center gap-2"><span class="text-gold text-lg">◈</span><span class="font-heading text-lg font-bold uppercase text-white">Oracle</span></div>
+    <p class="text-sm text-white/25 text-center">© 2026 HeLMO Oracle · Projet Académique</p>
+    <a href="index.html" class="footer-back">← Retour à l'accueil</a>
+  </div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  const h = document.getElementById('site-header');
+  window.addEventListener('scroll', () => h?.classList.toggle('scrolled', scrollY > 60), { passive: true });
+});
+</script>
+</body>
+</html>

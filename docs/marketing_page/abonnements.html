@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Oracle — Abonnements</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="style.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="noise-overlay" aria-hidden="true"></div>
+
+<header id="site-header" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl">
+  <div class="header-inner flex items-center justify-between px-6 py-3 rounded-full">
+    <a href="index.html" class="flex items-center gap-2"><span class="text-gold text-xl">◈</span><span class="font-heading text-xl font-bold tracking-wide uppercase text-white">Oracle</span></a>
+    <nav class="hidden md:flex space-x-8 text-sm font-semibold">
+      <a class="nav-link" href="index.html">Accueil</a>
+      <a class="nav-link" href="rag.html">Comment ça marche</a>
+      <a class="nav-link" href="stack.html">La Stack</a>
+      <a class="nav-link active" href="abonnements.html">Abonnements</a>
+    </nav>
+    <a class="cta-header px-6 py-2.5 rounded-full font-bold text-sm" href="https://oracle.dlzteam.com/">Accéder au Chat →</a>
+  </div>
+</header>
+
+<main class="relative z-10">
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-5" aria-hidden="true"></div>
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <!-- ── PAGE HERO ──────────────────────────────────────────────────── -->
+  <div class="page-hero relative z-10">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <div class="section-tag mx-auto w-fit mb-6 reveal">Catalogue Complet</div>
+      <h1 class="page-hero-title font-heading mb-6 reveal" style="--delay:.1s">
+        Abonnements & <span class="text-gradient-hero">Fonctionnalités</span>
+      </h1>
+      <!-- Cadrage — valeur, pas coût -->
+      <p class="text-white/50 text-lg max-w-2xl mx-auto leading-relaxed reveal" style="--delay:.2s">
+        Chaque tier est conçu pour que le gain dépasse largement son coût dès le premier mois. Choisissez celui qui correspond à votre niveau d'exigence.
+      </p>
+      <!-- Actualisation hyperbolique -->
+      <div class="flex justify-center gap-3 mt-6 reveal" style="--delay:.3s">
+        <div class="authority-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Opérationnel en 72h</div>
+        <div class="authority-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Infrastructure Cloud EU</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MCP EXPLAINER ──────────────────────────────────────────────── -->
+  <section class="max-w-5xl mx-auto px-4 mb-12">
+    <div class="mcp-explainer reveal">
+      <div class="flex items-start gap-4 mb-5">
+        <div class="w-9 h-9 flex-shrink-0 text-gold/70 mt-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+        </div>
+        <div>
+          <h3>Qu'est-ce que le MCP ?</h3>
+          <p class="mb-3"><strong class="text-white">MCP (Model Context Protocol)</strong> est le protocole qui permet à Oracle d'agir, pas seulement de répondre. Sans MCP, un bot est une encyclopédie. Avec MCP, Oracle devient un agent — il peut créer, envoyer, modifier, et déclencher des actions dans vos outils métiers.</p>
+          <p>C'est une boucle <strong class="text-white">ReAct (Reasoning + Acting)</strong> : Oracle analyse la demande, choisit l'outil approprié, exécute l'action, observe le résultat, et recommence jusqu'à avoir répondu au besoin. L'utilisateur voit une réponse fluide. En coulisses, Oracle a potentiellement créé un ticket, envoyé un email, et mis à jour une base de données.</p>
+        </div>
+      </div>
+      <!-- FIX: 3-col grid properly defined in CSS -->
+      <div class="mcp-trio">
+        <div class="mcp-trio-item"><h5>Resources — La donnée</h5><p>Sources d'information consultées en temps réel : règlements, catalogues, calendriers, bases de données. Le bot sait toujours quoi répondre car il accède à vos données à jour.</p></div>
+        <div class="mcp-trio-item"><h5>Tools — L'action</h5><p>Fonctions exécutables : créer un ticket, envoyer un email, générer un document, interroger une API. C'est là qu'Oracle passe du "chat" à l'"agent".</p></div>
+        <div class="mcp-trio-item"><h5>Prompts — Le raisonnement</h5><p>Modèles de comportement pré-configurés pour chaque contexte métier. Un prompt "étudiant Erasmus" rend le bot multilingue et pédagogique. Un prompt "juridique" le rend précis et sourcé.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TIERS ──────────────────────────────────────────────────────── -->
+  <div class="max-w-5xl mx-auto px-4 pb-24 space-y-8">
+
+    <!-- TIER 0 ────────────────────────────────────────────────────────── -->
+    <div class="tier-section tier-section-starter reveal">
+      <div class="tier-header">
+        <div><div class="case-tier-tag tier-tag-starter mb-3">Tier 0</div><h2 class="font-heading text-3xl font-bold text-white">Starter</h2><p class="text-white/40 mt-1">Indépendants · Freelances · TPE</p></div>
+        <div class="tier-price-block text-right">
+          <div class="price">29€<span class="text-xl text-white/30 font-medium"> /mois</span></div>
+          <div class="price-sub">+ 49 € setup (unique)</div>
+        </div>
+      </div>
+      <!-- Barnum -->
+      <p class="text-white/50 text-sm leading-relaxed mb-6 italic border-l-2 border-gold/30 pl-4">"Vous répondez seul à des dizaines de questions chaque semaine. Certains prospects n'attendent pas. Oracle répond à votre place — avec vos mots, vos tarifs, vos règles."</p>
+      <div class="feature-grid">
+        <div class="feature-item"><div class="feature-item-icon text-white/45"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div><div><h4>1 bot déployé</h4><p>WhatsApp ou Telegram. Réponses 24h/24 sur votre canal.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-white/45"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><h4>20 documents max</h4><p>PDF, TXT, MD. Vos offres, tarifs et procédures.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-white/45"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg></div><div><h4>1 ressource statique MCP</h4><p>Le bot puise dans vos documents à chaque réponse. Pas d'improvisation.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-white/45"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div><h4>PII Masking basique</h4><p>Détection des données personnelles courantes avant traitement LLM.</p></div></div>
+      </div>
+      <div class="mt-5 p-4 rounded-xl bg-white/[0.02] border border-white/6 text-white/35 text-sm"><strong class="text-white/50">Non inclus :</strong> MCP avancé, LLM Judge, bots supplémentaires au-delà du premier.</div>
+    </div>
+
+    <!-- TIER 1 ────────────────────────────────────────────────────────── -->
+    <div class="tier-section tier-section-essential reveal">
+      <div class="tier-header">
+        <div><div class="case-tier-tag tier-tag-essential mb-3">Tier 1</div><h2 class="font-heading text-3xl font-bold text-white">Essential</h2><p class="text-white/40 mt-1">PME · IT Helpdesk · RH · Collectivités locales</p></div>
+        <div class="tier-price-block text-right">
+          <div class="price">79€<span class="text-xl text-white/30 font-medium"> /mois</span></div>
+          <div class="price-sub">+ 150 € setup · +15 €/bot supp. · +5 €/50 docs supp.</div>
+        </div>
+      </div>
+      <p class="text-white/50 text-sm leading-relaxed mb-6 italic border-l-2 border-blue-400/30 pl-4">"Votre équipe répond toujours aux mêmes demandes de support. Chaque réponse prend 5 minutes. Oracle les traite en 5 secondes — et crée le ticket en même temps."</p>
+      <div class="feature-grid">
+        <div class="feature-item"><div class="feature-item-icon text-blue-400/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div><div><h4>1 bot inclus</h4><p>Teams, WhatsApp ou Telegram. +15 €/mois par bot supplémentaire.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-blue-400/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><h4>100 documents max</h4><p>PDF, TXT, MD, CSV, JSON. Catalogue, procédures, historique.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-blue-400/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><h4>MCP — Ressource statique</h4><p>Catalogue de réparations, procédures, prix. Le bot connaît tout, retrouve tout.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-blue-400/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div><h4>MCP Tools — Tickets & Emails</h4><p>Création automatique de tickets, envoi d'emails de confirmation. Zéro saisie manuelle.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-blue-400/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div><h4>PII Masking basique</h4><p>Filtrage des données personnelles avant traitement. Adapté aux usages PME.</p></div></div>
+        <div class="feature-item opacity-35"><div class="feature-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div><div><h4>LLM Judge</h4><p>Non disponible sur ce tier.</p></div></div>
+      </div>
+      <!-- Workflow MCP -->
+      <div class="mt-5 p-4 rounded-xl bg-blue-500/[0.04] border border-blue-500/12">
+        <p class="text-white/35 text-xs font-mono mb-3">// Workflow MCP — iFixit Bruxelles</p>
+        <div class="flex flex-wrap items-center gap-2 text-xs text-white/55">
+          <span class="px-2 py-1 bg-white/5 rounded">Client WhatsApp</span><span class="text-white/20">→</span>
+          <span class="px-2 py-1 bg-white/5 rounded">Diagnostic bot</span><span class="text-white/20">→</span>
+          <span class="px-2 py-1 bg-gold/10 rounded text-gold/70">Devis auto</span><span class="text-white/20">→</span>
+          <span class="px-2 py-1 bg-green-500/10 rounded text-green-400/70">Ticket créé</span><span class="text-white/20">→</span>
+          <span class="px-2 py-1 bg-green-500/10 rounded text-green-400/70">Email confirmé</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIER 2 ────────────────────────────────────────────────────────── -->
+    <div class="tier-section tier-section-sovereign reveal">
+      <div class="tier-header">
+        <div><div class="case-tier-tag tier-tag-sovereign mb-3">Tier 2</div><h2 class="font-heading text-3xl font-bold text-white">Sovereign</h2><p class="text-white/40 mt-1">Administrations · Universités · Hôpitaux · Grandes associations</p></div>
+        <div class="tier-price-block text-right">
+          <div class="price">499€<span class="text-xl text-white/30 font-medium"> /mois</span></div>
+          <div class="price-sub">+ 1 500–2 500 € setup · 0,10 €/page · +0,50 €/user actif/mois</div>
+        </div>
+      </div>
+      <p class="text-white/50 text-sm leading-relaxed mb-6 italic border-l-2 border-purple-400/30 pl-4">"Vos secrétariats sont débordés. Les mêmes questions reviennent chaque jour. Vos données appartiennent à votre institution — pas à un fournisseur cloud américain."</p>
+      <div class="feature-grid">
+        <div class="feature-item"><div class="feature-item-icon text-purple-400/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div><div><h4>3 bots inclus — Omnicanal</h4><p>Web, Discord, Teams, WhatsApp. Chaque bot couvre un public distinct.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-purple-400/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v16H4z M4 9h16M4 14h16M9 4v16"/></svg></div><div><h4>Ingestion illimitée</h4><p>Tous formats via Unstructured.io. 0,10 €/page pour le stock historique existant.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-purple-400/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><h4>5 ressources dynamiques MCP</h4><p>Connectées en temps réel. Quand un règlement change, le bot le sait immédiatement.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-purple-400/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div><h4>4 prompts métiers MCP</h4><p>Comportement adapté selon le contexte. Étudiant Erasmus, urgence admin, orientation master, IT interne.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-purple-400/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div><h4>PII Masking renforcé</h4><p>Détection étendue des données personnelles. Noms, adresses, données bancaires. Adapté au secteur public.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-purple-400/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div><h4>LLM Judge — Reference Based</h4><p>4 métriques évaluées automatiquement après chaque réponse. Persisté et traçable.</p></div></div>
+      </div>
+      <div class="mt-5 p-4 rounded-xl bg-purple-500/[0.04] border border-purple-500/12">
+        <p class="text-purple-300/50 text-xs font-mono mb-3">// Maintenance incluse</p>
+        <p class="text-white/40 text-sm">Quota 2h/mois incluses. Au-delà : 85 €/heure. VPS dédié avec monitoring actif et backup hebdomadaire.</p>
+      </div>
+    </div>
+
+    <!-- TIER 3 ────────────────────────────────────────────────────────── -->
+    <div class="tier-section tier-section-ultra reveal">
+      <div class="tier-header">
+        <div><div class="case-tier-tag tier-tag-ultra mb-3">Tier 3</div><h2 class="font-heading text-3xl font-bold text-white">Ultra</h2><p class="text-white/40 mt-1">Cabinets d'avocats · Compliance bancaire · Audit</p></div>
+        <div class="tier-price-block text-right">
+          <div class="price price-gold">1 999€<span class="text-xl text-white/30 font-medium"> /mois</span></div>
+          <div class="price-sub">+ 5 000 € setup · 10 000 pages incluses · 0,05 €/page au-delà</div>
+        </div>
+      </div>
+      <p class="text-white/50 text-sm leading-relaxed mb-6 italic border-l-2 border-gold/30 pl-4">"Vos associés facturent à 400 €/h. Chaque minute perdue à chercher une clause ou à rédiger une trame est une perte directe. Et vous ne pouvez pas vous permettre qu'un outil envoie vos dossiers hors de votre périmètre."</p>
+      <div class="feature-grid">
+        <div class="feature-item"><div class="feature-item-icon text-gold/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div><div><h4>Bots illimités</h4><p>Tous canaux via Chat SDK. Autant de surfaces que nécessaire.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-gold/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><h4>MCP Full Access — Ressources illimitées</h4><p>Recherche dans 50 000 documents en 8 secondes. Filtrage multi-critères sans code.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-gold/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div><h4>MCP Tools — Génération documentaire</h4><p>Trames de contrats, comparaison de versions, résumés exécutifs. Oracle supprime ce qui n'est pas votre cœur de métier.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-gold/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div><h4>Prompts métiers illimités</h4><p>Comportements sur mesure pour chaque spécialité, chaque type de client.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-gold/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div><h4>LLM Judge Multi-Agent</h4><p>3 agents LLM indépendants (Juridique, Technique, Synthèse) évaluent chaque réponse avant validation.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-gold/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><div><h4>PII Masking chirurgical (NER)</h4><p>Modèles NER lourds. Détection exhaustive de toutes les entités personnelles. Couverture &gt;99%.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-gold/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div><div><h4>Logs d'audit complets</h4><p>Chaque interaction est enregistrée et horodatée. Reconstituable intégralement.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-gold/60"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><h4>Infrastructure Cloud EU — RGPD Art. 44</h4><p>VPS haute performance isolé. Données garanties dans l'Union Européenne. Exigence légale pour le secteur juridique.</p></div></div>
+      </div>
+      <!-- ROI — cadrage -->
+      <div class="mt-5 p-5 rounded-xl bg-gold/[0.04] border border-gold/12">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6 flex-wrap">
+          <div><div class="text-gold font-heading text-3xl font-extrabold">80 000 €</div><div class="text-white/35 text-xs mt-1">de capacité de facturation récupérée/mois<br/>(10 associés × 2h gagnées × 400 €/h)</div></div>
+          <div class="text-white/15 text-2xl hidden sm:block">÷</div>
+          <div><div class="text-white font-heading text-3xl font-extrabold">1 999 €</div><div class="text-white/35 text-xs mt-1">abonnement mensuel</div></div>
+          <div class="text-white/15 text-2xl hidden sm:block">=</div>
+          <div><div class="text-green-400 font-heading text-3xl font-extrabold">ROI × 40</div><div class="text-white/35 text-xs mt-1">atteint en 3 jours</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIER 4 — Sur devis ───────────────────────────────────────────── -->
+    <div class="tier-section tier-section-custom reveal">
+      <div class="tier-header">
+        <div><div class="case-tier-tag tier-tag-starter mb-3" style="border-style:dashed">Tier 4</div><h2 class="font-heading text-3xl font-bold text-white">Custom</h2><p class="text-white/40 mt-1">Grands groupes · Besoins spécifiques · On-premise</p></div>
+        <div class="tier-price-block text-right"><div class="price text-white/60">Sur devis</div><div class="price-sub">Tarification selon périmètre</div></div>
+      </div>
+      <p class="text-white/50 text-sm leading-relaxed mb-6">Pour les organisations dont les exigences dépassent les tiers standards : déploiement sur vos propres serveurs, intégrations spécifiques, SLA garantis, fine-tuning de modèles dédiés.</p>
+      <div class="feature-grid">
+        <div class="feature-item"><div class="feature-item-icon text-white/35"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><div><h4>Déploiement on-premise</h4><p>Hébergement sur vos propres serveurs. Isolation totale de l'infrastructure.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-white/35"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg></div><div><h4>Connecteurs API spécifiques</h4><p>Intégration avec vos CRM, ERP, et systèmes propriétaires.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-white/35"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg></div><div><h4>Fine-tuning de modèles dédiés</h4><p>Entraînement d'embeddings sur votre domaine pour une précision maximale.</p></div></div>
+        <div class="feature-item"><div class="feature-item-icon text-white/35"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><h4>SLA garantis + Support 24/7</h4><p>Engagements de disponibilité contractuels. Équipe dédiée.</p></div></div>
+      </div>
+      <div class="mt-6 text-center">
+        <a href="mailto:contact@oracle.dlzteam.com" class="btn-tier btn-tier-outline inline-block px-10">Nous contacter →</a>
+      </div>
+    </div>
+
+    <!-- TABLEAU COMPARATIF ───────────────────────────────────────────── -->
+    <div class="glass-card rounded-3xl overflow-hidden reveal">
+      <div class="p-8 border-b border-white/8">
+        <h2 class="font-heading text-2xl font-bold text-white mb-1">Tableau comparatif</h2>
+        <p class="text-white/35 text-sm">Vue synthétique de toutes les fonctionnalités.</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-white/8">
+              <th class="text-left p-4 text-white/35 font-semibold min-w-[160px]">Fonctionnalité</th>
+              <th class="text-center p-4 text-white/45 font-semibold">Starter</th>
+              <th class="text-center p-4 text-blue-400/60 font-semibold">Essential</th>
+              <th class="text-center p-4 text-purple-400/60 font-semibold">Sovereign</th>
+              <th class="text-center p-4 text-gold/70 font-semibold">Ultra</th>
+              <th class="text-center p-4 text-white/30 font-semibold">Custom</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/[0.04]">
+            <tr><td class="p-4 text-white/55">Abonnement mensuel</td><td class="p-4 text-center text-white font-semibold">29 €</td><td class="p-4 text-center text-white font-semibold">79 €</td><td class="p-4 text-center text-white font-semibold">499 €</td><td class="p-4 text-center text-gold font-semibold">1 999 €</td><td class="p-4 text-center text-white/40">Sur devis</td></tr>
+            <tr class="bg-white/[0.01]"><td class="p-4 text-white/55">Bots inclus</td><td class="p-4 text-center text-white/55">1</td><td class="p-4 text-center text-white/55">1</td><td class="p-4 text-center text-white/55">3</td><td class="p-4 text-center text-white/55">Illimités</td><td class="p-4 text-center text-white/40">Illimités</td></tr>
+            <tr><td class="p-4 text-white/55">Documents</td><td class="p-4 text-center text-white/55">20</td><td class="p-4 text-center text-white/55">100</td><td class="p-4 text-center text-white/55">Illimité</td><td class="p-4 text-center text-white/55">Illimité</td><td class="p-4 text-center text-white/40">Illimité</td></tr>
+            <tr class="bg-white/[0.01]"><td class="p-4 text-white/55">MCP Ressources</td><td class="p-4 text-center text-white/55">1 statique</td><td class="p-4 text-center text-white/55">1 statique</td><td class="p-4 text-center text-white/55">5 dynamiques</td><td class="p-4 text-center text-white/55">Illimitées</td><td class="p-4 text-center text-white/40">Illimitées</td></tr>
+            <tr><td class="p-4 text-white/55">MCP Tools</td><td class="p-4 text-center text-white/25">—</td><td class="p-4 text-center text-white/55">Tickets, emails</td><td class="p-4 text-center text-white/55">Actions standard</td><td class="p-4 text-center text-white/55">Full access</td><td class="p-4 text-center text-white/40">Sur mesure</td></tr>
+            <tr class="bg-white/[0.01]"><td class="p-4 text-white/55">MCP Prompts</td><td class="p-4 text-center text-white/25">—</td><td class="p-4 text-center text-white/25">—</td><td class="p-4 text-center text-white/55">4 configurés</td><td class="p-4 text-center text-white/55">Illimités</td><td class="p-4 text-center text-white/40">Sur mesure</td></tr>
+            <tr><td class="p-4 text-white/55">LLM Judge</td><td class="p-4 text-center text-white/25">—</td><td class="p-4 text-center text-white/25">—</td><td class="p-4 text-center text-white/55">Reference Based</td><td class="p-4 text-center text-white/55">Multi-Agent</td><td class="p-4 text-center text-white/40">Multi-Agent</td></tr>
+            <tr class="bg-white/[0.01]"><td class="p-4 text-white/55">PII Masking</td><td class="p-4 text-center text-white/55">Basique</td><td class="p-4 text-center text-white/55">Basique</td><td class="p-4 text-center text-white/55">Renforcé</td><td class="p-4 text-center text-white/55">Chirurgical (NER)</td><td class="p-4 text-center text-white/40">Chirurgical</td></tr>
+            <tr><td class="p-4 text-white/55">Infrastructure</td><td class="p-4 text-center text-white/55">Cloud mutualisé</td><td class="p-4 text-center text-white/55">Cloud mutualisé</td><td class="p-4 text-center text-white/55">VPS dédié EU</td><td class="p-4 text-center text-white/55">VPS HP EU</td><td class="p-4 text-center text-white/40">On-premise</td></tr>
+            <tr class="bg-white/[0.01]"><td class="p-4 text-white/55">RGPD Art. 44</td><td class="p-4 text-center text-white/25">—</td><td class="p-4 text-center text-white/25">—</td><td class="p-4 text-center text-white/25">—</td><td class="p-4 text-center text-gold/70 font-semibold">Garanti EU</td><td class="p-4 text-center text-white/40">Garanti</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="py-10 border-t border-white/8">
+  <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6">
+    <div class="flex items-center gap-2"><span class="text-gold text-lg">◈</span><span class="font-heading text-lg font-bold uppercase text-white">Oracle</span></div>
+    <p class="text-sm text-white/25 text-center">© 2026 HeLMO Oracle · Projet Académique</p>
+    <a href="index.html" class="footer-back">← Retour à l'accueil</a>
+  </div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  }, { threshold: 0.06 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  const h = document.getElementById('site-header');
+  window.addEventListener('scroll', () => h?.classList.toggle('scrolled', scrollY > 60), { passive: true });
+});
+</script>
+</body>
+</html>
