@@ -39,7 +39,8 @@ export function ChatInput({
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   };
 
-  const canSubmit = value.trim().length > 0 && !isLoading;
+  const MAX_CHARS = 300;
+  const canSubmit = value.trim().length > 0 && !isLoading && value.length <= MAX_CHARS;
 
   return (
     <form onSubmit={onSubmit} className="relative">
@@ -82,6 +83,11 @@ export function ChatInput({
       </div>
       <p className="text-center text-xs text-[var(--text-subtle)] mt-1.5">
         Entrée pour envoyer · Shift+Entrée pour un saut de ligne
+        {value.length > MAX_CHARS * 0.8 && (
+          <span className={value.length > MAX_CHARS ? " text-red-400" : " text-yellow-400"}>
+            {" "}· {value.length}/{MAX_CHARS}
+          </span>
+        )}
       </p>
     </form>
   );

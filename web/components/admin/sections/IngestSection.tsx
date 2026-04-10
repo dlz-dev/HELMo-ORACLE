@@ -182,7 +182,22 @@ export function IngestSection({
             webkitdirectory=""
             multiple
             className="hidden"
-            onChange={(e) => onFilesChange(e.target.files)}
+            onChange={(e) => {
+              const MAX_MB = 2;
+              const files = e.target.files;
+              if (!files) return onFilesChange(null);
+              const oversized = Array.from(files).filter(
+                (f) => f.size > MAX_MB * 1024 * 1024
+              );
+              if (oversized.length > 0) {
+                alert(
+                  `Fichier(s) trop volumineux (max ${MAX_MB}MB) :\n${oversized.map((f) => f.name).join("\n")}`
+                );
+                e.target.value = "";
+                return onFilesChange(null);
+              }
+              onFilesChange(files);
+            }}
           />
 
           {/* File preview */}

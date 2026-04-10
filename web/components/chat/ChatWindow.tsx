@@ -57,6 +57,8 @@ export function ChatWindow({ sessionId, onSessionCreated }: Props) {
     currentSessionRef.current = sessionId;
   }, [sessionId]);
 
+  const [limitReached, setLimitReached] = useState(false);
+
   const {
     messages,
     input,
@@ -76,6 +78,9 @@ export function ChatWindow({ sessionId, onSessionCreated }: Props) {
         currentSessionRef.current = newId;
         onSessionCreated(newId);
       }
+    },
+    onError: (err) => {
+      if (err.message.includes("429")) setLimitReached(true);
     },
   });
 
@@ -217,6 +222,12 @@ export function ChatWindow({ sessionId, onSessionCreated }: Props) {
           </div>
         )}
       </div>
+
+      {limitReached && (
+        <div className="text-center text-sm py-2 px-4 bg-[var(--gold-glow)] border-t border-[var(--gold)]/20 text-[var(--gold)]">
+          Limite de 5 messages atteinte. Connectez-vous pour continuer.
+        </div>
+      )}
 
       <div className="border-t border-default bg-surface/50 backdrop-blur-sm">
         <div className="max-w-3xl mx-auto px-4 py-3">
