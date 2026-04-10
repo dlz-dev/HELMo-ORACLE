@@ -498,10 +498,7 @@ async def chat(req: ChatRequest):
     model = req.model or config.get("llm", {}).get("default_model", "")
     masked_message = pii.mask_text(req.message)
     session.setdefault("messages", []).append({"role": "user", "content": masked_message})
-    try:
-        request_sm.save(session)
-    except Exception:
-        pass  # user_id non Supabase (ex: Roblox), session non persistée
+    request_sm.save(session)
 
     async def event_stream():
         _chat_start = time.time()
@@ -590,6 +587,24 @@ async def chat(req: ChatRequest):
             "X-Session-Id": session["session_id"],
         }
     )
+
+
+@app.post("/chat/sync")
+async def chat_sync(req: ChatRequest):
+    """Endpoint synchrone pour clients sans support SSE (ex: Roblox)."""
+    model = req.model or config.get("llm", {}).get("default_model", "")
+    masked_message = pii.mask_text(req.message)
+    session = {"session_id": "roblox", "messages": [{"role": "user", "content": masked_message}]}
+    try:
+        response, _ = await asyncio.to_thread(
+            _run_agent,
+            session=session, masked_message=masked_message, provider=req.provider,
+            model=model, temperature=req.temperature, k_final=req.k_final,
+        )
+    except Exception as e:
+        logger.error(f"Erreur chat/sync: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"response": response}
 
 
 @app.get("/archives")
