@@ -10,6 +10,10 @@ const mockClient = {
     signOut: async () => {},
     signInAnonymously: async () => ({ error: null }),
     signInWithPassword: async () => ({ error: null }),
+    signInWithOAuth: async (options: any) => {
+      console.log("Mock OAuth login with:", options);
+      return { error: null };
+    },
     signUp: async () => ({ data: { user: null }, error: null }),
     getUser: async () => ({ data: { user: { id: "local_user" } } }),
   },
