@@ -60,6 +60,8 @@ class LateChunkingEmbedder:
             json={"model": self.model, "input": texts},
             timeout=300,
         )
+        if not resp.ok:
+            logger.error("Ollama /api/embed error %s: %s", resp.status_code, resp.text[:500])
         resp.raise_for_status()
         return resp.json()["embeddings"]
 
