@@ -5,11 +5,19 @@ import { useMediaQuery } from "react-responsive";
 import { SessionSidebar } from "./SessionSidebar";
 import { ChatWindow } from "./ChatWindow";
 import { PanelLeftOpen, PanelLeftClose } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export function ChatInterface() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setIsGuest(!data.user);
+    });
+  }, []);
 
   useEffect(() => {
     if (isMobile) setSidebarOpen(false);
@@ -54,7 +62,7 @@ export function ChatInterface() {
           )}
         </button>
 
-        <ChatWindow sessionId={sessionId} onSessionCreated={setSessionId} />
+        <ChatWindow sessionId={sessionId} onSessionCreated={setSessionId} isGuest={isGuest} />
       </div>
     </div>
   );

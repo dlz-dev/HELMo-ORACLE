@@ -32,9 +32,10 @@ const STARTER_PROMPTS = [
 interface Props {
   sessionId: string | null;
   onSessionCreated: (id: string) => void;
+  isGuest?: boolean;
 }
 
-export function ChatWindow({ sessionId, onSessionCreated }: Props) {
+export function ChatWindow({ sessionId, onSessionCreated, isGuest = false }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [cotOpen, setCotOpen] = useState(false);
   const [cotResults, setCotResults] = useState<CotResult[]>([]);
@@ -223,7 +224,7 @@ export function ChatWindow({ sessionId, onSessionCreated }: Props) {
         )}
       </div>
 
-      {limitReached && (
+      {(limitReached || (isGuest && messages.filter((m) => m.role === "user").length >= 5)) && (
         <div className="text-center text-sm py-2 px-4 bg-[var(--gold-glow)] border-t border-[var(--gold)]/20 text-[var(--gold)]">
           Limite de 5 messages atteinte. Connectez-vous pour continuer.
         </div>
@@ -235,7 +236,7 @@ export function ChatWindow({ sessionId, onSessionCreated }: Props) {
             value={input}
             onChange={handleInputChange}
             onSubmit={handleSubmit}
-            isLoading={isLoading}
+            isLoading={isLoading || (isGuest && messages.filter((m) => m.role === "user").length >= 5)}
           >
             {cotButton}
           </ChatInput>
