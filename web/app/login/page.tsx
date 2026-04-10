@@ -71,14 +71,26 @@ export default function LoginPage() {
 
   async function handleGoogleLogin() {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (error) {
-      setError(error.message);
+    setError("");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      if (error) {
+        console.error("Supabase Auth Error:", error);
+        setError(error.message);
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("Unexpected Auth Error:", err);
+      setError("Une erreur inattendue est survenue.");
       setLoading(false);
     }
   }
