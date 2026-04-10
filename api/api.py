@@ -592,9 +592,20 @@ async def chat(req: ChatRequest):
 @app.post("/chat/sync")
 async def chat_sync(req: ChatRequest):
     """Endpoint synchrone pour clients sans support SSE (ex: Roblox)."""
+    import uuid as _uuid
     model = req.model or config.get("llm", {}).get("default_model", "")
     masked_message = pii.mask_text(req.message)
-    session = {"session_id": "roblox", "messages": [{"role": "user", "content": masked_message}]}
+    session = {
+        "session_id": str(_uuid.uuid4()),
+        "user_id": None,
+        "title": "Roblox",
+        "provider": req.provider,
+        "model": model,
+        "messages": [{"role": "user", "content": masked_message}],
+        "summary": "",
+        "created_at": "",
+        "updated_at": "",
+    }
     try:
         response, _ = await asyncio.to_thread(
             _run_agent,
