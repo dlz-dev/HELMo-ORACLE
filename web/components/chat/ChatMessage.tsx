@@ -89,7 +89,13 @@ export function ChatMessage({
               prose-code:bg-[var(--bg-subtle)] prose-code:px-1.5 prose-code:rounded
               prose-code:text-xs prose-code:before:content-none prose-code:after:content-none"
             >
-              <Streamdown>{content}</Streamdown>
+              <Streamdown
+                animated
+                isAnimating={isLoading && isLast}
+                caret="circle"
+              >
+                {content}
+              </Streamdown>
             </div>
           )}
         </div>

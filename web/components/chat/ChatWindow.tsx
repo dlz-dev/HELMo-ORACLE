@@ -6,7 +6,7 @@ import React from "react";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { CotDrawer } from "./CotDrawer";
-import { Sparkles, BookOpen } from "lucide-react";
+import { ChevronRight, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -33,12 +33,14 @@ interface Props {
   sessionId: string | null;
   onSessionCreated: (id: string) => void;
   isGuest?: boolean;
+  firstName?: string;
 }
 
 export function ChatWindow({
   sessionId,
   onSessionCreated,
   isGuest = false,
+  firstName = "",
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [cotOpen, setCotOpen] = useState(false);
@@ -153,40 +155,128 @@ export function ChatWindow({
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto">
         {isEmpty ? (
-          <div className="flex flex-col items-center justify-center h-full px-6 py-8 animate-fade-in">
-            {/* Oracle header */}
-            <div className="text-center mb-8 space-y-3">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--gold-glow)] border border-[var(--gold)]/20">
-                <span className="text-[var(--gold)] text-3xl">◈</span>
-              </div>
-              <div>
-                <h2 className="font-cinzel text-lg font-semibold text-[var(--text)] tracking-widest uppercase">
-                  L'Oracle
-                </h2>
-                <p className="text-sm text-[var(--text-muted)] mt-1">
-                  Pose ta question sur Dofus, je consulte les archives
-                </p>
+          <div className="relative flex flex-col items-center justify-center h-full px-6 py-8 overflow-hidden animate-fade-in">
+            {/* Gradient background */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background:
+                  "radial-gradient(ellipse 80% 60% at 50% 10%, rgba(201,168,76,0.18) 0%, rgba(201,168,76,0.05) 45%, transparent 70%)",
+              }}
+            />
+
+            {/* Orb */}
+            <div
+              className="relative mb-10 orb-float animate-fade-up"
+              style={{ width: 200, height: 200, animationDelay: "0ms" }}
+            >
+              {/* Ambient halo — large soft glow behind everything */}
+              <div
+                className="absolute rounded-full orb-pulse"
+                style={{
+                  inset: "-55%",
+                  background:
+                    "radial-gradient(circle, rgba(201,168,76,0.28) 0%, rgba(201,168,76,0.06) 50%, transparent 70%)",
+                  filter: "blur(24px)",
+                  pointerEvents: "none",
+                }}
+              />
+
+              {/* Ring 1 — gold */}
+              <div
+                className="absolute rounded-full orb-ring-1"
+                style={{
+                  inset: 0,
+                  border: "1px solid rgba(201,168,76,0.35)",
+                }}
+              />
+              {/* Ring 2 — subtler gold, reverse */}
+              <div
+                className="absolute rounded-full orb-ring-2"
+                style={{
+                  inset: 20,
+                  border: "1px solid rgba(201,168,76,0.18)",
+                }}
+              />
+
+              {/* Core sphere */}
+              <div
+                className="absolute rounded-full"
+                style={{
+                  inset: 30,
+                  background:
+                    "radial-gradient(circle at 33% 28%, rgba(255,248,180,0.92) 0%, rgba(225,180,55,0.75) 18%, rgba(201,168,76,0.5) 42%, rgba(160,110,20,0.2) 68%, transparent 100%)",
+                  boxShadow:
+                    "0 0 45px rgba(201,168,76,0.6), 0 0 90px rgba(201,168,76,0.28), 0 0 150px rgba(201,168,76,0.1)",
+                  border: "1px solid rgba(201,168,76,0.3)",
+                }}
+              >
+                {/* Specular highlight */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "14%",
+                    left: "16%",
+                    width: "30%",
+                    height: "20%",
+                    borderRadius: "50%",
+                    background:
+                      "radial-gradient(ellipse, rgba(255,255,255,0.7) 0%, transparent 100%)",
+                    filter: "blur(4px)",
+                  }}
+                />
               </div>
             </div>
 
-            {/* Starter prompts */}
-            <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-2xl">
-              {STARTER_PROMPTS.map((prompt, i) => (
-                <button
-                  key={prompt}
-                  onClick={() => append({ role: "user", content: prompt })}
-                  className="group flex items-start gap-3 px-4 py-3.5 rounded-xl text-left border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--gold)]/30 hover:bg-[var(--gold-glow)] transition-all duration-150 animate-fade-up"
-                  style={{ animationDelay: `${i * 60}ms` }}
-                >
-                  <Sparkles
-                    size={14}
-                    className="mt-0.5 flex-shrink-0 text-[var(--gold)] opacity-50 group-hover:opacity-100 transition-opacity"
-                  />
-                  <span className="text-sm text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors leading-snug">
-                    {prompt}
-                  </span>
-                </button>
-              ))}
+            {/* Title + description */}
+            <div className="relative text-center mb-8 space-y-2 animate-fade-up" style={{ animationDelay: "60ms" }}>
+              <h2 className="font-cinzel text-3xl font-semibold text-[var(--text)] tracking-wide">
+                Bonjour{firstName ? ` ${firstName}` : ""}&nbsp;!
+              </h2>
+              <p className="text-sm text-[var(--text-muted)]">
+                Pose ta question sur Dofus, je consulte les archives
+              </p>
+            </div>
+
+            {/* Floating input */}
+            <div
+              className="relative w-full max-w-2xl animate-fade-up"
+              style={{
+                animationDelay: "120ms",
+                filter: "drop-shadow(0 8px 32px rgba(201,168,76,0.12)) drop-shadow(0 2px 8px rgba(0,0,0,0.12))",
+              }}
+            >
+              <ChatInput
+                value={input}
+                onChange={handleInputChange}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+              />
+            </div>
+
+            {/* Suggestions */}
+            <div className="relative w-full max-w-2xl mt-4 animate-fade-up" style={{ animationDelay: "180ms", paddingLeft: "12px", paddingRight: "12px" }}>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-subtle)] mb-2 px-1">
+                Suggestions
+              </p>
+              <ul className="space-y-0.5">
+                {STARTER_PROMPTS.map((prompt) => (
+                  <li key={prompt}>
+                    <button
+                      onClick={() => append({ role: "user", content: prompt })}
+                      className="group w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg
+                                 text-sm text-[var(--text-muted)] hover:text-[var(--text)]
+                                 hover:bg-[var(--gold-glow)] transition-all duration-150"
+                    >
+                      <ChevronRight
+                        size={12}
+                        className="flex-shrink-0 text-[var(--gold)] opacity-40 group-hover:opacity-100 transition-opacity"
+                      />
+                      {prompt}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         ) : (
@@ -208,17 +298,33 @@ export function ChatWindow({
                   <span className="text-[var(--gold)] text-xs">◈</span>
                 </div>
                 <div className="px-4 py-3 rounded-2xl rounded-tl-sm border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-muted)] flex items-center gap-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    className="text-[var(--gold)] flex-shrink-0"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M12 1A11 11 0 1 0 23 12 11 11 0 0 0 12 1Zm0 19a8 8 0 1 1 8-8 8 8 0 0 1-8 8Z"
+                      opacity=".25"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M12 4a8 8 0 0 1 7.89 6.7A1.53 1.53 0 0 0 21.38 12h0a1.5 1.5 0 0 0 1.48-1.75 11 11 0 0 0-21.72 0A1.5 1.5 0 0 0 2.62 12h0a1.53 1.53 0 0 0 1.49-1.3A8 8 0 0 1 12 4Z"
+                    >
+                      <animateTransform
+                        attributeName="transform"
+                        dur="0.75s"
+                        repeatCount="indefinite"
+                        type="rotate"
+                        values="0 12 12;360 12 12"
+                      />
+                    </path>
+                  </svg>
                   <span className="text-xs">
                     L'Oracle consulte les archives
-                  </span>
-                  <span className="flex gap-1">
-                    {[0, 1, 2].map((i) => (
-                      <span
-                        key={`dot-${i}`}
-                        className="w-1.5 h-1.5 rounded-full bg-[var(--gold)]/50 animate-bounce"
-                        style={{ animationDelay: `${i * 150}ms` }}
-                      />
-                    ))}
                   </span>
                 </div>
               </div>
@@ -235,21 +341,23 @@ export function ChatWindow({
         </div>
       )}
 
-      <div className="border-t border-default bg-surface/50 backdrop-blur-sm">
-        <div className="max-w-3xl mx-auto px-4 py-3">
-          <ChatInput
-            value={input}
-            onChange={handleInputChange}
-            onSubmit={handleSubmit}
-            isLoading={
-              isLoading ||
-              (isGuest && messages.filter((m) => m.role === "user").length >= 5)
-            }
-          >
-            {cotButton}
-          </ChatInput>
+      {!isEmpty && (
+        <div className="border-t border-default bg-surface/50 backdrop-blur-sm">
+          <div className="max-w-3xl mx-auto px-4 py-3">
+            <ChatInput
+              value={input}
+              onChange={handleInputChange}
+              onSubmit={handleSubmit}
+              isLoading={
+                isLoading ||
+                (isGuest && messages.filter((m) => m.role === "user").length >= 5)
+              }
+            >
+              {cotButton}
+            </ChatInput>
+          </div>
         </div>
-      </div>
+      )}
 
       <CotDrawer
         open={cotOpen}

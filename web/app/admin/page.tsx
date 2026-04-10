@@ -2,7 +2,7 @@ import { AdminPanel } from "@/components/admin/AdminPanel";
 
 export default function AdminPage() {
   return (
-    <div className="h-[calc(100vh-56px)] overflow-hidden">
+    <div className="h-screen overflow-hidden">
       <AdminPanel />
     </div>
   );
