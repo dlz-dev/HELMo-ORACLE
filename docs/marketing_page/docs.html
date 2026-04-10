@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Oracle — Documentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<!-- GSAP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<!-- Marked.js v4 — API stable avec renderers string -->
+<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+<!-- Prism.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+<!-- Mermaid.js — diagrammes en dark theme -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<!-- Contenu Markdown pré-embarqué (généré) -->
+<script src="doc-content.js"></script>
+<!-- Styles docs -->
+<link rel="stylesheet" href="docs.css"/>
+</head>
+<body>
+<div class="noise-overlay" aria-hidden="true"></div>
+
+<!-- ── TOP NAV ──────────────────────────────────────────────────────────── -->
+<header class="docs-topnav">
+  <div class="docs-topnav-inner">
+    <a href="index.html" class="docs-logo">
+      <span class="text-gold">◈</span>
+      <span class="font-heading">Oracle</span>
+      <span class="docs-badge">Docs</span>
+    </a>
+    <nav class="docs-topnav-links">
+      <a href="index.html">Accueil</a>
+      <a href="rag.html">Architecture</a>
+      <a href="abonnements.html">Abonnements</a>
+      <a href="https://oracle.dlzteam.com/" class="btn-cta-top">Accéder au Chat →</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ── LAYOUT ───────────────────────────────────────────────────────────── -->
+<div class="docs-layout">
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────────────────────── -->
+  <aside class="docs-sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <span class="sidebar-label">Vue d'ensemble</span>
+      <ul>
+        <li><a href="#" class="sidebar-link active" data-doc="readme">Introduction</a></li>
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <span class="sidebar-label">Composants</span>
+      <ul>
+        <li><a href="#" class="sidebar-link" data-doc="ingestion">Ingestion</a></li>
+        <li><a href="#" class="sidebar-link" data-doc="hybrid_search">Recherche Hybride</a></li>
+        <li><a href="#" class="sidebar-link" data-doc="pii_masking">PII Masking</a></li>
+        <li><a href="#" class="sidebar-link" data-doc="human_in_the_loop">Human-in-the-Loop</a></li>
+        <li><a href="#" class="sidebar-link" data-doc="judge">LLM Judge</a></li>
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <span class="sidebar-label">Intégrations</span>
+      <ul>
+        <li><a href="#" class="sidebar-link" data-doc="ai_sdk">Vercel AI SDK</a></li>
+        <li><a href="#" class="sidebar-link" data-doc="api">API Reference</a></li>
+        <li><a href="#" class="sidebar-link" data-doc="postrest">Architecture Backend</a></li>
+        <li><a href="#" class="sidebar-link" data-doc="rls">Row Level Security</a></li>
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <span class="sidebar-label">Équipe</span>
+      <ul>
+        <li><a href="#" class="sidebar-link" data-doc="decision">Décisions Techniques</a></li>
+        <li><a href="#" class="sidebar-link" data-doc="workflow">Workflow & Diagrammes</a></li>
+      </ul>
+    </div>
+
+    <!-- TOC dynamique -->
+    <div class="sidebar-section" id="toc-section" style="display:none">
+      <span class="sidebar-label">Sur cette page</span>
+      <ul id="toc-list"></ul>
+    </div>
+  </aside>
+
+  <!-- ── MAIN CONTENT ────────────────────────────────────────────────────── -->
+  <main class="docs-main" id="docs-main">
+
+    <!-- Zone contenu Markdown -->
+    <article class="docs-content" id="docs-content">
+      <div id="md-body"></div>
+    </article>
+
+  </main>
+</div>
+
+<script src="doc-viewer.js"></script>
+</body>
+</html>

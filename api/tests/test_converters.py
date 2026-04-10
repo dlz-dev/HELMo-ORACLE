@@ -175,13 +175,13 @@ class TestProcessTextFile(unittest.TestCase):
 class TestParseJson(unittest.TestCase):
 
     def test_dict_with_list_of_objects(self):
-        """Teste un dictionnaire contenant une liste d'objets et l'extraction de 'id', 'name' ou 'nom'."""
+        """Teste un dictionnaire contenant une liste d'objets groupée en batch."""
         json_data = {
             "utilisateurs": [
                 {"id": 101, "role": "admin"},
                 {"name": "Alice", "age": 30},
                 {"nom": "Bob", "job": "dev"},
-                {"age": 25}  # Pas d'identifiant
+                {"age": 25}
             ]
         }
         tmp_path = create_temp_file(json.dumps(json_data), ".json")
@@ -190,13 +190,44 @@ class TestParseJson(unittest.TestCase):
         try:
             result = parse_json(tmp_path)
 
+            self.assertEqual(len(result), 1)
+
+            expected_text = json.dumps(json_data["utilisateurs"], ensure_ascii=False, separators=(",", ":"))
+            self.assertEqual(result[0][0], expected_text)
+            self.assertEqual(result[0][1], {"source": file_name, "category": "utilisateurs"})
+
+        finally:
+            os.remove(tmp_path)
+
+    def test_dict_with_list_of_objects_large(self):
+        """Teste le découpage d'une liste d'objets quand le batch est trop volumineux."""
+        json_data = {
+            "utilisateurs": [
+                {"id": 101, "role": "admin", "desc": "A" * 100},
+                {"name": "Alice", "age": 30, "desc": "B" * 100},
+                {"nom": "Bob", "job": "dev", "desc": "C" * 100},
+                {"age": 25, "desc": "D" * 100}
+            ]
+        }
+        tmp_path = create_temp_file(json.dumps(json_data), ".json")
+        file_name = os.path.basename(tmp_path)
+
+        try:
+            # Force a very small chunk_size to trigger fallback
+            result = parse_json(tmp_path, chunk_size=10, batch_size=4)
+
             self.assertEqual(len(result), 4)
 
-            self.assertEqual(result[0][0], '{"id": 101, "role": "admin"}')
+            self.assertIn('{"id":101,"role":"admin"', result[0][0])
             self.assertEqual(result[0][1], {"source": file_name, "category": "utilisateurs", "item_name": "101"})
 
+            self.assertIn('{"name":"Alice","age":30', result[1][0])
             self.assertEqual(result[1][1], {"source": file_name, "category": "utilisateurs", "item_name": "Alice"})
+
+            self.assertIn('{"nom":"Bob","job":"dev"', result[2][0])
             self.assertEqual(result[2][1], {"source": file_name, "category": "utilisateurs", "item_name": "Bob"})
+
+            self.assertIn('{"age":25', result[3][0])
             self.assertEqual(result[3][1], {"source": file_name, "category": "utilisateurs"})
 
         finally:
@@ -215,7 +246,7 @@ class TestParseJson(unittest.TestCase):
             result = parse_json(tmp_path)
             self.assertEqual(len(result), 2)
 
-            self.assertEqual(result[0][0], '{"theme": "dark", "lang": "fr"}')
+            self.assertEqual(result[0][0], '{"theme":"dark","lang":"fr"}')
             self.assertEqual(result[0][1], {"source": file_name, "category": "config"})
 
             self.assertEqual(result[1][0], "2.0")
@@ -235,13 +266,11 @@ class TestParseJson(unittest.TestCase):
 
         try:
             result = parse_json(tmp_path)
-            self.assertEqual(len(result), 2)
+            self.assertEqual(len(result), 1)
 
-            self.assertEqual(result[0][0], '{"id": "A1", "value": 10}')
-            self.assertEqual(result[0][1], {"source": file_name, "item_name": "A1"})
-
-            self.assertEqual(result[1][0], '{"value": 20}')
-            self.assertEqual(result[1][1], {"source": file_name})
+            expected_text = json.dumps(json_data, ensure_ascii=False, separators=(",", ":"))
+            self.assertEqual(result[0][0], expected_text)
+            self.assertEqual(result[0][1], {"source": file_name})
 
         finally:
             os.remove(tmp_path)
