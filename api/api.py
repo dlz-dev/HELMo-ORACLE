@@ -498,7 +498,10 @@ async def chat(req: ChatRequest):
     model = req.model or config.get("llm", {}).get("default_model", "")
     masked_message = pii.mask_text(req.message)
     session.setdefault("messages", []).append({"role": "user", "content": masked_message})
-    request_sm.save(session)
+    try:
+        request_sm.save(session)
+    except Exception:
+        pass  # user_id non Supabase (ex: Roblox), session non persistée
 
     async def event_stream():
         _chat_start = time.time()
