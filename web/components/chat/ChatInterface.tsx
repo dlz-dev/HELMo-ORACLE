@@ -62,7 +62,11 @@ export function ChatInterface() {
           )}
         </button>
 
-        <ChatWindow sessionId={sessionId} onSessionCreated={setSessionId} isGuest={isGuest} />
+        <ChatWindow
+          sessionId={sessionId}
+          onSessionCreated={setSessionId}
+          isGuest={isGuest}
+        />
       </div>
     </div>
   );

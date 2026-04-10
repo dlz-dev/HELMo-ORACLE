@@ -29,9 +29,11 @@ export async function GET(request: NextRequest) {
     if (!error) {
       return response;
     }
-    
+
     console.error("Auth callback error:", error);
-    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`);
+    return NextResponse.redirect(
+      `${origin}/login?error=${encodeURIComponent(error.message)}`,
+    );
   }
 
   return NextResponse.redirect(`${origin}/login?error=No code provided`);
