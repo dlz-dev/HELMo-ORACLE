@@ -57,7 +57,7 @@ class LateChunkingEmbedder:
         """Single HTTP call to Ollama /api/embed for a list of texts."""
         resp = requests.post(
             f"{self.base_url}/api/embed",
-            json={"model": self.model, "input": texts},
+            json={"model": self.model, "input": texts, "truncate": True},
             timeout=300,
         )
         if not resp.ok:
