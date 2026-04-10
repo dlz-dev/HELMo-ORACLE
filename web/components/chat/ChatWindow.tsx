@@ -7,11 +7,11 @@ import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import {
   ChevronRight,
-  ScanSearchIcon,
-  LayersIcon,
-  DatabaseIcon,
-  ArrowUpDownIcon,
-  PenLineIcon,
+  ScanSearch,
+  Layers,
+  Database,
+  ArrowUpDown,
+  PenLine,
 } from "lucide-react";
 import {
   ChainOfThought,
@@ -21,11 +21,11 @@ import {
 // ── Pipeline steps ────────────────────────────────────────────────────────────
 
 const PIPELINE_STEPS = [
-  { id: "analyse", label: "Analyse de la question", Icon: ScanSearchIcon },
-  { id: "embedding", label: "Génération de l'embedding", Icon: LayersIcon },
-  { id: "retrieval", label: "Recherche dans les archives", Icon: DatabaseIcon },
-  { id: "reranking", label: "Reranking des résultats", Icon: ArrowUpDownIcon },
-  { id: "answer", label: "Rédaction de la réponse", Icon: PenLineIcon },
+  { id: "analyse", label: "Analyse de la question", Icon: ScanSearch },
+  { id: "embedding", label: "Génération de l'embedding", Icon: Layers },
+  { id: "retrieval", label: "Recherche dans les archives", Icon: Database },
+  { id: "reranking", label: "Reranking des résultats", Icon: ArrowUpDown },
+  { id: "answer", label: "Rédaction de la réponse", Icon: PenLine },
 ] as const;
 
 const STEP_IDS = PIPELINE_STEPS.map(
@@ -63,6 +63,8 @@ export function ChatWindow({
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [cotResults, setCotResults] = useState<CotResult[]>([]);
+  const [completedSteps, setCompletedSteps] = useState<string[]>([]);
+  const prevMsgCountRef = useRef(0);
 
   // Lit la config depuis localStorage (sauvegardée depuis l'admin)
   const getOracleConfig = () => {
@@ -112,18 +114,27 @@ export function ChatWindow({
     },
   });
 
-  // Extrait le dernier CoT + pipeline step depuis les annotations AI SDK
+  // Extrait CoT + pipeline steps depuis les annotations AI SDK
   useEffect(() => {
     if (!data?.length) return;
-    const last = [...data].reverse().find((d: any) => d?.cotResults);
-    if (last) setCotResults((last as any).cotResults);
+    const lastCot = [...data].reverse().find((d: any) => d?.cotResults);
+    if (lastCot) setCotResults((lastCot as any).cotResults);
     const lastStep = [...data].reverse().find((d: any) => d?.pipelineStep);
-    if (lastStep) setCurrentPipelineStep((lastStep as any).pipelineStep);
+    if (lastStep) {
+      const step = (lastStep as any).pipelineStep as string;
+      setCurrentPipelineStep(step);
+      // Accumule toutes les étapes jusqu'à celle-ci (dans l'ordre)
+      const idx = STEP_IDS.indexOf(step);
+      if (idx >= 0) setCompletedSteps(STEP_IDS.slice(0, idx + 1) as string[]);
+    }
   }, [data]);
 
-  // Reset pipeline step quand un nouveau message commence
+  // Reset au début d'une nouvelle requête
   useEffect(() => {
-    if (isLoading) setCurrentPipelineStep(null);
+    if (isLoading) {
+      setCurrentPipelineStep(null);
+      setCompletedSteps([]);
+    }
   }, [isLoading]);
 
   useEffect(() => {
@@ -146,8 +157,14 @@ export function ChatWindow({
       .catch((err) => console.error("Erreur chargement session:", err));
   }, [sessionId, setMessages]);
 
+  // Scroll : smooth uniquement quand un nouveau message est ajouté,
+  // instant pendant le streaming (évite le jank)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const isNewMessage = messages.length > prevMsgCountRef.current;
+    prevMsgCountRef.current = messages.length;
+    bottomRef.current?.scrollIntoView({
+      behavior: isNewMessage ? "smooth" : "instant",
+    });
   }, [messages]);
 
   const isEmpty = messages.length === 0;
@@ -306,6 +323,13 @@ export function ChatWindow({
                   !isLoading &&
                   i === messages.length - 1
                     ? cotResults
+                    : undefined
+                }
+                pipelineSteps={
+                  msg.role === "assistant" &&
+                  !isLoading &&
+                  i === messages.length - 1
+                    ? completedSteps
                     : undefined
                 }
               />

@@ -9,7 +9,7 @@ const LOCAL_MODE = process.env.NEXT_PUBLIC_LOCAL_MODE === "true";
  */
 export async function getServerUserId(): Promise<string | null> {
   if (LOCAL_MODE) {
-    return "00000000-0000-0000-0000-000000000001";
+    return "local_user";
   }
 
   const cookieStore = await cookies();

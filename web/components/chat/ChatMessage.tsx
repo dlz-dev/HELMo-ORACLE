@@ -11,6 +11,19 @@ import {
   SourcesTrigger,
   SourcesContent,
 } from "@/components/ai-elements/sources";
+import {
+  ChainOfThought,
+  ChainOfThoughtHeader,
+  ChainOfThoughtContent,
+  ChainOfThoughtStep,
+} from "@/components/ai-elements/chain-of-thought";
+import {
+  ScanSearch,
+  Layers,
+  Database,
+  ArrowUpDown,
+  PenLine,
+} from "lucide-react";
 
 interface CotResult {
   source: string;
@@ -18,6 +31,14 @@ interface CotResult {
   rrf_score: number;
   confidence: "high" | "medium" | "low";
 }
+
+const PIPELINE_STEP_CONFIG = [
+  { id: "analyse", label: "Analyse de la question", Icon: ScanSearch },
+  { id: "embedding", label: "Génération de l'embedding", Icon: Layers },
+  { id: "retrieval", label: "Recherche dans les archives", Icon: Database },
+  { id: "reranking", label: "Reranking des résultats", Icon: ArrowUpDown },
+  { id: "answer", label: "Rédaction de la réponse", Icon: PenLine },
+];
 
 const CONFIDENCE_CONFIG = {
   high: {
@@ -41,6 +62,7 @@ interface Props {
   isLast: boolean;
   isLoading: boolean;
   cotResults?: CotResult[];
+  pipelineSteps?: string[];
 }
 
 export function ChatMessage({
@@ -50,6 +72,7 @@ export function ChatMessage({
   isLast,
   isLoading,
   cotResults,
+  pipelineSteps,
 }: Props) {
   const isUser = role === "user";
   const [copied, setCopied] = useState(false);
@@ -129,6 +152,22 @@ export function ChatMessage({
             </div>
           )}
         </div>
+
+        {/* Pipeline steps — collapsible après la réponse */}
+        {!isUser && !isLoading && pipelineSteps && pipelineSteps.length > 0 && (
+          <div className="mt-1 px-1 w-full">
+            <ChainOfThought>
+              <ChainOfThoughtHeader className="text-xs text-[var(--text-subtle)] hover:text-[var(--text-muted)]">
+                {pipelineSteps.length} étape{pipelineSteps.length > 1 ? "s" : ""} exécutée{pipelineSteps.length > 1 ? "s" : ""}
+              </ChainOfThoughtHeader>
+              <ChainOfThoughtContent>
+                {PIPELINE_STEP_CONFIG.filter((s) => pipelineSteps.includes(s.id)).map((s) => (
+                  <ChainOfThoughtStep key={s.id} icon={s.Icon} label={s.label} status="complete" />
+                ))}
+              </ChainOfThoughtContent>
+            </ChainOfThought>
+          </div>
+        )}
 
         {/* Sources — assistant only, après la réponse */}
         {!isUser && !isLoading && cotResults && cotResults.length > 0 && (
