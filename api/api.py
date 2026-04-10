@@ -495,6 +495,12 @@ async def chat(req: ChatRequest):
     else:
         session = request_sm.new_session(provider=req.provider, model=req.model or "")
 
+    # Limite invités : 5 messages max par session
+    if not req.user_id or not _is_valid_uuid(req.user_id):
+        guest_msgs = [m for m in session.get("messages", []) if m["role"] == "user"]
+        if len(guest_msgs) >= 5:
+            raise HTTPException(status_code=429, detail="Limite de 5 messages atteinte. Connectez-vous pour continuer.")
+
     model = req.model or config.get("llm", {}).get("default_model", "")
     masked_message = pii.mask_text(req.message)
     session.setdefault("messages", []).append({"role": "user", "content": masked_message})
