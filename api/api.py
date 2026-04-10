@@ -8,6 +8,7 @@ Exposes the RAG pipeline as a REST API so a separate frontend
 import asyncio
 import json
 import os
+import queue as _queue
 import threading as _threading
 import time
 import uuid
@@ -248,20 +249,16 @@ def _build_lc_history(history_tuples, masked_message):
 
 
 def _run_agent(session: dict, masked_message: str, provider: str, model: str,
-               temperature: float, k_final: int) -> tuple[str, list]:
+               temperature: float, k_final: int,
+               step_callback=None) -> tuple[str, list]:
     user_id = session.get("user_id")
-    # Correction: S'assurer que user_id est un UUID valide ou None
     log_user_id = user_id if _is_valid_uuid(user_id) else None
 
-    start_retrieval = time.time()
+    if step_callback:
+        step_callback("analyse")
+
     cot_storage = []
-    search_tool = get_search_tool(vm, k_final=k_final, cot_storage=cot_storage)
-    retrieval_time = time.time() - start_retrieval
-    log_to_db_sync(
-        level="INFO", source="RAG_PROFILING",
-        message="Context retrieval finished",
-        metadata={"duration_seconds": retrieval_time}, user_id=log_user_id
-    )
+    search_tool = get_search_tool(vm, k_final=k_final, cot_storage=cot_storage, step_callback=step_callback)
 
     llm = get_llm(
         provider_key=provider, model=model,
@@ -270,6 +267,9 @@ def _run_agent(session: dict, masked_message: str, provider: str, model: str,
     agent = create_react_agent(llm, [search_tool], prompt=BASE_SYSTEM_PROMPT)
     enriched_prompt, history_tuples = mm.build_agent_input(session, BASE_SYSTEM_PROMPT)
     lc_history = _build_lc_history(history_tuples, masked_message)
+
+    if step_callback:
+        step_callback("answer")
 
     start_generation = time.time()
     result = agent.invoke({"messages": lc_history})
@@ -508,18 +508,40 @@ async def chat(req: ChatRequest):
 
     async def event_stream():
         _chat_start = time.time()
-        # 1. Envoie le session_id immédiatement comme premier event SSE
+        # 1. Envoie le session_id immédiatement
         yield f"data: {json.dumps({'type': 'session_id', 'session_id': session['session_id']})}\n\n"
 
+        # 2. Lance le pipeline dans un thread en communiquant les étapes via une queue
+        step_q: _queue.SimpleQueue = _queue.SimpleQueue()
+
+        def _step_cb(name: str):
+            step_q.put(name)
+
         try:
-            response, cot_storage = await asyncio.to_thread(
+            agent_task = asyncio.create_task(asyncio.to_thread(
                 _run_agent,
                 session=session, masked_message=masked_message, provider=req.provider,
                 model=model, temperature=req.temperature, k_final=req.k_final,
-            )
+                step_callback=_step_cb,
+            ))
+
+            # Yield les étapes au fur et à mesure pendant que le thread tourne
+            while not agent_task.done():
+                try:
+                    step = step_q.get_nowait()
+                    yield f"data: {json.dumps({'type': 'step', 'step': step})}\n\n"
+                except _queue.Empty:
+                    pass
+                await asyncio.sleep(0.04)
+
+            # Vider les étapes restantes éventuelles
+            while not step_q.empty():
+                yield f"data: {json.dumps({'type': 'step', 'step': step_q.get_nowait()})}\n\n"
+
+            response, cot_storage = agent_task.result()
+
         except Exception as e:
             logger.error(f"Erreur critique dans le RAG: {e}", exc_info=True)
-
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
             return
 

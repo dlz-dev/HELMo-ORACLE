@@ -5,15 +5,34 @@ import { useEffect, useRef, useState } from "react";
 import React from "react";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
-import { CotDrawer } from "./CotDrawer";
-import { ChevronRight, BookOpen } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  ChevronRight,
+  ScanSearchIcon,
+  LayersIcon,
+  DatabaseIcon,
+  ArrowUpDownIcon,
+  PenLineIcon,
+} from "lucide-react";
+import {
+  ChainOfThought,
+  ChainOfThoughtStep,
+} from "@/components/ai-elements/chain-of-thought";
+
+// ── Pipeline steps ────────────────────────────────────────────────────────────
+
+const PIPELINE_STEPS = [
+  { id: "analyse", label: "Analyse de la question", Icon: ScanSearchIcon },
+  { id: "embedding", label: "Génération de l'embedding", Icon: LayersIcon },
+  { id: "retrieval", label: "Recherche dans les archives", Icon: DatabaseIcon },
+  { id: "reranking", label: "Reranking des résultats", Icon: ArrowUpDownIcon },
+  { id: "answer", label: "Rédaction de la réponse", Icon: PenLineIcon },
+] as const;
+
+const STEP_IDS = PIPELINE_STEPS.map(
+  (s) => s.id,
+) as unknown as readonly string[];
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface CotResult {
   source: string;
@@ -43,7 +62,6 @@ export function ChatWindow({
   firstName = "",
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
-  const [cotOpen, setCotOpen] = useState(false);
   const [cotResults, setCotResults] = useState<CotResult[]>([]);
 
   // Lit la config depuis localStorage (sauvegardée depuis l'admin)
@@ -65,6 +83,9 @@ export function ChatWindow({
   }, [sessionId]);
 
   const [limitReached, setLimitReached] = useState(false);
+  const [currentPipelineStep, setCurrentPipelineStep] = useState<string | null>(
+    null,
+  );
 
   const {
     messages,
@@ -91,12 +112,19 @@ export function ChatWindow({
     },
   });
 
-  // Extrait le dernier CoT depuis les annotations AI SDK
+  // Extrait le dernier CoT + pipeline step depuis les annotations AI SDK
   useEffect(() => {
     if (!data?.length) return;
     const last = [...data].reverse().find((d: any) => d?.cotResults);
     if (last) setCotResults((last as any).cotResults);
+    const lastStep = [...data].reverse().find((d: any) => d?.pipelineStep);
+    if (lastStep) setCurrentPipelineStep((lastStep as any).pipelineStep);
   }, [data]);
+
+  // Reset pipeline step quand un nouveau message commence
+  useEffect(() => {
+    if (isLoading) setCurrentPipelineStep(null);
+  }, [isLoading]);
 
   useEffect(() => {
     if (!sessionId) {
@@ -123,33 +151,6 @@ export function ChatWindow({
   }, [messages]);
 
   const isEmpty = messages.length === 0;
-
-  const cotButton =
-    cotResults.length > 0 ? (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-[var(--gold)] hover:bg-[var(--gold-glow)]"
-                onClick={() => setCotOpen(true)}
-              />
-            }
-          >
-            <BookOpen size={13} />
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            <p className="text-xs">
-              {cotResults.length} source{cotResults.length > 1 ? "s" : ""}{" "}
-              consultée{cotResults.length > 1 ? "s" : ""}
-            </p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    ) : null;
 
   return (
     <div className="flex flex-col h-full">
@@ -229,7 +230,10 @@ export function ChatWindow({
             </div>
 
             {/* Title + description */}
-            <div className="relative text-center mb-8 space-y-2 animate-fade-up" style={{ animationDelay: "60ms" }}>
+            <div
+              className="relative text-center mb-8 space-y-2 animate-fade-up"
+              style={{ animationDelay: "60ms" }}
+            >
               <h2 className="font-cinzel text-3xl font-semibold text-[var(--text)] tracking-wide">
                 Bonjour{firstName ? ` ${firstName}` : ""}&nbsp;!
               </h2>
@@ -243,7 +247,8 @@ export function ChatWindow({
               className="relative w-full max-w-2xl animate-fade-up"
               style={{
                 animationDelay: "120ms",
-                filter: "drop-shadow(0 8px 32px rgba(201,168,76,0.12)) drop-shadow(0 2px 8px rgba(0,0,0,0.12))",
+                filter:
+                  "drop-shadow(0 8px 32px rgba(201,168,76,0.12)) drop-shadow(0 2px 8px rgba(0,0,0,0.12))",
               }}
             >
               <ChatInput
@@ -255,7 +260,14 @@ export function ChatWindow({
             </div>
 
             {/* Suggestions */}
-            <div className="relative w-full max-w-2xl mt-4 animate-fade-up" style={{ animationDelay: "180ms", paddingLeft: "12px", paddingRight: "12px" }}>
+            <div
+              className="relative w-full max-w-2xl mt-4 animate-fade-up"
+              style={{
+                animationDelay: "180ms",
+                paddingLeft: "12px",
+                paddingRight: "12px",
+              }}
+            >
               <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-subtle)] mb-2 px-1">
                 Suggestions
               </p>
@@ -289,43 +301,37 @@ export function ChatWindow({
                 index={i}
                 isLast={i === messages.length - 1}
                 isLoading={isLoading && i === messages.length - 1}
+                cotResults={
+                  msg.role === "assistant" &&
+                  !isLoading &&
+                  i === messages.length - 1
+                    ? cotResults
+                    : undefined
+                }
               />
             ))}
-            {/* Indicateur "L'Oracle réfléchit" */}
+            {/* Pipeline steps — visible tant que l'assistant n'a pas commencé à répondre */}
             {isLoading && messages[messages.length - 1]?.role === "user" && (
               <div className="flex gap-3 animate-fade-up">
                 <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center mt-0.5 bg-[var(--gold-glow)] border border-[var(--gold)]/20">
                   <span className="text-[var(--gold)] text-xs">◈</span>
                 </div>
-                <div className="px-4 py-3 rounded-2xl rounded-tl-sm border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-muted)] flex items-center gap-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    className="text-[var(--gold)] flex-shrink-0"
-                  >
-                    <path
-                      fill="currentColor"
-                      d="M12 1A11 11 0 1 0 23 12 11 11 0 0 0 12 1Zm0 19a8 8 0 1 1 8-8 8 8 0 0 1-8 8Z"
-                      opacity=".25"
-                    />
-                    <path
-                      fill="currentColor"
-                      d="M12 4a8 8 0 0 1 7.89 6.7A1.53 1.53 0 0 0 21.38 12h0a1.5 1.5 0 0 0 1.48-1.75 11 11 0 0 0-21.72 0A1.5 1.5 0 0 0 2.62 12h0a1.53 1.53 0 0 0 1.49-1.3A8 8 0 0 1 12 4Z"
-                    >
-                      <animateTransform
-                        attributeName="transform"
-                        dur="0.75s"
-                        repeatCount="indefinite"
-                        type="rotate"
-                        values="0 12 12;360 12 12"
-                      />
-                    </path>
-                  </svg>
-                  <span className="text-xs">
-                    L'Oracle consulte les archives
-                  </span>
+                <div className="px-4 py-3 rounded-2xl rounded-tl-sm border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+                  <ChainOfThought>
+                    {PIPELINE_STEPS.map(({ id, label, Icon }, i) => {
+                      const idx = STEP_IDS.indexOf(currentPipelineStep ?? "");
+                      const status =
+                        i < idx ? "complete" : i === idx ? "active" : "pending";
+                      return (
+                        <ChainOfThoughtStep
+                          key={id}
+                          icon={Icon}
+                          label={label}
+                          status={status}
+                        />
+                      );
+                    })}
+                  </ChainOfThought>
                 </div>
               </div>
             )}
@@ -334,12 +340,13 @@ export function ChatWindow({
         )}
       </div>
 
-      {(limitReached ||
-        (isGuest && messages.filter((m) => m.role === "user").length >= 5)) && (
-        <div className="text-center text-sm py-2 px-4 bg-[var(--gold-glow)] border-t border-[var(--gold)]/20 text-[var(--gold)]">
-          Limite de 5 messages atteinte. Connectez-vous pour continuer.
-        </div>
-      )}
+      {isGuest &&
+        (limitReached ||
+          messages.filter((m) => m.role === "user").length >= 5) && (
+          <div className="text-center text-sm py-2 px-4 bg-[var(--gold-glow)] border-t border-[var(--gold)]/20 text-[var(--gold)]">
+            Limite de 5 messages atteinte. Connectez-vous pour continuer.
+          </div>
+        )}
 
       {!isEmpty && (
         <div className="border-t border-default bg-surface/50 backdrop-blur-sm">
@@ -350,20 +357,13 @@ export function ChatWindow({
               onSubmit={handleSubmit}
               isLoading={
                 isLoading ||
-                (isGuest && messages.filter((m) => m.role === "user").length >= 5)
+                (isGuest &&
+                  messages.filter((m) => m.role === "user").length >= 5)
               }
-            >
-              {cotButton}
-            </ChatInput>
+            />
           </div>
         </div>
       )}
-
-      <CotDrawer
-        open={cotOpen}
-        onClose={() => setCotOpen(false)}
-        results={cotResults}
-      />
     </div>
   );
 }

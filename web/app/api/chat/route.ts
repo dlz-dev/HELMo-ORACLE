@@ -75,7 +75,13 @@ export async function POST(req: NextRequest) {
               continue;
             }
 
-            if (event.type === "text") {
+            if (event.type === "step") {
+              controller.enqueue(
+                enc.encode(
+                  `2:${JSON.stringify([{ pipelineStep: event.step }])}\n`,
+                ),
+              );
+            } else if (event.type === "text") {
               // Format AI SDK Data Stream : "0:\"chunk\"\n"
               controller.enqueue(
                 enc.encode(`0:${JSON.stringify(event.content)}\n`),

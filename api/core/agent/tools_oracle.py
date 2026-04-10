@@ -11,13 +11,15 @@ from typing import Callable, Any, Optional
 from core.database.vector_manager import VectorManager
 from langchain_core.tools import tool
 
+StepCallback = Optional[Callable[[str], None]]
+
 # RRF score thresholds for confidence classification
 # Empirical values for the paraphrase-multilingual-MiniLM-L12-v2 model
 CONFIDENCE_THRESHOLD_HIGH: float = 0.025
 CONFIDENCE_THRESHOLD_MEDIUM: float = 0.010
 
 
-def get_search_tool(vm: VectorManager, k_final: int = 5, cot_storage: Optional[list] = None) -> Callable:
+def get_search_tool(vm: VectorManager, k_final: int = 5, cot_storage: Optional[list] = None, step_callback: StepCallback = None) -> Callable:
     """
     Factory function returning a LangGraph tool bound to the shared VectorManager.
 
@@ -52,8 +54,16 @@ def get_search_tool(vm: VectorManager, k_final: int = 5, cot_storage: Optional[l
         if not query:
             return "<archives_sacrees>\nEmpty query.\n</archives_sacrees>"
 
+        if step_callback:
+            step_callback("embedding")
         query_vector = vm.embeddings_model.embed_query(query)
+
+        if step_callback:
+            step_callback("retrieval")
         results = vm.search_hybrid(query=query, query_vector=query_vector, k_final=k_final)
+
+        if step_callback:
+            step_callback("reranking")
 
         if not results:
             return "<archives_sacrees>\nNo documents found for this query.\n</archives_sacrees>"

@@ -15,8 +15,17 @@ const LOCAL_MODE = process.env.NEXT_PUBLIC_LOCAL_MODE === "true";
 const GUIDE_TIPS = [
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5">
-        <circle cx="12" cy="12" r="3"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5"
+      >
+        <circle cx="12" cy="12" r="3" />
+        <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
       </svg>
     ),
     title: "Soyez précis dans votre question",
@@ -24,8 +33,17 @@ const GUIDE_TIPS = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5">
-        <path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5"
+      >
+        <path d="M3 3v18h18" />
+        <path d="m19 9-5 5-4-4-3 3" />
       </svg>
     ),
     title: "Contextualisez votre niveau",
@@ -33,8 +51,16 @@ const GUIDE_TIPS = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5"
+      >
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
       </svg>
     ),
     title: "Utilisez un langage naturel",
@@ -42,8 +68,17 @@ const GUIDE_TIPS = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5"
+      >
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.35-4.35M11 8v6M8 11h6" />
       </svg>
     ),
     title: "Demandez des précisions",
@@ -51,8 +86,16 @@ const GUIDE_TIPS = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5">
-        <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5"
+      >
+        <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
       </svg>
     ),
     title: "Enchaînez les questions",
@@ -60,8 +103,17 @@ const GUIDE_TIPS = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-5 h-5 text-[var(--gold)] flex-shrink-0 mt-0.5"
+      >
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
       </svg>
     ),
     title: "Consultez les sources",
@@ -89,8 +141,12 @@ function GuideContent() {
             >
               {icon}
               <div className="space-y-1.5">
-                <h3 className="font-semibold text-sm text-[var(--text)]">{title}</h3>
-                <p className="text-sm text-[var(--text-muted)] leading-relaxed">{body}</p>
+                <h3 className="font-semibold text-sm text-[var(--text)]">
+                  {title}
+                </h3>
+                <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                  {body}
+                </p>
               </div>
             </div>
           ))}
@@ -197,7 +253,11 @@ export function ChatInterface() {
           className="absolute top-3 left-3 z-10 p-1.5 rounded-md text-muted-fg hover:text-main hover:bg-subtle transition-all"
           aria-label={sidebarOpen ? "Fermer le panneau" : "Ouvrir le panneau"}
         >
-          {sidebarOpen ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
+          {sidebarOpen ? (
+            <PanelLeftClose size={16} />
+          ) : (
+            <PanelLeftOpen size={16} />
+          )}
         </button>
 
         {activeTab === "oracle" && (
