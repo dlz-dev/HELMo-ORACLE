@@ -3,43 +3,23 @@ import json
 import os
 from typing import List, Tuple, Dict, Any
 
-from llama_index.core import Document
-from llama_index.core.node_parser import SentenceSplitter
 
-
-def load_csv_data(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50) -> List[Tuple[str, Dict[str, Any]]]:
+def load_csv_data(file_path: str, chunk_size: int = 512, batch_size: int = 20) -> List[Tuple[str, Dict[str, Any]]]:
     """
-    Reads a CSV file, converts each row to JSON (text), and chunks it.
-    
-    Args:
-        file_path (str): The path to the CSV file.
-        chunk_size (int): The maximum chunk size.
-        chunk_overlap (int): The overlap between chunks.
-        
-    Returns:
-        List[Tuple[str, Dict[str, Any]]]: A list of tuples (text, metadata).
+    Reads a CSV file and groups rows into batches to minimize the number of
+    chunks sent to the embedder. Each batch of `batch_size` rows becomes one chunk.
     """
     file_name = os.path.basename(file_path)
-    documents = []
+    rows = []
 
     try:
-        with open(file_path, "r", encoding="utf-8", errors="strict") as file:
-            sample = file.read(1024)
-            file.seek(0)
-
-            # Automatic deduction of the delimiter (comma, semicolon, etc.)
+        with open(file_path, "r", encoding="utf-8", errors="strict") as f:
+            sample = f.read(1024)
+            f.seek(0)
             dialect = csv.Sniffer().sniff(sample)
-            reader = csv.DictReader(file, dialect=dialect)
-
+            reader = csv.DictReader(f, dialect=dialect)
             for row in reader:
-                item_name = row.get("name") or row.get("nom") or row.get("id")
-                metadata: Dict[str, Any] = {"source": file_name}
-                if item_name:
-                    metadata["item_name"] = str(item_name)
-
-                # Serialize the row so the LLM understands the key-value structure
-                chunk_text = json.dumps(row, ensure_ascii=False)
-                documents.append(Document(text=chunk_text, metadata=metadata))
+                rows.append(dict(row))
 
     except csv.Error as e:
         print(f"WARNING: Unrecognized CSV format or empty file ignored ({file_name}): {e}")
@@ -51,11 +31,18 @@ def load_csv_data(file_path: str, chunk_size: int = 512, chunk_overlap: int = 50
         print(f"ERROR: Unexpected error while reading {file_name}: {e}")
         return []
 
-    if not documents:
+    if not rows:
         return []
 
-    # Chunking with LlamaIndex (secures rows containing very long texts)
-    text_splitter = SentenceSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-    nodes = text_splitter.get_nodes_from_documents(documents)
+    chunks = []
+    for i in range(0, len(rows), batch_size):
+        batch = rows[i: i + batch_size]
+        text = json.dumps(batch, ensure_ascii=False, separators=(",", ":"))
+        # If batch is too large, fall back to one row per chunk
+        if len(text) > chunk_size * 4 and batch_size > 1:
+            for row in batch:
+                chunks.append((json.dumps(row, ensure_ascii=False, separators=(",", ":")), {"source": file_name}))
+        else:
+            chunks.append((text, {"source": file_name}))
 
-    return [(node.get_content(), node.metadata) for node in nodes]
+    return chunks
