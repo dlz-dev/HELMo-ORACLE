@@ -2,6 +2,7 @@ fastapi==0.135.1
 uvicorn[standard]==0.34.0
 langchain_anthropic
 langchain_community
+langchain_ollama
 langchain_core
 langchain_google_genai
 langchain_groq
