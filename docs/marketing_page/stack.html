@@ -6,13 +6,21 @@
 <title>Oracle — La Stack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="style.css" rel="stylesheet"/>
+<style>
+  .stack-tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  .stack-icon-wrap { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+</style>
 </head>
-<body>
+<body class="sub-page page-scrolled">
 <div class="noise-overlay" aria-hidden="true"></div>
 
-<header id="site-header" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl">
-  <div class="header-inner flex items-center justify-between px-6 py-3 rounded-full">
-    <a href="index.html" class="flex items-center gap-2"><span class="text-gold text-xl">◈</span><span class="font-heading text-xl font-bold tracking-wide uppercase text-white">Oracle</span></a>
+<!-- ── HEADER ────────────────────────────────────────────────────────── -->
+<header id="site-header">
+  <div class="header-inner">
+    <a href="index.html" class="flex items-center gap-2">
+      <span class="text-gold text-xl leading-none">◈</span>
+      <span class="header-logo-text font-heading text-xl font-bold uppercase">Oracle</span>
+    </a>
     <nav class="hidden md:flex space-x-8 text-sm font-semibold">
       <a class="nav-link" href="index.html">Accueil</a>
       <a class="nav-link" href="rag.html">Comment ça marche</a>
@@ -20,231 +28,188 @@
       <a class="nav-link" href="abonnements.html">Abonnements</a>
       <a class="nav-link" href="docs.html">Docs</a>
     </nav>
-    <a class="cta-header px-6 py-2.5 rounded-full font-bold text-sm" href="https://oracle.dlzteam.com/">Accéder au Chat →</a>
+    <a class="cta-header" href="https://oracle.dlzteam.com/" target="_blank">Accéder au Chat →</a>
   </div>
 </header>
 
-<main class="relative z-10">
-  <div class="orb orb-1" aria-hidden="true"></div>
-  <div class="orb orb-5" aria-hidden="true"></div>
-  <div class="grid-bg" aria-hidden="true"></div>
+<main>
 
-  <div class="page-hero relative z-10">
+  <!-- ── PAGE HERO ──────────────────────────────────────────────────── -->
+  <div class="page-hero">
     <div class="max-w-3xl mx-auto px-4 text-center">
       <div class="section-tag mx-auto w-fit mb-6 reveal">Architecture & Technologie</div>
       <h1 class="page-hero-title font-heading mb-6 reveal" style="--delay:.1s">La <span class="text-gradient-hero">Stack</span></h1>
-      <p class="text-white/50 text-lg leading-relaxed reveal" style="--delay:.2s">
-        Chaque composant a été choisi pour sa fiabilité, sa performance et sa compatibilité avec les exigences de souveraineté des données. Voici comment Oracle est construit.
+      <p class="reveal" style="color:var(--text-muted);--delay:.2s;max-width:600px;margin:0 auto;font-size:1.05rem">
+        Chaque composant a été choisi pour sa fiabilité, sa performance et sa compatibilité avec les exigences de souveraineté des données.
       </p>
     </div>
   </div>
 
-  <div class="max-w-4xl mx-auto px-4 pb-32 space-y-6">
+  <div class="max-w-5xl mx-auto px-6 pb-32 space-y-8">
 
-    <!-- ── PIPELINE D'INGESTION ──────────────────────────────────────── -->
-    <div class="stack-block reveal">
-      <div class="flex items-center gap-3 mb-5">
-        <div class="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <!-- ── PIPELINE D'INGESTION ── -->
+    <div class="b-card reveal">
+      <div class="flex items-start gap-6">
+        <div class="stack-icon-wrap bg-gold/10 text-gold">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         </div>
-        <h3>Pipeline d'ingestion</h3>
-      </div>
-      <p class="mb-4">Le pipeline d'ingestion transforme vos fichiers bruts en base de connaissances vectorielle interrogeable. Il est conçu pour être modulaire, robuste, et capable de traiter tous les formats documentaires courants.</p>
-      <p class="mb-5">Chaque fichier passe d'abord par un <strong class="text-white/80">Gardien LLM</strong> qui vérifie que le contenu correspond au domaine thématique attendu. Les fichiers hors-sujet sont mis en quarantaine automatiquement. Les fichiers validés reçoivent ensuite une description contextuelle générée par LLM, préfixée à chaque fragment — ce qui améliore significativement la précision des recherches.</p>
-      <div class="flex flex-wrap gap-2 mb-4">
-        <span class="stack-tag">PDF · DOCX via Unstructured.io</span>
-        <span class="stack-tag">CSV · JSON · MD (parseurs natifs)</span>
-        <span class="stack-tag">Déduplication SHA-256</span>
-        <span class="stack-tag">Late chunking contextuel</span>
-        <span class="stack-tag stack-tag-gold">Guardian LLM</span>
-      </div>
-      <p class="text-white/40 text-xs font-mono">Modèle d'embedding : nomic-embed-text · 768 dimensions · 8 192 tokens de contexte</p>
-    </div>
-
-    <!-- ── BASE VECTORIELLE ──────────────────────────────────────────── -->
-    <div class="stack-block reveal">
-      <div class="flex items-center gap-3 mb-5">
-        <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.657 4.03 3 9 3s9-1.343 9-3V5"/><path d="M3 12c0 1.657 4.03 3 9 3s9-1.343 9-3"/></svg>
+        <div>
+          <h3 class="b-title text-xl mb-3">Pipeline d'ingestion</h3>
+          <p class="b-desc mb-4">Transforme vos fichiers bruts en base de connaissances vectorielle interrogeable. Il est conçu pour être modulaire, robuste et sécurisé.</p>
+          <p class="b-desc">Chaque fichier passe par un <strong>Gardien LLM</strong> qui valide le contenu avant ingestion. Les données reçoivent une description contextuelle pour améliorer la précision des recherches futures.</p>
+          <div class="stack-tag-list">
+            <span class="b-tag">Unstructured.io</span>
+            <span class="b-tag">SHA-256 Deduplication</span>
+            <span class="b-tag">Late Chunking</span>
+            <span class="b-tag b-tag-gold">Guardian LLM</span>
+          </div>
         </div>
-        <h3>Base de données vectorielle</h3>
-      </div>
-      <p class="mb-4">Oracle stocke les embeddings dans PostgreSQL avec l'extension <strong class="text-white/80">pgvector</strong>, hébergé directement sur le VPS dédié du client. Ce choix garantit l'isolation des données et la conformité RGPD — contrairement aux bases vectorielles cloud partagées.</p>
-      <p class="mb-5">Chaque document est stocké avec son contenu, son vecteur, ses métadonnées et son hash de déduplication. Pour les environnements de développement, ChromaDB est utilisé en local.</p>
-      <div class="flex flex-wrap gap-2">
-        <span class="stack-tag stack-tag-gold">PostgreSQL + pgvector (production)</span>
-        <span class="stack-tag">ChromaDB (développement)</span>
-        <span class="stack-tag">Similarité cosinus</span>
-        <span class="stack-tag">Full-Text Search BM25</span>
-        <span class="stack-tag">VPS dédié EU</span>
       </div>
     </div>
 
-    <!-- ── RECHERCHE HYBRIDE RRF ─────────────────────────────────────── -->
-    <div class="stack-block reveal">
-      <div class="flex items-center gap-3 mb-5">
-        <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <!-- ── BASE VECTORIELLE ── -->
+    <div class="b-card reveal" style="--delay:.05s">
+      <div class="flex items-start gap-6">
+        <div class="stack-icon-wrap bg-blue-100 text-blue-600">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.657 4.03 3 9 3s9-1.343 9-3V5"/><path d="M3 12c0 1.657 4.03 3 9 3s9-1.343 9-3"/></svg>
         </div>
-        <h3>Recherche hybride — Reciprocal Rank Fusion (RRF)</h3>
-      </div>
-      <p class="mb-4">La recherche hybride est l'un des composants les plus critiques du pipeline RAG. Elle combine deux approches complémentaires : la recherche sémantique (qui comprend le sens d'une question) et la recherche par mots-clés BM25 (qui garantit la précision sur les termes rares, acronymes ou codes internes).</p>
-      <p class="mb-5">La fusion RRF fusionne les deux listes de résultats en attribuant un score à chaque document selon son rang dans chaque liste, plutôt que selon son score de similarité brut. Cette approche est plus robuste et favorise naturellement les documents pertinents pour les deux méthodes simultanément.</p>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div class="bg-white/[0.03] border border-white/8 rounded-xl p-4">
-          <div class="text-blue-400/70 font-semibold text-sm mb-2">Recherche sémantique</div>
-          <p class="text-white/40 text-xs leading-relaxed">Trouve les passages dont le <em>sens</em> est proche de la question, même avec des mots différents. Idéal pour les questions complexes et les synonymes.</p>
+        <div>
+          <h3 class="b-title text-xl mb-3">Base de données vectorielle</h3>
+          <p class="b-desc mb-4">PostgreSQL avec l'extension <strong>pgvector</strong>, hébergé directement sur le VPS dédié. Cette isolation totale garantit la conformité RGPD stricte.</p>
+          <div class="stack-tag-list">
+            <span class="b-tag b-tag-gold">PostgreSQL + pgvector</span>
+            <span class="b-tag">Cosine Similarity</span>
+            <span class="b-tag">BM25 Hybrid</span>
+            <span class="b-tag">Isolated VPS</span>
+          </div>
         </div>
-        <div class="bg-white/[0.03] border border-white/8 rounded-xl p-4">
-          <div class="text-purple-400/70 font-semibold text-sm mb-2">Full-Text Search BM25</div>
-          <p class="text-white/40 text-xs leading-relaxed">Trouve les passages contenant les <em>termes exacts</em> recherchés. Indispensable pour les codes d'erreur, numéros de référence, noms propres.</p>
-        </div>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <span class="stack-tag stack-tag-gold">RRF — Reciprocal Rank Fusion</span>
-        <span class="stack-tag">Score : 1/(k + rang)</span>
-        <span class="stack-tag">k = 60 (constante standard)</span>
       </div>
     </div>
 
-    <!-- ── AGENT & MCP ────────────────────────────────────────────────── -->
-    <div class="stack-block reveal">
-      <div class="flex items-center gap-3 mb-5">
-        <div class="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    <!-- ── RECHERCHE HYBRIDE RRF ── -->
+    <div class="bento-grid">
+      <div class="col-12 b-card reveal" style="--delay:.1s">
+        <div class="flex items-start gap-6">
+          <div class="stack-icon-wrap bg-purple-100 text-purple-600">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <div>
+            <h3 class="b-title text-xl mb-3">Recherche Hybride (RRF)</h3>
+            <p class="b-desc mb-6">Oracle combine recherche sémantique (sens) et mots-clés BM25 (précision brute). La fusion <strong>Reciprocal Rank Fusion</strong> garantit les meilleurs résultats.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="p-4 bg-subtle rounded-xl border border-border">
+                <div class="font-bold text-sm mb-1 text-blue-600">Sémantique</div>
+                <p class="text-xs text-muted">Comprend le contexte et les synonymes, même sans mots-clés exacts.</p>
+              </div>
+              <div class="p-4 bg-subtle rounded-xl border border-border">
+                <div class="font-bold text-sm mb-1 text-purple-600">BM25</div>
+                <p class="text-xs text-muted">Indispensable pour les codes internes, acronymes et références précises.</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <h3>Architecture agentique — MCP</h3>
-      </div>
-      <p class="mb-4">Oracle implémente une boucle <strong class="text-white/80">ReAct (Reasoning + Acting)</strong>. Contrairement à un simple chatbot qui répond et s'arrête, l'agent Oracle peut enchaîner plusieurs raisonnements et actions : il analyse la demande, sélectionne l'outil MCP approprié, exécute l'action, observe le résultat, et itère jusqu'à satisfaire le besoin.</p>
-      <p class="mb-5">Le <strong class="text-white/80">Model Context Protocol (MCP)</strong> standardise la communication entre le LLM et les outils externes. L'agent n'appelle pas les tools lui-même — il expose ses capacités et le client décide de les déclencher selon le contexte de la conversation.</p>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div class="bg-white/[0.03] border border-white/8 rounded-xl p-4">
-          <div class="text-gold/70 font-semibold text-sm mb-2">Resources</div>
-          <p class="text-white/40 text-xs leading-relaxed">Sources d'information connectées en temps réel. Règlements, catalogues, calendriers. Mis à jour sans redéploiement.</p>
-        </div>
-        <div class="bg-white/[0.03] border border-white/8 rounded-xl p-4">
-          <div class="text-gold/70 font-semibold text-sm mb-2">Tools</div>
-          <p class="text-white/40 text-xs leading-relaxed">Fonctions exécutables. Création de tickets, envoi d'emails, génération de documents, appels API. L'agent devient actif.</p>
-        </div>
-        <div class="bg-white/[0.03] border border-white/8 rounded-xl p-4">
-          <div class="text-gold/70 font-semibold text-sm mb-2">Prompts</div>
-          <p class="text-white/40 text-xs leading-relaxed">Modèles de raisonnement pré-configurés. Chaque prompt encode une expertise métier spécifique.</p>
-        </div>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <span class="stack-tag stack-tag-gold">Boucle ReAct</span>
-        <span class="stack-tag">FastAPI (backend)</span>
-        <span class="stack-tag">SSE streaming</span>
-        <span class="stack-tag">Chat SDK multi-canal</span>
       </div>
     </div>
 
-    <!-- ── LLM JUDGE ─────────────────────────────────────────────────── -->
-    <div class="stack-block reveal">
-      <div class="flex items-center gap-3 mb-5">
-        <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    <!-- ── AGENT & MCP ── -->
+    <div class="b-card reveal" style="--delay:.15s">
+      <div class="flex items-start gap-6">
+        <div class="stack-icon-wrap bg-gold/10 text-gold">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         </div>
-        <h3>LLM Judge — Évaluation automatique des réponses</h3>
-      </div>
-      <p class="mb-4">Le LLM Judge est un composant d'observabilité qui s'exécute en arrière-plan après chaque réponse, de manière asynchrone et non-bloquante. Un modèle LLM dédié (température 0.0 pour maximiser le déterminisme) évalue la réponse sur 4 métriques standardisées.</p>
-      <p class="mb-5">L'architecture est fail-safe : si le juge échoue (timeout, JSON malformé, modèle indisponible), l'erreur est loggée silencieusement sans impacter l'expérience utilisateur. Les scores sont persistés en base de données et croisés avec les feedbacks manuels pour l'amélioration continue.</p>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <div class="bg-white/[0.03] border border-white/8 rounded-xl p-3 text-center">
-          <div class="text-gold/70 font-semibold text-xs mb-1">Faithfulness</div>
-          <p class="text-white/35 text-xs">Fidélité aux sources</p>
+        <div>
+          <h3 class="b-title text-xl mb-3">Boucle Agentique ReAct</h3>
+          <p class="b-desc mb-4">Utilisation du protocole <strong>MCP</strong> pour exposer des ressources et des outils au LLM. L'agent peut raisonner, agir, et observer le résultat en boucle.</p>
+          <div class="stack-tag-list">
+            <span class="b-tag b-tag-gold">Model Context Protocol</span>
+            <span class="b-tag">FastAPI Backend</span>
+            <span class="b-tag">SSE Streaming</span>
+            <span class="b-tag">ReAct Loop</span>
+          </div>
         </div>
-        <div class="bg-white/[0.03] border border-white/8 rounded-xl p-3 text-center">
-          <div class="text-blue-400/70 font-semibold text-xs mb-1">Context Relevance</div>
-          <p class="text-white/35 text-xs">Pertinence du contexte</p>
-        </div>
-        <div class="bg-white/[0.03] border border-white/8 rounded-xl p-3 text-center">
-          <div class="text-purple-400/70 font-semibold text-xs mb-1">Answer Relevance</div>
-          <p class="text-white/35 text-xs">Adéquation réponse</p>
-        </div>
-        <div class="bg-white/[0.03] border border-white/8 rounded-xl p-3 text-center">
-          <div class="text-green-400/70 font-semibold text-xs mb-1">Context Coverage</div>
-          <p class="text-white/35 text-xs">Couverture du contexte</p>
-        </div>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <span class="stack-tag stack-tag-gold">Reference Based (Tier 2)</span>
-        <span class="stack-tag stack-tag-gold">Multi-Agent — 3 LLMs (Tier 3)</span>
-        <span class="stack-tag">Température 0.0</span>
-        <span class="stack-tag">asyncio · timeout 20s</span>
-        <span class="stack-tag">Persisté Supabase</span>
       </div>
     </div>
 
-    <!-- ── SÉCURITÉ & CONFORMITÉ ──────────────────────────────────────── -->
-    <div class="stack-block reveal">
-      <div class="flex items-center gap-3 mb-5">
-        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    <!-- ── LLM JUDGE ── -->
+    <div class="bento-grid">
+      <div class="col-12 b-card reveal" style="--delay:.2s">
+        <div class="flex items-start gap-6">
+          <div class="stack-icon-wrap bg-green-100 text-green-600">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="b-title text-xl mb-3">Observabilité — LLM Judge</h3>
+            <p class="b-desc mb-6">Évaluation asynchrone de chaque réponse par un modèle dédié (température 0.0) sur 4 piliers fondamentaux.</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div class="p-3 bg-subtle rounded-lg text-center border border-border">
+                <div class="text-[10px] uppercase font-black text-muted mb-1">Faithfulness</div>
+                <div class="text-[10px] text-muted">Fidélité source</div>
+              </div>
+              <div class="p-3 bg-subtle rounded-lg text-center border border-border">
+                <div class="text-[10px] uppercase font-black text-muted mb-1">Relevance</div>
+                <div class="text-[10px] text-muted">Pertinence</div>
+              </div>
+              <div class="p-3 bg-subtle rounded-lg text-center border border-border">
+                <div class="text-[10px] uppercase font-black text-muted mb-1">Coverage</div>
+                <div class="text-[10px] text-muted">Couverture</div>
+              </div>
+              <div class="p-3 bg-subtle rounded-lg text-center border border-border">
+                <div class="text-[10px] uppercase font-black text-muted mb-1">Adéquation</div>
+                <div class="text-[10px] text-muted">Réponse/Question</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <h3>Sécurité & Conformité RGPD</h3>
-      </div>
-      <p class="mb-4">La souveraineté des données est une contrainte de conception, pas une option. Chaque composant d'Oracle a été pensé pour garantir que les données sensibles restent dans le périmètre du client.</p>
-      <p class="mb-5">Le <strong class="text-white/80">PII Masking</strong> (masquage des données personnelles) est actif à chaque tier, avec un niveau de sophistication croissant. En Tier 0–1, un filtre basique détecte les patterns courants (emails, téléphones, numéros de sécurité sociale). En Tier 2 Sovereign, le filtrage est renforcé. En Tier 3 Ultra, des modèles NER (Named Entity Recognition) lourds sont utilisés pour une détection quasi-exhaustive.</p>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div class="bg-white/[0.03] border border-white/8 rounded-xl p-4">
-          <div class="text-white/50 font-semibold text-sm mb-2">Tier 0–1 · Basique</div>
-          <p class="text-white/35 text-xs leading-relaxed">Détection par patterns regex. Emails, téléphones, numéros courants. Couverture ~85%.</p>
-        </div>
-        <div class="bg-white/[0.03] border border-white/8 rounded-xl p-4">
-          <div class="text-purple-400/60 font-semibold text-sm mb-2">Tier 2 · Renforcé</div>
-          <p class="text-white/35 text-xs leading-relaxed">Patterns enrichis + validation contextuelle. Noms, adresses, données bancaires. Couverture ~95%.</p>
-        </div>
-        <div class="bg-white/[0.03] border border-white/8 rounded-xl p-4">
-          <div class="text-gold/70 font-semibold text-sm mb-2">Tier 3 · Chirurgical</div>
-          <p class="text-white/35 text-xs leading-relaxed">Modèles NER lourds entraînés spécifiquement. Entités nommées complexes. Couverture &gt;99%.</p>
-        </div>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <span class="stack-tag stack-tag-gold">Infrastructure Cloud EU</span>
-        <span class="stack-tag">RGPD Art. 44 (Tier 3)</span>
-        <span class="stack-tag">Logs d'audit complets</span>
-        <span class="stack-tag">Backups automatiques</span>
-        <span class="stack-tag">NER — Named Entity Recognition</span>
       </div>
     </div>
 
-    <!-- ── MODÈLES LLM ────────────────────────────────────────────────── -->
-    <div class="stack-block reveal">
-      <div class="flex items-center gap-3 mb-5">
-        <div class="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <!-- ── SÉCURITÉ ── -->
+    <div class="b-card reveal" style="--delay:.25s">
+      <div class="flex items-start gap-6">
+        <div class="stack-icon-wrap bg-red-100 text-red-600">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
         </div>
-        <h3>Modèles de langage</h3>
-      </div>
-      <p class="mb-4">Oracle est agnostique vis-à-vis du fournisseur LLM. La configuration du modèle est centralisée et peut être modifiée sans redéploiement. L'architecture sépare clairement le modèle de conversation, le modèle d'embedding, et le modèle juge.</p>
-      <p class="mb-5">Pour la conversation, les modèles légers et rapides (Flash / Haiku) sont utilisés par défaut pour minimiser la latence et les coûts. Les tiers supérieurs peuvent configurer des modèles plus puissants selon leur besoin de précision. Le juge utilise systématiquement un modèle à température 0.0 pour garantir le déterminisme des évaluations.</p>
-      <div class="flex flex-wrap gap-2">
-        <span class="stack-tag">Claude Haiku (Anthropic)</span>
-        <span class="stack-tag">Gemini Flash (Google)</span>
-        <span class="stack-tag">GPT-4o mini (OpenAI)</span>
-        <span class="stack-tag stack-tag-gold">nomic-embed-text (embeddings)</span>
-        <span class="stack-tag">Ollama (local)</span>
-        <span class="stack-tag">Groq (juge — faible latence)</span>
+        <div>
+          <h3 class="b-title text-xl mb-3">PII Masking & Souveraineté</h3>
+          <p class="b-desc mb-4">Masquage automatique des données sensibles avant traitement LLM. Plusieurs niveaux de détection selon le tier choisi.</p>
+          <div class="stack-tag-list">
+            <span class="b-tag">Presidio Engine</span>
+            <span class="b-tag">Custom NER Models</span>
+            <span class="b-tag">Cloud EU Guarantee</span>
+            <span class="b-tag b-tag-gold">Audit Logs</span>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- CTA -->
-    <div class="text-center reveal">
+    <div class="b-card b-card-dark text-center py-12 reveal">
+      <h3 class="b-title-white text-2xl mb-4">Prêt à déployer votre Oracle ?</h3>
+      <p class="b-desc-white mb-8 max-w-lg mx-auto">Choisissez le plan adapté à votre structure ou contactez-nous pour une installation on-premise.</p>
       <div class="flex flex-col sm:flex-row justify-center gap-4">
-        <a href="rag.html" class="btn-secondary px-8 py-3.5 rounded-full font-semibold inline-block">← Comment ça marche</a>
-        <a href="abonnements.html" class="btn-primary px-8 py-3.5 rounded-full font-bold inline-block">Voir les abonnements →</a>
+        <a href="rag.html" class="btn-secondary-light !bg-white/10 !border-white/10 !text-white hover:!bg-white/20 transition-all">← Comment ça marche</a>
+        <a href="abonnements.html" class="btn-primary">Voir les abonnements</a>
       </div>
     </div>
 
   </div>
 </main>
 
-<footer class="py-10 border-t border-white/8">
-  <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6">
-    <div class="flex items-center gap-2"><span class="text-gold text-lg">◈</span><span class="font-heading text-lg font-bold uppercase text-white">Oracle</span></div>
-    <p class="text-sm text-white/25 text-center">© 2026 HeLMO Oracle · Projet Académique</p>
-    <a href="index.html" class="footer-back">← Retour à l'accueil</a>
+<footer class="site-footer">
+  <div class="footer-bg-text"><span>Oracle</span></div>
+  <div class="relative z-10 max-w-7xl mx-auto px-6 flex flex-col items-center gap-10">
+    <div class="flex flex-col md:flex-row items-center justify-between w-full gap-6 pb-10" style="border-bottom:1px solid rgba(255,255,255,.06)">
+      <div class="flex items-center gap-2">
+        <span class="text-gold text-2xl">◈</span>
+        <span class="footer-logo-text font-heading text-xl font-bold uppercase">Oracle</span>
+      </div>
+      <div class="flex gap-8">
+        <a href="https://www.linkedin.com/in/tdelhez/" target="_blank" class="footer-link">Tim</a>
+        <a href="https://www.linkedin.com/in/maxime-bourguignon-6275253b6/" target="_blank" class="footer-link">Maxime</a>
+        <a href="https://www.linkedin.com/in/arnaudleroyit/" target="_blank" class="footer-link">Arnaud</a>
+      </div>
+    </div>
+    <p class="footer-copy">© 2026 HeLMO Oracle · Plateforme RAG Agentique Souveraine. Projet académique conçu pour la souveraineté numérique.</p>
   </div>
 </footer>
 
@@ -252,10 +217,13 @@
 document.addEventListener('DOMContentLoaded', () => {
   const obs = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
-  }, { threshold: 0.06 });
+  }, { threshold: 0.08 });
   document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
   const h = document.getElementById('site-header');
-  window.addEventListener('scroll', () => h?.classList.toggle('scrolled', scrollY > 60), { passive: true });
+  window.addEventListener('scroll', () => {
+    h?.classList.toggle('scrolled', scrollY > 60);
+    document.body.classList.toggle('page-scrolled', scrollY > 60);
+  }, { passive: true });
 });
 </script>
 </body>

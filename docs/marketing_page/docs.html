@@ -27,23 +27,24 @@
 <!-- Styles docs -->
 <link rel="stylesheet" href="docs.css"/>
 </head>
-<body>
+<body class="sub-page page-scrolled">
 <div class="noise-overlay" aria-hidden="true"></div>
 
-<!-- ── TOP NAV ──────────────────────────────────────────────────────────── -->
-<header class="docs-topnav">
-  <div class="docs-topnav-inner">
-    <a href="index.html" class="docs-logo">
-      <span class="text-gold">◈</span>
-      <span class="font-heading">Oracle</span>
-      <span class="docs-badge">Docs</span>
+<!-- ── HEADER ────────────────────────────────────────────────────────── -->
+<header id="site-header">
+  <div class="header-inner">
+    <a href="index.html" class="flex items-center gap-2">
+      <span class="text-gold text-xl leading-none">◈</span>
+      <span class="header-logo-text font-heading text-xl font-bold uppercase">Oracle</span>
     </a>
-    <nav class="docs-topnav-links">
-      <a href="index.html">Accueil</a>
-      <a href="rag.html">Architecture</a>
-      <a href="abonnements.html">Abonnements</a>
-      <a href="https://oracle.dlzteam.com/" class="btn-cta-top">Accéder au Chat →</a>
+    <nav class="hidden md:flex space-x-8 text-sm font-semibold">
+      <a class="nav-link" href="index.html">Accueil</a>
+      <a class="nav-link" href="rag.html">Comment ça marche</a>
+      <a class="nav-link" href="stack.html">La Stack</a>
+      <a class="nav-link" href="abonnements.html">Abonnements</a>
+      <a class="nav-link active" href="docs.html">Docs</a>
     </nav>
+    <a class="cta-header" href="https://oracle.dlzteam.com/" target="_blank">Accéder au Chat →</a>
   </div>
 </header>
 
