@@ -53,7 +53,7 @@ export default function LoginPage() {
               onClick={() => router.push("/")}
               className="w-full mt-2 bg-[var(--gold)] hover:bg-[var(--gold-light)] text-[#0a0c10] font-medium"
             >
-              Accéder à l'Oracle
+              Accéder à Oracle
             </Button>
           </CardContent>
         </Card>

@@ -88,6 +88,7 @@ export function ChatWindow({
   const [currentPipelineStep, setCurrentPipelineStep] = useState<string | null>(
     null,
   );
+  const isCreatingSessionRef = useRef(false);
 
   const {
     messages,
@@ -105,6 +106,7 @@ export function ChatWindow({
     onResponse: (res) => {
       const newId = res.headers.get("X-Session-Id");
       if (newId && newId.length > 10 && !currentSessionRef.current) {
+        isCreatingSessionRef.current = true;
         currentSessionRef.current = newId;
         onSessionCreated(newId);
       }
@@ -138,6 +140,13 @@ export function ChatWindow({
   }, [isLoading]);
 
   useEffect(() => {
+    // Si on vient de créer la session via onResponse, on ne fait pas de fetch
+    // car useChat gère déjà l'affichage des messages en cours.
+    if (isCreatingSessionRef.current) {
+      isCreatingSessionRef.current = false;
+      return;
+    }
+
     if (!sessionId) {
       setMessages([]);
       return;
@@ -320,44 +329,36 @@ export function ChatWindow({
                 isLoading={isLoading && i === messages.length - 1}
                 cotResults={
                   msg.role === "assistant" &&
-                  !isLoading &&
                   i === messages.length - 1
                     ? cotResults
                     : undefined
                 }
                 pipelineSteps={
                   msg.role === "assistant" &&
-                  !isLoading &&
                   i === messages.length - 1
                     ? completedSteps
+                    : undefined
+                }
+                currentPipelineStep={
+                  msg.role === "assistant" &&
+                  i === messages.length - 1
+                    ? currentPipelineStep
                     : undefined
                 }
               />
             ))}
             {/* Pipeline steps — visible tant que l'assistant n'a pas commencé à répondre */}
             {isLoading && messages[messages.length - 1]?.role === "user" && (
-              <div className="flex gap-3 animate-fade-up">
-                <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center mt-0.5 bg-[var(--gold-glow)] border border-[var(--gold)]/20">
-                  <span className="text-[var(--gold)] text-xs">◈</span>
-                </div>
-                <div className="px-4 py-3 rounded-2xl rounded-tl-sm border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
-                  <ChainOfThought>
-                    {PIPELINE_STEPS.map(({ id, label, Icon }, i) => {
-                      const idx = STEP_IDS.indexOf(currentPipelineStep ?? "");
-                      const status =
-                        i < idx ? "complete" : i === idx ? "active" : "pending";
-                      return (
-                        <ChainOfThoughtStep
-                          key={id}
-                          icon={Icon}
-                          label={label}
-                          status={status}
-                        />
-                      );
-                    })}
-                  </ChainOfThought>
-                </div>
-              </div>
+              <ChatMessage
+                key="thinking"
+                role="assistant"
+                content=""
+                index={messages.length}
+                isLast={true}
+                isLoading={true}
+                pipelineSteps={completedSteps}
+                currentPipelineStep={currentPipelineStep}
+              />
             )}
             <div ref={bottomRef} />
           </div>

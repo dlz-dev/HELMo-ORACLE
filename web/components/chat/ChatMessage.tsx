@@ -63,6 +63,7 @@ interface Props {
   isLoading: boolean;
   cotResults?: CotResult[];
   pipelineSteps?: string[];
+  currentPipelineStep?: string | null;
 }
 
 export function ChatMessage({
@@ -73,6 +74,7 @@ export function ChatMessage({
   isLoading,
   cotResults,
   pipelineSteps,
+  currentPipelineStep,
 }: Props) {
   const isUser = role === "user";
   const [copied, setCopied] = useState(false);
@@ -82,6 +84,8 @@ export function ChatMessage({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
+
+  const showSteps = !isUser && pipelineSteps && pipelineSteps.length > 0;
 
   return (
     <div
@@ -123,7 +127,7 @@ export function ChatMessage({
               : "bg-[var(--surface)] text-[var(--text)] rounded-tl-sm border border-[var(--border)] shadow-[var(--shadow-sm)]",
           )}
         >
-          {/* Streaming dots */}
+          {/* Points de chargement si vide, sinon texte */}
           {isLoading && isLast && !content ? (
             <div className="flex items-center gap-1.5 h-5">
               {[0, 1, 2].map((i) => (
@@ -134,7 +138,7 @@ export function ChatMessage({
                 />
               ))}
             </div>
-          ) : (
+          ) : content ? (
             <div
               className="prose prose-sm dark:prose-invert max-w-none
               prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-headings:my-2
@@ -150,20 +154,40 @@ export function ChatMessage({
                 {content}
               </Streamdown>
             </div>
-          )}
+          ) : null}
         </div>
 
-        {/* Pipeline steps — collapsible après la réponse */}
-        {!isUser && !isLoading && pipelineSteps && pipelineSteps.length > 0 && (
+        {/* Étapes stables sous la bulle */}
+        {showSteps && (
           <div className="mt-1 px-1 w-full">
             <ChainOfThought>
               <ChainOfThoughtHeader className="text-xs text-[var(--text-subtle)] hover:text-[var(--text-muted)]">
-                {pipelineSteps.length} étape{pipelineSteps.length > 1 ? "s" : ""} exécutée{pipelineSteps.length > 1 ? "s" : ""}
+                {isLoading && !content 
+                  ? "Oracle en réflexion..." 
+                  : `${pipelineSteps.length} étape${pipelineSteps.length > 1 ? "s" : ""} exécutée${pipelineSteps.length > 1 ? "s" : ""}`}
               </ChainOfThoughtHeader>
               <ChainOfThoughtContent>
-                {PIPELINE_STEP_CONFIG.filter((s) => pipelineSteps.includes(s.id)).map((s) => (
-                  <ChainOfThoughtStep key={s.id} icon={s.Icon} label={s.label} status="complete" />
-                ))}
+                {PIPELINE_STEP_CONFIG.map((s, i) => {
+                  const currentIdx = PIPELINE_STEP_CONFIG.findIndex(step => step.id === currentPipelineStep);
+                  let status: "complete" | "active" | "pending" = "pending";
+                  
+                  if (pipelineSteps.includes(s.id)) {
+                    status = "complete";
+                  } else if (s.id === currentPipelineStep) {
+                    status = "active";
+                  } else if (currentIdx !== -1 && i < currentIdx) {
+                    status = "complete";
+                  }
+
+                  return (
+                    <ChainOfThoughtStep
+                      key={s.id}
+                      icon={s.Icon}
+                      label={s.label}
+                      status={status}
+                    />
+                  );
+                })}
               </ChainOfThoughtContent>
             </ChainOfThought>
           </div>

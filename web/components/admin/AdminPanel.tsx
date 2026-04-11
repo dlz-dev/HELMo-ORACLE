@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Lock,
   Eye,
@@ -17,6 +19,8 @@ import {
   XCircle,
   Database,
   Cpu,
+  User,
+  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,12 +28,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { IngestStatus } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 
 import { LS } from "./sections/shared";
 import { ModelSection } from "./sections/ModelSection";
 import { LogsSection } from "./sections/LogsSection";
 import { HealthSection } from "./sections/HealthSection";
 import { IngestSection } from "./sections/IngestSection";
+import { ProfileSection } from "./sections/ProfileSection";
 
 const NAV = [
   { id: "overview", label: "Tableau de bord", icon: LayoutDashboard },
@@ -37,16 +43,19 @@ const NAV = [
   { id: "config", label: "Configuration", icon: Settings2 },
   { id: "logs", label: "Journaux", icon: FileText },
   { id: "health", label: "Santé système", icon: Activity },
+  { id: "profile", label: "Compte", icon: User },
 ] as const;
 
 type Tab = (typeof NAV)[number]["id"];
 
 export function AdminPanel() {
+  const router = useRouter();
   // ── Auth ──────────────────────────────────────────────────────────
   const [unlocked, setUnlocked] = useState(false);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   // ── Navigation ────────────────────────────────────────────────────
   const [tab, setTab] = useState<Tab>("overview");
@@ -71,12 +80,18 @@ export function AdminPanel() {
   const [ingestMsg, setIngestMsg] = useState("");
   const [ingestFiles, setIngestFiles] = useState<IngestStatus["files"]>({});
 
-  // ── Init localStorage ─────────────────────────────────────────────
+  // ── Init localStorage & User ──────────────────────────────────────
   useEffect(() => {
     setProvider(localStorage.getItem(LS.provider) || "groq");
     setModel(localStorage.getItem(LS.model) || "llama-3.3-70b-versatile");
     setTemperature(parseFloat(localStorage.getItem(LS.temperature) || "0"));
     setKFinal(parseInt(localStorage.getItem(LS.k_final) || "5"));
+
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+    fetchUser();
   }, []);
 
   // ── Auto health check on overview ────────────────────────────────
@@ -106,6 +121,11 @@ export function AdminPanel() {
     } catch {
       setAuthError(true);
     }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
   };
 
   const handleSaveConfig = () => {
@@ -276,6 +296,16 @@ export function AdminPanel() {
 
         {/* Nav */}
         <nav className="flex-1 py-2 space-y-0.5 px-1.5">
+          <Link
+            href="/"
+            className="w-full flex items-center gap-3 px-2 py-2.5 rounded-md text-sm text-[var(--text-muted)] hover:text-[var(--gold)] hover:bg-[var(--gold-glow)] transition-all duration-150 mb-4"
+          >
+            <Home size={16} className="shrink-0" />
+            <span className="hidden md:block truncate">Retour à Oracle</span>
+          </Link>
+
+          <div className="h-px bg-[var(--border)] mx-2 mb-4" />
+
           {NAV.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -299,8 +329,8 @@ export function AdminPanel() {
             onClick={() => setUnlocked(false)}
             className="w-full flex items-center gap-3 px-2 py-2 rounded-md text-xs text-[var(--text-subtle)] hover:text-red-400 transition-colors"
           >
-            <LogOut size={14} className="shrink-0" />
-            <span className="hidden md:block">Déconnexion</span>
+            <Lock size={14} className="shrink-0" />
+            <span className="hidden md:block">Verrouiller</span>
           </button>
         </div>
       </aside>
@@ -608,7 +638,6 @@ export function AdminPanel() {
               <LogsSection />
             </div>
           )}
-
           {/* ── HEALTH ───────────────────────────────────────────────── */}
           {tab === "health" && (
             <div className="max-w-3xl mx-auto">
@@ -617,6 +646,13 @@ export function AdminPanel() {
                 healthState={healthState}
                 onCheck={handleHealthCheck}
               />
+            </div>
+          )}
+
+          {/* ── PROFILE ──────────────────────────────────────────────── */}
+          {tab === "profile" && (
+            <div className="max-w-3xl mx-auto">
+              <ProfileSection user={user} onLogout={handleLogout} />
             </div>
           )}
         </main>

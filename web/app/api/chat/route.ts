@@ -50,63 +50,72 @@ export async function POST(req: NextRequest) {
   // Transforme le SSE FastAPI → AI SDK Data Stream Protocol
   const stream = new ReadableStream({
     async start(controller) {
-      const reader = backendResponse.body!.getReader();
+      if (!backendResponse.body) {
+        controller.enqueue(enc.encode(`3:${JSON.stringify("Erreur: Corps de réponse backend vide")}\n`));
+        controller.enqueue(enc.encode(`d:{"finishReason":"error"}\n`));
+        controller.close();
+        return;
+      }
+
+      const reader = backendResponse.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
 
       try {
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+          if (value) {
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
 
-          for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            const raw = line.slice(6).trim();
-            if (!raw) continue;
+            for (const line of lines) {
+              if (!line.startsWith("data: ")) continue;
+              const raw = line.slice(6).trim();
+              if (!raw) continue;
 
-            let event: { type: string; [key: string]: unknown };
-            try {
-              event = JSON.parse(raw);
-            } catch {
-              continue;
-            }
+              let event: { type: string; [key: string]: unknown };
+              try {
+                event = JSON.parse(raw);
+              } catch {
+                continue;
+              }
 
-            if (event.type === "step") {
-              controller.enqueue(
-                enc.encode(
-                  `2:${JSON.stringify([{ pipelineStep: event.step }])}\n`,
-                ),
-              );
-            } else if (event.type === "text") {
-              // Format AI SDK Data Stream : "0:\"chunk\"\n"
-              controller.enqueue(
-                enc.encode(`0:${JSON.stringify(event.content)}\n`),
-              );
-            } else if (event.type === "cot") {
-              const cotResults = event.results as unknown[];
-              // Envoie les sources RAG comme data annotation AI SDK : "2:[...]\n"
-              controller.enqueue(
-                enc.encode(`2:${JSON.stringify([{ cotResults }])}\n`),
-              );
-            } else if (event.type === "done") {
-              controller.enqueue(
-                enc.encode(
-                  `d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`,
-                ),
-              );
-            } else if (event.type === "error") {
-              controller.enqueue(
-                enc.encode(
-                  `3:${JSON.stringify((event.message as string) || "Erreur serveur")}\n`,
-                ),
-              );
+              if (event.type === "step") {
+                controller.enqueue(enc.encode(`2:${JSON.stringify([{ pipelineStep: event.step }])}\n`));
+              } else if (event.type === "text") {
+                controller.enqueue(enc.encode(`0:${JSON.stringify(event.content)}\n`));
+              } else if (event.type === "cot") {
+                const cotResults = event.results as unknown[];
+                controller.enqueue(enc.encode(`2:${JSON.stringify([{ cotResults }])}\n`));
+              } else if (event.type === "done") {
+                controller.enqueue(enc.encode(`d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
+              } else if (event.type === "error") {
+                controller.enqueue(enc.encode(`3:${JSON.stringify((event.message as string) || "Erreur serveur")}\n`));
+                controller.enqueue(enc.encode(`d:{"finishReason":"error"}\n`));
+              }
             }
           }
+
+          if (done) {
+            // Traite le dernier morceau de buffer si présent
+            if (buffer.startsWith("data: ")) {
+              const raw = buffer.slice(6).trim();
+              try {
+                const event = JSON.parse(raw);
+                if (event.type === "done") {
+                  controller.enqueue(enc.encode(`d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
+                }
+              } catch {}
+            }
+            break;
+          }
         }
+      } catch (err) {
+        console.error("Error in stream processing:", err);
+        controller.enqueue(enc.encode(`3:${JSON.stringify("Stream processing error")}\n`));
+        controller.enqueue(enc.encode(`d:{"finishReason":"error"}\n`));
       } finally {
         controller.close();
       }

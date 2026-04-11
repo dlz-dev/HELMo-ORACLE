@@ -47,7 +47,7 @@ const GUIDE_TIPS = [
       </svg>
     ),
     title: "Contextualisez votre niveau",
-    body: "Indiquez votre niveau de jeu, votre classe et votre progression. L'Oracle adaptera ses réponses à votre profil — débutant ou vétéran, solo ou en équipe.",
+    body: "Indiquez votre niveau de jeu, votre classe et votre progression. Oracle adaptera ses réponses à votre profil — débutant ou vétéran, solo ou en équipe.",
   },
   {
     icon: (
@@ -64,7 +64,7 @@ const GUIDE_TIPS = [
       </svg>
     ),
     title: "Utilisez un langage naturel",
-    body: "Aucun besoin de formuler en mots-clés. Posez votre question comme vous la poseriez à un expert de Dofus — l'Oracle comprend le français courant.",
+    body: "Aucun besoin de formuler en mots-clés. Posez votre question comme vous la poseriez à un expert de Dofus — Oracle comprend le français courant.",
   },
   {
     icon: (
@@ -99,7 +99,7 @@ const GUIDE_TIPS = [
       </svg>
     ),
     title: "Enchaînez les questions",
-    body: "L'Oracle conserve le contexte de la conversation. Vous pouvez affiner progressivement une réponse en posant des questions complémentaires sans tout répéter.",
+    body: "Oracle conserve le contexte de la conversation. Vous pouvez affiner progressivement une réponse en posant des questions complémentaires sans tout répéter.",
   },
   {
     icon: (
@@ -130,7 +130,7 @@ function GuideContent() {
             Guide d'utilisation
           </h1>
           <p className="text-sm text-[var(--text-muted)]">
-            Tirez le meilleur de l'Oracle en suivant ces recommandations
+            Tirez le meilleur de Oracle en suivant ces recommandations
           </p>
         </div>
         <div className="space-y-3">
@@ -167,7 +167,7 @@ function LibraireContent() {
             Librairie
           </h1>
           <p className="text-sm text-[var(--text-muted)]">
-            Les sources de connaissance consultées par l'Oracle
+            Les sources de connaissance consultées par Oracle
           </p>
         </div>
         <SourcesGrid />

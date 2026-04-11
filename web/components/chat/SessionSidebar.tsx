@@ -271,12 +271,17 @@ export function SessionSidebar({
     <div className="flex flex-col h-full bg-[var(--surface)]">
       {/* Logo */}
       <div className="px-4 py-4 border-b border-[var(--border)] flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="text-[var(--gold)] text-xl leading-none">◈</span>
-          <span className="font-cinzel text-sm font-semibold text-[var(--text)] tracking-widest uppercase">
-            L'Oracle
+        <button
+          onClick={onNewSession}
+          className="flex items-center gap-2 group hover:opacity-80 transition-opacity"
+        >
+          <span className="text-[var(--gold)] text-xl leading-none transition-transform group-hover:scale-110">
+            ◈
           </span>
-        </div>
+          <span className="font-cinzel text-sm font-semibold text-[var(--text)] tracking-widest uppercase">
+            Oracle
+          </span>
+        </button>
       </div>
 
       {/* Navigation */}
