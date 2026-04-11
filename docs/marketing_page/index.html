@@ -29,7 +29,7 @@
   <div class="header-inner">
     <a href="index.html" class="flex items-center gap-2">
       <span class="text-gold text-xl leading-none">◈</span>
-      <span class="header-logo-text font-heading">Oracle</span>
+      <span class="header-logo-text font-heading text-xl font-bold uppercase">Oracle</span>
     </a>
     <nav class="hidden md:flex space-x-8 text-sm font-semibold">
       <a class="nav-link active" href="index.html">Accueil</a>
@@ -74,458 +74,327 @@
       <span class="text-gradient-hero">votre périmètre</span>
     </h1>
 
-    <p class="text-lg md:text-xl mb-3 leading-relaxed max-w-2xl" style="color:rgba(255,255,255,.6)" id="hero-sub">
+    <p class="text-lg md:text-xl mb-4 leading-relaxed max-w-2xl font-medium" style="color:rgba(255,255,255,0.85)" id="hero-sub">
       Vous avez des données sensibles, des équipes qui posent toujours les mêmes questions,
       et des outils qui ne se parlent pas. Oracle transforme votre base documentaire en un
       assistant qui agit — sur vos canaux, dans votre périmètre.
     </p>
 
-    <p class="text-sm mb-10 reveal" style="color:rgba(255,255,255,.3)" id="hero-sub2">
-      Des organisations perdent en moyenne <strong style="color:rgba(255,255,255,.5)">30% de leur temps</strong> à répondre aux mêmes questions internes. Oracle le récupère.
+    <p class="text-sm mb-10 font-semibold" style="color:rgba(255,255,255,0.5)" id="hero-sub2">
+      Des organisations récupèrent en moyenne <strong style="color:rgba(255,255,255,0.8)">30% de leur temps</strong> grâce à Oracle.
     </p>
 
     <!-- CTAs -->
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14" id="hero-ctas">
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4" id="hero-ctas">
       <a class="btn-primary" id="warp-btn" href="https://oracle.dlzteam.com/" target="_blank">
         ✦ Lancer la Démo
       </a>
       <a class="btn-secondary" href="abonnements.html">Opérationnel en 72h →</a>
     </div>
+  </div>
+</section>
 
-    <!-- ── BENTO CARDS ROW ── -->
-    <div class="hero-bento" id="hero-bento">
+<!-- ── BENTO FEATURES ────────────────────────────────────────────────── -->
+<section class="py-24 bg-subtle">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="bento-grid">
 
       <!-- Stats card -->
-      <div class="bento-card bento-card-stats">
-        <div class="bento-stat">
-          <div class="bento-stat-num">8s</div>
-          <div class="bento-stat-label">Pour retrouver une clause dans 50 000 documents</div>
-        </div>
-        <div class="bento-stat">
-          <div class="bento-stat-num">72h</div>
-          <div class="bento-stat-label">Pour être opérationnel — pas des semaines</div>
-        </div>
-        <div class="bento-stat">
-          <div class="bento-stat-num" style="color:var(--gold)">0</div>
-          <div class="bento-stat-label">Données quittant votre infrastructure</div>
+      <div class="col-4 b-card reveal" style="--delay:.1s">
+        <div class="b-tag b-tag-gold mb-4">Performance</div>
+        <div class="flex flex-col justify-center h-full">
+          <div class="b-stat b-stat-gold">8s</div>
+          <div class="b-label">Pour retrouver une clause précise dans 50 000 documents.</div>
         </div>
       </div>
 
-      <!-- Chat preview card -->
-      <div class="bento-card" style="padding:0">
-        <div class="chat-window" style="border:none;border-radius:var(--radius-lg);background:transparent">
-          <div class="chat-topbar">
-            <div class="chat-dot"></div>
-            <div class="chat-dot"></div>
-            <div class="chat-dot"></div>
-            <span class="chat-url">oracle.dlzteam.com</span>
+      <!-- Chat preview -->
+      <div class="col-8 b-card reveal overflow-hidden !p-0" style="--delay:.2s; background: #1d1d1f; border-color: #333;">
+        <div class="chat-window border-none shadow-none !bg-transparent">
+          <div class="chat-topbar !bg-white/5 !border-white/10">
+            <div class="flex gap-1.5">
+              <div class="w-2.5 h-2.5 rounded-full bg-red-500/40"></div>
+              <div class="w-2.5 h-2.5 rounded-full bg-amber-500/40"></div>
+              <div class="w-2.5 h-2.5 rounded-full bg-green-500/40"></div>
+            </div>
+            <div class="chat-url opacity-40 text-[10px] ml-4 font-mono">oracle.helmo.be/agent/juridique-v2</div>
           </div>
-          <div class="chat-body">
-            <div class="chat-msg-user">
-              Nos contrats signés entre 2020–2024 incluent-ils des clauses de non-concurrence &gt; 24 mois ?
+          <div class="chat-body p-8">
+            <div class="chat-msg-user !bg-white/10 !border-white/10 text-white/90 text-sm">
+              Nos contrats 2020-2024 incluent-ils des clauses de non-concurrence > 24 mois ?
             </div>
-            <div class="chat-msg-oracle">
-              <div class="chat-oracle-label">Oracle · Ultra</div>
-              <div class="chat-msg-oracle-bubble">
-                J'ai analysé <strong style="color:white">7 contrats</strong> correspondants.
-                Parmi eux, <strong style="color:white">3</strong> incluent des clauses
-                dépassant 24 mois, principalement dans les secteurs tech et SaaS.
-                <span style="color:rgba(201,168,76,.55);font-size:.75rem;display:block;margin-top:8px">
-                  ↳ Sources : CT-2021-084, CT-2022-031, CT-2023-117
-                </span>
+            <div class="chat-msg-oracle mt-6">
+              <div class="chat-oracle-label text-gold text-[10px] font-black tracking-widest mb-2">Oracle AI Agent</div>
+              <div class="chat-msg-oracle-bubble !bg-white/5 !border-white/10 text-white/70 text-sm leading-relaxed">
+                J'ai analysé <strong>7 contrats</strong> correspondants. 3 d'entre eux incluent des clauses dépassant 24 mois (SaaS & Tech).<br/>
+                <span class="text-gold/50 text-[11px] mt-2 block">↳ Sources : CT-2021-084, CT-2022-031...</span>
               </div>
             </div>
-            <div class="judge-overlay">
-              <div style="font-size:9px;font-weight:800;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;font-family:'Outfit';margin-bottom:6px">LLM Judge</div>
-              <div class="judge-metric">
-                <span>Fidélité</span>
-                <div class="judge-bar"><div class="judge-fill" style="--w:96%"></div></div>
-                <span style="font-weight:700;color:white">4.8</span>
+            <div class="judge-overlay !bg-white/5 !border-white/10 mt-6 p-4 rounded-xl">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="judge-status-dot"></div>
+                <span class="text-[10px] font-black text-white/40 uppercase tracking-widest">Verified by LLM Judge</span>
               </div>
-              <div class="judge-metric">
-                <span>Pertinence</span>
-                <div class="judge-bar"><div class="judge-fill" style="--w:92%"></div></div>
-                <span style="font-weight:700;color:white">4.6</span>
+              <div class="grid grid-cols-2 gap-x-8 gap-y-2">
+                <div class="judge-metric">
+                  <span class="text-[10px] opacity-50">Fidélité</span>
+                  <div class="judge-bar"><div class="judge-fill" style="--w:98%"></div></div>
+                </div>
+                <div class="judge-metric">
+                  <span class="text-[10px] opacity-50">Pertinence</span>
+                  <div class="judge-bar"><div class="judge-fill" style="--w:94%"></div></div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-    </div><!-- /hero-bento -->
+      <!-- Security card -->
+      <div class="col-6 b-card reveal" style="--delay:.3s">
+        <div class="b-icon b-icon-gold">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3 class="b-title text-xl">Souveraineté des données</h3>
+        <p class="b-desc">Hébergement 100% européen sur VPS isolé. Vos documents ne quittent jamais votre infrastructure et sont protégés par un masquage PII automatique.</p>
+      </div>
 
-  </div><!-- /hero-content -->
+      <!-- MCP card -->
+      <div class="col-6 b-card reveal" style="--delay:.4s">
+        <div class="b-icon b-icon-dark">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <h3 class="b-title text-xl">Capacités Agentiques (MCP)</h3>
+        <p class="b-desc">Grâce au Model Context Protocol, Oracle peut agir : créer un ticket Jira, envoyer un email récapitulatif ou mettre à jour un document collaboratif.</p>
+      </div>
 
-  <div class="scroll-indicator">
-    <span>Défiler</span>
-    <div class="scroll-line"></div>
-  </div>
-</section>
-
-<!-- ── SOCIAL PROOF ─────────────────────────────────────────────────── -->
-<section class="social-proof-bar">
-  <div class="max-w-5xl mx-auto px-6">
-    <p class="social-proof-label">Conçu pour les secteurs qui ne peuvent pas se permettre l'erreur</p>
-    <div class="grid grid-cols-3 md:grid-cols-6 gap-8 items-center justify-items-center">
-      <div class="sector-logo reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6l9-3 9 3v9c0 5-9 9-9 9S3 20 3 15V6z"/></svg><span>Juridique</span></div>
-      <div class="sector-logo reveal" style="--delay:.06s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>Santé</span></div>
-      <div class="sector-logo reveal" style="--delay:.12s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Secteur Public</span></div>
-      <div class="sector-logo reveal" style="--delay:.18s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span>Finance</span></div>
-      <div class="sector-logo reveal" style="--delay:.24s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg><span>Enseignement</span></div>
-      <div class="sector-logo reveal" style="--delay:.3s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span>IT & Tech</span></div>
     </div>
   </div>
 </section>
 
-<!-- ── SOVEREIGN SHIELD ──────────────────────────────────────────────── -->
+<!-- ── SOVEREIGN SHIELD ──────────────────── -->
 <section id="sovereign" class="py-32 bg-subtle">
   <div class="max-w-7xl mx-auto px-6">
-    <div class="text-center mb-20 reveal">
-      <div class="section-tag">Sovereign Shield</div>
-      <h2 class="section-title font-heading">Vos données ne quittent<br/><span class="text-gradient-hero" style="background:linear-gradient(135deg,#0f172a 0%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent">jamais votre périmètre</span></h2>
-      <p class="section-sub">ChatGPT et Claude.ai envoient vos documents sur leurs serveurs. Oracle les traite sur une infrastructure cloud européenne que vous contrôlez.</p>
-    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+      <div class="reveal">
+        <div class="section-tag">Bouclier de Souveraineté</div>
+        <h2 class="section-title">Vos données,<br/>votre périmètre.</h2>
+        <p class="section-sub mb-10">
+          Contrairement aux solutions cloud mutualisées, Oracle s'installe sur votre infrastructure.
+          Chaque donnée est filtrée, chaque accès est contrôlé.
+        </p>
+        
+        <div class="space-y-6">
+          <div class="flex items-start gap-4">
+            <div class="check-icon mt-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div>
+              <h4 class="font-bold text-gray-900">Isolation Totale</h4>
+              <p class="text-sm text-gray-500">Un environnement PostgreSQL + pgvector dédié par client.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <div class="check-icon mt-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div>
+              <h4 class="font-bold text-gray-900">Anonymisation NER</h4>
+              <p class="text-sm text-gray-500">Détection chirurgicale des noms, emails et téléphones avant traitement.</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <div class="flex flex-col lg:flex-row items-center gap-16">
-      <!-- Shield visual -->
-      <div class="flex-1 flex items-center justify-center min-h-[380px] reveal">
-        <div class="shield-wrap" id="shield-wrap">
-          <svg class="data-flows absolute inset-0 w-full h-full" viewBox="0 0 400 400" fill="none">
-            <line class="flow-line" x1="0"   y1="80"  x2="200" y2="200" stroke="url(#fg)" stroke-width="1.5" stroke-dasharray="6 4"/>
-            <line class="flow-line" x1="0"   y1="200" x2="200" y2="200" stroke="url(#fg)" stroke-width="1.5" stroke-dasharray="6 4" style="animation-delay:.3s"/>
-            <line class="flow-line" x1="0"   y1="320" x2="200" y2="200" stroke="url(#fg)" stroke-width="1.5" stroke-dasharray="6 4" style="animation-delay:.6s"/>
-            <line class="flow-line" x1="400" y1="80"  x2="200" y2="200" stroke="url(#fr)" stroke-width="1.5" stroke-dasharray="6 4" style="animation-delay:.15s"/>
-            <line class="flow-line" x1="400" y1="200" x2="200" y2="200" stroke="url(#fr)" stroke-width="1.5" stroke-dasharray="6 4" style="animation-delay:.45s"/>
-            <line class="flow-line" x1="400" y1="320" x2="200" y2="200" stroke="url(#fr)" stroke-width="1.5" stroke-dasharray="6 4" style="animation-delay:.75s"/>
-            <defs>
-              <linearGradient id="fg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#C9A84C" stop-opacity="0"/><stop offset="100%" stop-color="#C9A84C" stop-opacity="0.5"/></linearGradient>
-              <linearGradient id="fr" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#C9A84C" stop-opacity="0"/><stop offset="100%" stop-color="#C9A84C" stop-opacity="0.5"/></linearGradient>
-            </defs>
-          </svg>
+      <div class="flex justify-center reveal" style="--delay:.2s">
+        <div class="shield-wrap">
           <div class="shield-circle">
             <div class="shield-ring shield-ring-outer"></div>
             <div class="shield-ring shield-ring-mid"></div>
             <div class="shield-core-inner">
-              <span class="text-gold text-3xl font-heading font-bold">◈</span>
-              <span style="color:rgba(15,23,42,.4);font-size:.65rem;font-family:monospace;margin-top:4px">ORACLE</span>
+              <span class="text-gold text-4xl">◈</span>
             </div>
           </div>
-          <div class="data-label data-label-tl">PDF · DOCX</div>
-          <div class="data-label data-label-ml">Teams · WhatsApp</div>
-          <div class="data-label data-label-bl">JSON · CSV</div>
-          <div class="data-label data-label-tr">Contrats</div>
-          <div class="data-label data-label-mr">Procédures</div>
-          <div class="data-label data-label-br">Archives</div>
-        </div>
-      </div>
-
-      <!-- Infra cards -->
-      <div class="flex-1 flex flex-col gap-4">
-        <div class="glass-card p-6 rounded-2xl reveal" style="--delay:.1s">
-          <div class="flex items-start gap-4">
-            <div class="infra-icon-svg" style="color:var(--gold)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-            <div><h4 class="font-heading font-bold text-lg mb-1" style="color:var(--text)">Infrastructure Cloud EU dédiée</h4><p class="text-sm leading-relaxed" style="color:var(--text-muted)">VPS haute performance isolé. Données hébergées en Union Européenne. Conformité <strong style="color:var(--gold)">RGPD Art. 44</strong> garantie. Aucun transfert international.</p></div>
-          </div>
-        </div>
-        <div class="glass-card p-6 rounded-2xl reveal" style="--delay:.2s">
-          <div class="flex items-start gap-4">
-            <div class="infra-icon-svg" style="color:#3b82f6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
-            <div><h4 class="font-heading font-bold text-lg mb-1" style="color:var(--text)">Scaling automatique</h4><p class="text-sm leading-relaxed" style="color:var(--text-muted)">Infrastructure qui s'adapte à votre charge. Facturation sur usage réel. Vous ne payez que ce que vous consommez.</p></div>
-          </div>
-        </div>
-        <div class="glass-card p-6 rounded-2xl reveal" style="--delay:.3s">
-          <div class="flex items-start gap-4">
-            <div class="infra-icon-svg" style="color:#8b5cf6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
-            <div><h4 class="font-heading font-bold text-lg mb-1" style="color:var(--text)">PII Masking intégré à chaque tier</h4><p class="text-sm leading-relaxed" style="color:var(--text-muted)">Détection et masquage des données personnelles avant traitement LLM. Basique en Tier 1, renforcé en Sovereign, chirurgical (NER) en Ultra.</p></div>
-          </div>
-        </div>
-        <div class="glass-card p-6 rounded-2xl reveal" style="--delay:.4s">
-          <div class="flex items-start gap-4">
-            <div class="infra-icon-svg" style="color:#22c55e"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.657 4.03 3 9 3s9-1.343 9-3V5"/><path d="M3 12c0 1.657 4.03 3 9 3s9-1.343 9-3"/></svg></div>
-            <div><h4 class="font-heading font-bold text-lg mb-1" style="color:var(--text)">PostgreSQL + pgvector — vos données, chez vous</h4><p class="text-sm leading-relaxed" style="color:var(--text-muted)">Base vectorielle hébergée sur votre VPS. Backups automatiques. Recherche hybride sémantique + BM25 intégrée nativement.</p></div>
-          </div>
+          <!-- Flows dots -->
+          <div class="data-label data-label-tl">Contrats PDF</div>
+          <div class="data-label data-label-tr">Logs Serveur</div>
+          <div class="data-label data-label-ml">RH Docs</div>
+          <div class="data-label data-label-mr">Wiki Interne</div>
+          <div class="data-label data-label-bl">Emails</div>
+          <div class="data-label data-label-br">Base SQL</div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── LLM JUDGE ─────────────────────────────────────────────────────── -->
-<section id="judge" class="py-32" style="background:var(--bg)">
+<!-- ── LLM JUDGE ── -->
+<section id="judge" class="py-32 bg-subtle">
   <div class="max-w-7xl mx-auto px-6">
     <div class="text-center mb-20 reveal">
-      <div class="section-tag">Différenciateur Clé</div>
-      <h2 class="section-title font-heading">Chaque réponse est<br/><span class="text-gradient-hero" style="background:linear-gradient(135deg,#0f172a 0%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent">évaluée automatiquement</span></h2>
-      <p class="section-sub">Les autres bots sont des boîtes noires. Oracle est le seul à mesurer automatiquement la qualité de chaque réponse — sans intervention humaine.</p>
+      <div class="section-tag">Observabilité</div>
+      <h2 class="section-title">Zéro Hallucination.<br/>Garanti par le Juge.</h2>
+      <p class="section-sub">Chaque réponse est auditée en temps réel par un second modèle d'IA spécialisé.</p>
     </div>
 
-    <div class="flex flex-col lg:flex-row items-start gap-12">
-      <div class="flex-1 reveal">
-        <div class="judge-panel glass-card rounded-3xl">
-          <div class="flex items-center gap-3 mb-8">
-            <span class="text-gold font-heading font-bold text-sm uppercase tracking-widest">Rapport d'évaluation</span>
+    <div class="max-w-4xl mx-auto reveal" style="--delay:.2s">
+      <div class="judge-panel glass-card">
+        <div class="flex items-center justify-between mb-10">
+          <div class="flex items-center gap-3">
             <div class="judge-status-dot"></div>
+            <span class="text-xs font-bold tracking-widest uppercase text-gray-400">Analyse du LLM Judge</span>
           </div>
-          <div class="space-y-6" id="judge-metrics">
-            <div class="judge-metric-full" data-score="4.8" data-pct="96">
-              <div class="flex justify-between mb-2"><span class="font-semibold text-sm" style="color:var(--text)">Fidélité <span style="color:var(--text-muted);font-weight:400">— Faithfulness</span></span><span class="metric-score font-heading font-bold" style="color:var(--text)">—</span></div>
-              <div class="metric-bar-bg"><div class="metric-bar-fill metric-fill-gold"></div></div>
-              <p class="text-xs mt-1" style="color:var(--text-muted)">La réponse est-elle fidèle aux sources ?</p>
-            </div>
-            <div class="judge-metric-full" data-score="4.6" data-pct="92">
-              <div class="flex justify-between mb-2"><span class="font-semibold text-sm" style="color:var(--text)">Pertinence contexte <span style="color:var(--text-muted);font-weight:400">— Context Relevance</span></span><span class="metric-score font-heading font-bold" style="color:var(--text)">—</span></div>
-              <div class="metric-bar-bg"><div class="metric-bar-fill metric-fill-blue"></div></div>
-              <p class="text-xs mt-1" style="color:var(--text-muted)">Le contexte contient-il l'information nécessaire ?</p>
-            </div>
-            <div class="judge-metric-full" data-score="4.7" data-pct="94">
-              <div class="flex justify-between mb-2"><span class="font-semibold text-sm" style="color:var(--text)">Adéquation <span style="color:var(--text-muted);font-weight:400">— Answer Relevance</span></span><span class="metric-score font-heading font-bold" style="color:var(--text)">—</span></div>
-              <div class="metric-bar-bg"><div class="metric-bar-fill metric-fill-purple"></div></div>
-              <p class="text-xs mt-1" style="color:var(--text-muted)">La réponse adresse-t-elle la question ?</p>
-            </div>
-            <div class="judge-metric-full" data-score="4.5" data-pct="90">
-              <div class="flex justify-between mb-2"><span class="font-semibold text-sm" style="color:var(--text)">Couverture <span style="color:var(--text-muted);font-weight:400">— Context Coverage</span></span><span class="metric-score font-heading font-bold" style="color:var(--text)">—</span></div>
-              <div class="metric-bar-bg"><div class="metric-bar-fill metric-fill-green"></div></div>
-              <p class="text-xs mt-1" style="color:var(--text-muted)">Les informations pertinentes sont-elles exploitées ?</p>
-            </div>
-          </div>
-          <div class="mt-8 pt-6 flex items-center justify-between flex-wrap gap-2" style="border-top:1px solid var(--border)">
-            <span class="text-xs font-mono" style="color:var(--text-muted)">async · non-bloquant · fail-safe</span>
-            <span class="text-xs font-semibold" style="color:#22c55e">Persisté &amp; traçable</span>
-          </div>
+          <div class="text-gold font-heading text-2xl font-black">4.9 / 5</div>
         </div>
-      </div>
 
-      <div class="flex-1 flex flex-col gap-5 reveal" style="--delay:.2s">
-        <div class="glass-card rounded-2xl p-6">
-          <h3 class="font-heading font-bold text-xl mb-3" style="color:var(--text)">Reference Based <span class="tier-badge-sovereign">Tier 2</span></h3>
-          <p class="text-sm leading-relaxed" style="color:var(--text-muted)">Un modèle juge dédié (température 0.0) évalue chaque réponse sur 4 métriques. Résultats persistés et croisés avec les feedbacks utilisateurs.</p>
-        </div>
-        <div class="glass-card glass-card-glow-ultra rounded-2xl p-6">
-          <h3 class="font-heading font-bold text-xl mb-3" style="color:var(--text)">Multi-Agent <span class="tier-badge-ultra">Tier 3 Ultra</span></h3>
-          <p class="text-sm leading-relaxed mb-4" style="color:var(--text-muted)">Trois agents LLM indépendants débattent de chaque réponse. Un comité de relecture automatisé, 24h/24.</p>
-          <div class="flex flex-col gap-2">
-            <div class="flex items-center gap-3 glass-card rounded-xl px-4 py-3"><div class="agent-dot" style="background:rgba(201,168,76,.7)"></div><span class="text-sm" style="color:var(--text-muted)">Agent Juridique — cohérence légale</span></div>
-            <div class="flex items-center gap-3 glass-card rounded-xl px-4 py-3"><div class="agent-dot" style="background:rgba(59,130,246,.7)"></div><span class="text-sm" style="color:var(--text-muted)">Agent Technique — fidélité aux sources</span></div>
-            <div class="flex items-center gap-3 glass-card rounded-xl px-4 py-3"><div class="agent-dot" style="background:rgba(139,92,246,.7)"></div><span class="text-sm" style="color:var(--text-muted)">Agent Synthèse — validation finale</span></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs font-bold mb-1">
+              <span>Fidélité (Faithfulness)</span>
+              <span class="text-gold">98%</span>
+            </div>
+            <div class="metric-bar-bg"><div class="metric-bar-fill metric-fill-gold" style="width:98%"></div></div>
           </div>
-        </div>
-        <div class="glass-card rounded-2xl p-6">
-          <p class="text-xs font-mono mb-2" style="color:var(--text-muted)">// Fail-safe architecture</p>
-          <p class="text-sm leading-relaxed" style="color:var(--text-muted)">Asynchrone, non-bloquant. Si le juge échoue, l'erreur est loggée silencieusement — <strong style="color:var(--text)">l'utilisateur ne voit rien</strong>.</p>
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs font-bold mb-1">
+              <span>Pertinence (Relevance)</span>
+              <span class="text-blue-500">94%</span>
+            </div>
+            <div class="metric-bar-bg"><div class="metric-bar-fill metric-fill-blue" style="width:94%"></div></div>
+          </div>
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs font-bold mb-1">
+              <span>Précision Contextuelle</span>
+              <span class="text-purple-500">96%</span>
+            </div>
+            <div class="metric-bar-bg"><div class="metric-bar-fill metric-fill-purple" style="width:96%"></div></div>
+          </div>
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs font-bold mb-1">
+              <span>Couverture des sources</span>
+              <span class="text-green-500">92%</span>
+            </div>
+            <div class="metric-bar-bg"><div class="metric-bar-fill metric-fill-green" style="width:92%"></div></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── IKEA EFFECT ────────────────────────────────────────────────────── -->
-<section class="py-24 bg-subtle">
-  <div class="max-w-5xl mx-auto px-6">
-    <div class="text-center mb-16 reveal">
-      <div class="section-tag">Déploiement Express</div>
-      <h2 class="section-title font-heading">Votre Oracle,<br/><span class="text-gradient-hero" style="background:linear-gradient(135deg,#0f172a 0%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent">configuré par vous</span></h2>
-      <p class="section-sub">Vous ne choisissez pas un logiciel. Vous construisez votre propre assistant — avec vos documents, vos règles, vos canaux.</p>
+<!-- ── IKEA STEPS ── -->
+<section id="cases" class="py-32 bg-subtle">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-20 reveal">
+      <div class="section-tag">Déploiement</div>
+      <h2 class="section-title">Prêt en 3 étapes.</h2>
+      <p class="section-sub">Pas de cycle d'intégration de 6 mois. Oracle est conçu pour la vélocité.</p>
     </div>
-    <div class="ikea-steps reveal">
+
+    <div class="ikea-steps reveal" style="--delay:.2s">
       <div class="ikea-step">
         <div class="ikea-step-num">01</div>
-        <h4>Chargez vos documents</h4>
-        <p>PDF, DOCX, CSV, règlements internes, catalogues, procédures. Oracle apprend votre contexte métier, pas le monde entier.</p>
+        <h4>Connexion</h4>
+        <p>On branche vos sources (Google Drive, SharePoint, Dossiers locaux) sur votre instance isolée.</p>
       </div>
       <div class="ikea-step">
         <div class="ikea-step-num">02</div>
-        <h4>Choisissez vos canaux</h4>
-        <p>WhatsApp, Teams, Discord, Web. Votre bot déployé là où vos équipes ou clients travaillent déjà — pas sur une nouvelle interface.</p>
+        <h4>Configuration</h4>
+        <p>On définit les "Prompts Métiers" : comment le bot doit parler et quelles actions il peut déclencher via MCP.</p>
       </div>
       <div class="ikea-step">
         <div class="ikea-step-num">03</div>
-        <h4>Opérationnel en 72h</h4>
-        <p>Nous gérons l'infrastructure, le déploiement et la configuration. Vous récupérez votre temps dès la première semaine.</p>
+        <h4>Déploiement</h4>
+        <p>Accédez au chat via l'interface web sécurisée ou intégrez-le sur vos outils (Teams, Discord, WhatsApp).</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── CASES — Bento Grid ─────────────────────────────────────────────── -->
-<section id="cases" style="padding:96px 0;background:var(--bg-subtle)">
-  <div class="max-w-6xl mx-auto px-6">
-    <div class="text-center mb-14 reveal">
-      <div class="section-tag">Cas d'Usage</div>
-      <h2 class="section-title font-heading">Oracle dans la <span class="text-gradient-dark">vie réelle</span></h2>
-      <p class="section-sub mt-3">Chaque secteur a le même problème. Oracle l'adresse en 72h.</p>
-    </div>
-
-    <!-- ROW 1 -->
-    <div class="bento-grid reveal mb-4">
-      <!-- Big stat: temps perdu -->
-      <div class="b-card b-card-dark col-3" style="display:flex;flex-direction:column;justify-content:space-between;min-height:180px">
-        <div class="b-tag b-tag-gold">Fait #1</div>
-        <div>
-          <div class="b-stat b-stat-white">30%</div>
-          <div class="b-label b-label-white">du temps de travail perdu à répondre aux mêmes questions internes</div>
-        </div>
-      </div>
-      <!-- Sophie -->
-      <div class="b-card b-card-gold col-5" style="display:flex;flex-direction:column;justify-content:space-between">
-        <div>
-          <div class="b-tag b-tag-gold">Tier 0 · Starter · 29€/mois</div>
-          <div class="b-title">Sophie, Consultante Freelance</div>
-          <div class="b-desc">Perd chaque semaine des heures à répondre aux mêmes questions prospects. Le bot répond à 22h comme Sophie le ferait.</div>
-        </div>
-        <div style="margin-top:16px">
-          <div class="b-stat b-stat-gold" style="font-size:2.2rem">9 600 €</div>
-          <div class="b-label">de manque à gagner annuel évité</div>
-        </div>
-      </div>
-      <!-- iFixit -->
-      <div class="b-card b-card-blue col-4" style="display:flex;flex-direction:column;justify-content:space-between">
-        <div>
-          <div class="b-tag b-tag-blue">Tier 1 · Essential · 79€/mois</div>
-          <div class="b-title">iFixit Bruxelles</div>
-          <div class="b-desc">Le bot génère le devis, crée le ticket, envoie la confirmation. Zéro saisie manuelle.</div>
-        </div>
-        <div style="margin-top:16px">
-          <div class="b-stat b-stat-dark" style="font-size:2.2rem;color:#1d4ed8">+200 €</div>
-          <div class="b-label">de CA quotidien potentiel</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ROW 2 -->
-    <div class="bento-grid reveal" style="--delay:.1s">
-      <!-- ULiège -->
-      <div class="b-card b-card-purple col-5" style="display:flex;flex-direction:column;justify-content:space-between">
-        <div>
-          <div class="b-tag b-tag-purple">Tier 2 · Sovereign · 499€/mois</div>
-          <div class="b-title">Université de Liège</div>
-          <div class="b-desc">25 000 étudiants. 3 bots spécialisés : EtudBot, ProfBot, AdminBot. Chacun avec son prompt métier.</div>
-        </div>
-        <div style="margin-top:16px">
-          <div class="b-stat b-stat-dark" style="font-size:2.2rem;color:#5b21b6">30h</div>
-          <div class="b-label">de travail administratif économisé chaque jour</div>
-        </div>
-      </div>
-      <!-- Garrigues — hero card -->
-      <div class="b-card b-card-dark col-7" style="display:flex;flex-direction:column;justify-content:space-between;min-height:220px">
-        <div>
-          <div class="b-tag b-tag-gold">Tier 3 · Ultra · 1 999€/mois</div>
-          <div class="b-title b-title-white" style="font-size:1.15rem">Garrigues — Cabinet d'Avocats</div>
-          <div class="b-desc b-desc-white">50 000 documents. Associés à 400 €/h. Oracle retrouve les clauses, génère les trames, compare les versions. <strong style="color:rgba(255,255,255,.75)">En 8 secondes.</strong></div>
-        </div>
-        <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:20px;flex-wrap:wrap;gap:12px">
-          <div>
-            <div class="b-stat b-stat-gold">80 000 €</div>
-            <div class="b-label b-label-white">de capacité de facturation récupérée/mois</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:900;color:#22c55e">ROI × 40</div>
-            <div style="font-size:.72rem;color:rgba(255,255,255,.4)">atteint en 3 jours</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── PRICING ────────────────────────────────────────────────────────── -->
+<!-- ── PRICING ── -->
 <section id="pricing" class="py-32 bg-subtle">
   <div class="max-w-7xl mx-auto px-6">
     <div class="text-center mb-20 reveal">
       <div class="section-tag">Tarification</div>
-      <h2 class="section-title font-heading">Un tier pour chaque <span class="text-gradient-hero" style="background:linear-gradient(135deg,#0f172a 0%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent">niveau d'ambition</span></h2>
+      <h2 class="section-title">Un plan pour chaque<br/>niveau d'ambition</h2>
       <p class="section-sub">Chaque abonnement est conçu pour que le ROI dépasse largement son coût dès le premier mois. <a href="abonnements.html" style="color:var(--gold)">Voir le détail complet →</a></p>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
-      <!-- Starter -->
-      <div class="pricing-card glass-card reveal">
-        <div class="text-xs font-bold uppercase tracking-widest mb-3 font-heading" style="color:var(--text-muted)">Tier 0</div>
-        <h3 class="font-heading font-bold text-2xl mb-1" style="color:var(--text)">Starter</h3>
-        <p class="text-sm mb-6" style="color:var(--text-muted)">Indépendants, freelances, TPE</p>
-        <div class="mb-2"><span class="font-heading font-extrabold text-4xl" style="color:var(--text)">29€</span><span class="text-sm ml-1" style="color:var(--text-muted)">/mois</span></div>
-        <div class="text-xs mb-6" style="color:var(--text-muted)">+ 49 € setup</div>
-        <ul class="space-y-3 mb-8 flex-grow text-sm" style="color:var(--text-muted)">
-          <li class="flex items-center gap-2"><span class="check-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>1 bot WhatsApp / Telegram</li>
-          <li class="flex items-center gap-2"><span class="check-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>20 documents max</li>
-          <li class="flex items-center gap-2"><span class="check-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>PII Masking basique</li>
-          <li class="flex items-center gap-2 opacity-40"><span class="cross-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>MCP avancé</li>
-          <li class="flex items-center gap-2 opacity-40"><span class="cross-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>LLM Judge</li>
-        </ul>
-        <a class="btn-tier btn-tier-ghost mt-auto" href="abonnements.html">Voir les détails</a>
-      </div>
-
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      
       <!-- Essential -->
       <div class="pricing-card glass-card reveal" style="--delay:.1s">
-        <div class="text-xs font-bold uppercase tracking-widest mb-3 font-heading" style="color:#3b82f6">Tier 1</div>
-        <h3 class="font-heading font-bold text-2xl mb-1" style="color:var(--text)">Essential</h3>
-        <p class="text-sm mb-6" style="color:var(--text-muted)">PME, IT, RH, collectivités</p>
-        <div class="mb-2"><span class="font-heading font-extrabold text-4xl" style="color:var(--text)">79€</span><span class="text-sm ml-1" style="color:var(--text-muted)">/mois</span></div>
-        <div class="text-xs mb-6" style="color:var(--text-muted)">+ 150 € setup</div>
-        <ul class="space-y-3 mb-8 flex-grow text-sm" style="color:var(--text-muted)">
-          <li class="flex items-center gap-2"><span class="check-icon check-blue"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>1 bot + MCP tickets/emails</li>
+        <div class="mb-8">
+          <div class="font-bold text-xs uppercase tracking-widest text-blue-500 mb-2">Essential</div>
+          <div class="flex items-baseline gap-1">
+            <span class="text-4xl font-black text-gray-900">79€</span>
+            <span class="text-gray-400 text-sm font-medium">/mois</span>
+          </div>
+          <p class="text-gray-500 text-xs mt-4">Pour les PME et services RH cherchant à automatiser les questions répétitives.</p>
+        </div>
+        <ul class="space-y-4 mb-10 flex-grow">
+          <li class="flex items-center gap-2"><span class="check-icon check-blue"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>1 Bot Omnicanal</li>
           <li class="flex items-center gap-2"><span class="check-icon check-blue"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>100 documents max</li>
-          <li class="flex items-center gap-2"><span class="check-icon check-blue"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>PII Masking basique</li>
-          <li class="flex items-center gap-2 opacity-40"><span class="cross-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>LLM Judge</li>
+          <li class="flex items-center gap-2"><span class="check-icon check-blue"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>MCP Tools (Tickets & Emails)</li>
+          <li class="flex items-center gap-2"><span class="check-icon check-blue"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>Infrastructure Cloud EU</li>
         </ul>
-        <a class="btn-tier btn-tier-blue mt-auto" href="abonnements.html">Voir les détails</a>
+        <a href="abonnements.html" class="btn-tier btn-tier-blue">Choisir Essential</a>
       </div>
 
       <!-- Sovereign -->
-      <div class="pricing-card pricing-sovereign-card glass-card reveal relative pt-12" style="--delay:.2s">
-        <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest whitespace-nowrap shadow-lg">Le Plus Populaire</div>
-        <div class="text-xs font-bold uppercase tracking-widest mb-3 font-heading" style="color:#8b5cf6">Tier 2</div>
-        <h3 class="font-heading font-bold text-2xl mb-1" style="color:var(--text)">Sovereign</h3>
-        <p class="text-sm mb-6" style="color:var(--text-muted)">Admins, universités, hôpitaux</p>
-        <div class="mb-2"><span class="font-heading font-extrabold text-4xl" style="color:var(--text)">499€</span><span class="text-sm ml-1" style="color:var(--text-muted)">/mois</span></div>
-        <div class="text-xs mb-6" style="color:var(--text-muted)">+ 1 500–2 500 € setup</div>
-        <ul class="space-y-3 mb-8 flex-grow text-sm" style="color:var(--text-muted)">
-          <li class="flex items-center gap-2"><span class="check-icon check-purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>3 bots · 5 ressources dynamiques</li>
-          <li class="flex items-center gap-2"><span class="check-icon check-purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>4 prompts métiers configurés</li>
-          <li class="flex items-center gap-2"><span class="check-icon check-purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>PII Masking renforcé</li>
-          <li class="flex items-center gap-2"><span class="check-icon check-purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>LLM Judge Reference Based</li>
+      <div class="pricing-card glass-card pricing-sovereign-card reveal relative" style="--delay:.2s">
+        <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest whitespace-nowrap shadow-lg">Recommandé</div>
+        <div class="mb-8">
+          <div class="font-bold text-xs uppercase tracking-widest text-purple-600 mb-2">Sovereign</div>
+          <div class="flex items-baseline gap-1">
+            <span class="text-4xl font-black text-gray-900">499€</span>
+            <span class="text-gray-400 text-sm font-medium">/mois</span>
+          </div>
+          <p class="text-gray-500 text-xs mt-4">Pour les administrations et universités exigeant une souveraineté totale.</p>
+        </div>
+        <ul class="space-y-4 mb-10 flex-grow">
+          <li class="flex items-center gap-2"><span class="check-icon check-purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>3 Bots inclus</li>
+          <li class="flex items-center gap-2"><span class="check-icon check-purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>Ingestion Illimitée</li>
+          <li class="flex items-center gap-2"><span class="check-icon check-purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>LLM Judge Standard</li>
+          <li class="flex items-center gap-2"><span class="check-icon check-purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>VPS Dédié EU</li>
         </ul>
-        <a class="btn-tier btn-tier-purple mt-auto" href="abonnements.html">Voir les détails</a>
+        <a href="abonnements.html" class="btn-tier btn-tier-purple">Passer à la Souveraineté</a>
       </div>
 
       <!-- Ultra -->
       <div class="pricing-card glass-card glass-card-glow-ultra reveal ultra-float" style="--delay:.3s" id="ultra-card">
-        <div class="text-xs font-bold uppercase tracking-widest mb-3 font-heading" style="color:var(--gold)">Tier 3</div>
-        <h3 class="font-heading font-bold text-2xl mb-1" style="color:var(--text)">Ultra</h3>
-        <p class="text-sm mb-6" style="color:var(--text-muted)">Juridique, compliance, audit</p>
-        <div class="mb-2"><span class="font-heading font-extrabold text-4xl" style="color:var(--gold)">1 999€</span><span class="text-sm ml-1" style="color:var(--text-muted)">/mois</span></div>
-        <div class="text-xs mb-6" style="color:var(--text-muted)">+ 5 000 € setup · 10k pages incluses</div>
-        <ul class="space-y-3 mb-8 flex-grow text-sm" style="color:var(--text-muted)">
-          <li class="flex items-center gap-2"><span class="check-icon check-gold"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>Bots illimités · MCP Full Access</li>
+        <div class="mb-8">
+          <div class="font-bold text-xs uppercase tracking-widest text-gold mb-2">Ultra</div>
+          <div class="flex items-baseline gap-1">
+            <span class="text-4xl font-black text-gray-900">1 999€</span>
+            <span class="text-gray-400 text-sm font-medium">/mois</span>
+          </div>
+          <p class="text-gray-500 text-xs mt-4">Pour les environnements critiques : avocats, banques, audit.</p>
+        </div>
+        <ul class="space-y-4 mb-10 flex-grow">
+          <li class="flex items-center gap-2"><span class="check-icon check-gold"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>Bots & Sources illimités</li>
           <li class="flex items-center gap-2"><span class="check-icon check-gold"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>LLM Judge Multi-Agent</li>
           <li class="flex items-center gap-2"><span class="check-icon check-gold"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>PII Masking chirurgical (NER)</li>
-          <li class="flex items-center gap-2"><span class="check-icon check-gold"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>Infrastructure Cloud EU · RGPD Art. 44</li>
+          <li class="flex items-center gap-2"><span class="check-icon check-gold"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>VPS High-Performance EU</li>
         </ul>
-        <a class="btn-tier btn-tier-gold mt-auto" href="abonnements.html">Voir les détails</a>
+        <a href="abonnements.html" class="btn-tier btn-tier-gold">Accéder à l'Ultra</a>
       </div>
+
     </div>
   </div>
 </section>
 
-<!-- ── FOOTER ─────────────────────────────────────────────────────────── -->
-<footer id="site-footer">
-  <div class="footer-bg-text">
-    <span>Oracle</span>
-  </div>
-  <div class="relative z-10 max-w-7xl mx-auto px-6 flex flex-col items-center gap-12">
-    <div class="flex flex-col md:flex-row items-center justify-between w-full gap-6 pb-12" style="border-bottom:1px solid rgba(255,255,255,.06)">
-      <div class="flex items-center gap-6">
-        <div class="flex items-center gap-2">
-          <span class="text-gold text-2xl">◈</span>
-          <span class="footer-logo-text font-heading text-2xl font-bold uppercase">Oracle</span>
-        </div>
+<footer class="site-footer">
+  <div class="footer-bg-text"><span>Oracle</span></div>
+  <div class="relative z-10 max-w-7xl mx-auto px-6 flex flex-col items-center gap-10">
+    <div class="flex flex-col md:flex-row items-center justify-between w-full gap-6 pb-10" style="border-bottom:1px solid rgba(255,255,255,.06)">
+      <div class="flex items-center gap-2">
+        <span class="text-gold text-2xl">◈</span>
+        <span class="footer-logo-text font-heading text-xl font-bold uppercase">Oracle</span>
       </div>
       <div class="flex gap-8">
-        <a href="https://www.linkedin.com/in/tdelhez/" target="_blank" class="footer-link"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>Tim</a>
-        <a href="https://www.linkedin.com/in/maxime-bourguignon-6275253b6/" target="_blank" class="footer-link"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>Maxime</a>
-        <a href="https://www.linkedin.com/in/arnaudleroyit/" target="_blank" class="footer-link"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>Arnaud</a>
+        <a href="https://www.linkedin.com/in/tdelhez/" target="_blank" class="footer-link">Tim</a>
+        <a href="https://www.linkedin.com/in/maxime-bourguignon-6275253b6/" target="_blank" class="footer-link">Maxime</a>
+        <a href="https://www.linkedin.com/in/arnaudleroyit/" target="_blank" class="footer-link">Arnaud</a>
       </div>
     </div>
-    <p class="footer-copy">© 2026 HeLMO Oracle · Plateforme RAG Agentique Souveraine. Projet académique conçu pour la souveraineté numérique et l'IA éthique.</p>
+    <p class="footer-copy">© 2026 HeLMO Oracle · Plateforme RAG Agentique Souveraine. Projet académique conçu pour la souveraineté numérique.</p>
   </div>
 </footer>
 
