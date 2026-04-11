@@ -10,13 +10,13 @@ import {
   Sources,
   SourcesTrigger,
   SourcesContent,
-} from "@/components/ai-elements/sources";
+} from "../ai-elements/sources";
 import {
   ChainOfThought,
   ChainOfThoughtHeader,
   ChainOfThoughtContent,
   ChainOfThoughtStep,
-} from "@/components/ai-elements/chain-of-thought";
+} from "../ai-elements/chain-of-thought";
 import {
   ScanSearch,
   Layers,

@@ -9,6 +9,7 @@ import {
   MessageSquare,
   Settings,
   LogOut,
+  Activity,
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { clsx } from "clsx";

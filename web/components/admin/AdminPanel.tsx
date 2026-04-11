@@ -34,11 +34,11 @@ import { supabase } from "@/lib/supabase";
 import { LS } from "./sections/shared";
 import { ModelSection } from "./sections/ModelSection";
 import { LogsSection } from "./sections/LogsSection";
-import { HealthSection } from "./sections/HealthSection";
-import { IngestSection } from "./sections/IngestSection";
-import { ProfileSection } from "./sections/ProfileSection";
+import { HealthSection } from "@/components/admin/sections/HealthSection";
+import { IngestSection } from "@/components/admin/sections/IngestSection";
+import { ProfileSection } from "@/components/admin/sections/ProfileSection";
 
-import { DashboardSection } from "./sections/DashboardSection";
+import { DashboardSection } from "@/components/admin/sections/DashboardSection";
 
 const NAV = [
   { id: "overview", label: "Dashboard", icon: LayoutDashboard },
