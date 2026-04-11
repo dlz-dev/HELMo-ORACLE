@@ -843,20 +843,35 @@ async def trigger_ingest(files: list[UploadFile] = File(...)):
     if _ingest_status.get("running"):
         return {"started": False, "detail": "Une ingestion est déjà en cours."}
 
+    import shutil
+    from pathlib import Path
     from core.utils.utils import NEW_FILES_DIR, ARCHIVE_DIR, QUARANTINE_DIR
+
     NEW_FILES_DIR.mkdir(parents=True, exist_ok=True)
     ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
     QUARANTINE_DIR.mkdir(parents=True, exist_ok=True)
 
     saved_paths = []
     for file in files:
-        safe_name = Path(file.filename).name  # strip any subdirectory prefix (webkitdirectory)
-        dest = NEW_FILES_DIR / safe_name
-        contents = await file.read()
-        with open(dest, "wb") as f:
-            f.write(contents)
-        saved_paths.append(dest)
-        logger.info("INGEST | Fichier reçu : %s", safe_name)
+        safe_name = Path(file.filename).name
+        if safe_name.startswith("lore_"):
+            dest = NEW_FILES_DIR / safe_name
+            with open(dest, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+
+            saved_paths.append(dest)
+            logger.info("INGEST | Fichier reçu : %s", safe_name)
+        else:
+            quarantine_dest = QUARANTINE_DIR / safe_name
+            # Écriture en streaming vers la quarantaine
+            with open(quarantine_dest, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+
+            logger.warning("INGEST | Refusé (nom invalide) — mis en quarantaine : %s", safe_name)
+
+    # Sécurité : Si aucun fichier n'a passé le filtre, on ne lance pas le thread
+    if not saved_paths:
+        return {"started": False, "detail": "Aucun fichier valide. Tous les fichiers ont été mis en quarantaine."}
 
     _ingest_cancel.clear()
     _ingest_status.update({"running": True, "last_status": "idle", "last_message": "Démarrage…"})
