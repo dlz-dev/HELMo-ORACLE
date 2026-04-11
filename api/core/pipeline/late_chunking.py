@@ -15,7 +15,11 @@ import logging
 import os
 from typing import List
 
-from langchain_community.embeddings import OllamaEmbeddings
+import os as _os
+if _os.environ.get("OLLAMA_BATCH", "false").lower() == "true":
+    from langchain_ollama import OllamaEmbeddings
+else:
+    from langchain_community.embeddings import OllamaEmbeddings
 
 logger = logging.getLogger("oracle")
 
@@ -66,7 +70,7 @@ class LateChunkingEmbedder:
         if not chunks:
             return []
 
-        MAX_CHARS = 6000
+        MAX_CHARS = 3000
         contextual_texts: List[str] = []
         for i, chunk in enumerate(chunks):
             start = max(0, i - self.context_window)
