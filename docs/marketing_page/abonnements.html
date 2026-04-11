@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Oracle — Abonnements</title>
+<title>Oracle — Abonnements & Transparence</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="style.css" rel="stylesheet"/>
 <style>
@@ -12,6 +12,8 @@
   .tier-card { display: flex; flex-direction: column; height: 100%; }
   .tier-feature-item { display: flex; align-items: flex-start; gap: 10px; font-size: 0.85rem; color: var(--text-2); margin-bottom: 12px; }
   .tier-feature-icon { flex-shrink: 0; color: var(--gold); margin-top: 2px; }
+  .use-case-card { background: white; border: 1px solid var(--border); border-radius: var(--r-xl); padding: 24px; }
+  .roi-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; margin-top: 12px; }
 </style>
 </head>
 <body class="sub-page page-scrolled">
@@ -40,12 +42,12 @@
   <!-- ── PAGE HERO ──────────────────────────────────────────────────── -->
   <div class="page-hero">
     <div class="max-w-4xl mx-auto px-4 text-center">
-      <div class="section-tag mx-auto w-fit mb-6 reveal">Catalogue Complet</div>
+      <div class="section-tag mx-auto w-fit mb-6 reveal">Transparence Totale</div>
       <h1 class="page-hero-title font-heading mb-6 reveal" style="--delay:.1s">
-        Abonnements & <span class="text-gradient-hero">Plans</span>
+        Catalogue des <span class="text-gradient-hero">Abonnements</span>
       </h1>
       <p class="reveal" style="color:var(--text-muted);--delay:.2s;max-width:600px;margin:0 auto;font-size:1.05rem">
-        Chaque tier est conçu pour que le gain dépasse largement son coût dès le premier mois. Choisissez la souveraineté adaptée à vos besoins.
+        De l'indépendant au cabinet d'avocats, choisissez le niveau de souveraineté et de puissance adapté à vos processus métier.
       </p>
     </div>
   </div>
@@ -53,7 +55,7 @@
   <div class="max-w-6xl mx-auto px-6 pb-32">
 
     <!-- ── GRID TIERS ── -->
-    <div class="bento-grid mb-20">
+    <div class="bento-grid mb-24">
       
       <!-- Tier Starter -->
       <div class="col-4 b-card tier-card reveal" style="--delay:.05s">
@@ -62,11 +64,12 @@
           <div class="tier-price">29€<span class="text-lg font-medium opacity-40">/mois</span></div>
           <div class="tier-price-sub">+ 49 € setup unique</div>
         </div>
+        <p class="text-xs text-muted mb-6">Indépendants & TPE. Professionnalisez votre relation client sans perdre de temps.</p>
         <div class="flex-grow">
-          <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> 1 bot (WhatsApp/Telegram)</div>
-          <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> 20 documents max</div>
+          <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> 1 bot (WhatsApp ou Telegram)</div>
+          <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> 20 documents max (PDF, TXT, MD)</div>
           <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> 1 ressource statique MCP</div>
-          <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> PII Masking basique</div>
+          <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> Infra mutualisée (Railway + Supabase)</div>
         </div>
         <a href="mailto:contact@oracle.dlzteam.com" class="btn-tier btn-tier-ghost mt-8">Choisir Starter</a>
       </div>
@@ -78,11 +81,12 @@
           <div class="tier-price">79€<span class="text-lg font-medium opacity-40">/mois</span></div>
           <div class="tier-price-sub">+ 150 € setup unique</div>
         </div>
+        <p class="text-xs text-muted mb-6">PME, IT & RH. Automatisez le support et les processus d'onboarding.</p>
         <div class="flex-grow">
           <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> 1 bot inclus (Omnicanal)</div>
           <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> 100 documents max</div>
           <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> MCP Tools : Tickets & Emails</div>
-          <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> PII Masking standard</div>
+          <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> Options : +15€/bot, +5€/50 docs</div>
         </div>
         <a href="mailto:contact@oracle.dlzteam.com" class="btn-tier btn-tier-blue mt-8">Choisir Essential</a>
       </div>
@@ -92,13 +96,15 @@
         <div class="b-tag tier-tag-sovereign mb-4">Tier 2 — Sovereign</div>
         <div class="mb-6">
           <div class="tier-price">499€<span class="text-lg font-medium opacity-40">/mois</span></div>
-          <div class="tier-price-sub">+ 1500 € setup unique</div>
+          <div class="tier-price-sub">+ 1500€ à 2500€ setup + 0.10€/page</div>
         </div>
+        <p class="text-xs text-muted mb-6">Administrations & Universités. Isolation totale et gestion de volumes importants.</p>
         <div class="flex-grow">
-          <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> 3 bots inclus</div>
-          <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> Ingestion illimitée</div>
+          <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> 3 bots inclus (Web, Discord, Teams)</div>
           <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> 5 ressources dynamiques MCP</div>
+          <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> 4 prompts métiers (Rôles adaptés)</div>
           <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> LLM Judge Reference Based</div>
+          <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> VPS Dédié (Monitoring actif)</div>
         </div>
         <a href="mailto:contact@oracle.dlzteam.com" class="btn-tier btn-tier-purple mt-8">Choisir Sovereign</a>
       </div>
@@ -108,18 +114,21 @@
         <div class="flex flex-col md:flex-row gap-8">
           <div class="flex-1">
             <div class="b-tag tier-tag-ultra mb-4">Tier 3 — Ultra</div>
-            <h3 class="b-title text-2xl mb-4">La puissance totale de l'IA Agentique</h3>
-            <p class="b-desc mb-6">Conçu pour les environnements à haute facturation (avocats, audit) où chaque seconde gagnée est un profit net.</p>
+            <h3 class="b-title text-2xl mb-2">Exigence Critique & RGPD Art. 44</h3>
+            <p class="b-desc mb-6 text-sm">Cabinets d'avocats, banques et audit. Vos données ne quittent jamais l'UE (DigitalOcean Amsterdam).</p>
             <div class="grid grid-cols-2 gap-x-4">
-              <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> Bots & Sources illimités</div>
-              <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> LLM Judge Multi-Agent</div>
-              <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> PII Masking NER (Lourd)</div>
-              <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> Cloud EU Haute Performance</div>
+              <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> Bots & Ingestion illimités</div>
+              <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> LLM Judge Multi-Agent (3 LLMs)</div>
+              <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> MCP Full Access (Workflows complexes)</div>
+              <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> PII Masking NER (Detection >99%)</div>
+              <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> Logs d'audit & Support réactif</div>
+              <div class="tier-feature-item"><span class="tier-feature-icon">◈</span> VPS High Performance Isolé</div>
             </div>
           </div>
           <div class="md:w-64 flex flex-col justify-center items-center p-6 bg-white/40 rounded-2xl border border-gold/10">
             <div class="tier-price text-gold">1 999€</div>
             <div class="tier-price-sub text-center">/ mois</div>
+            <div class="text-[10px] text-muted mt-2 text-center">+ 5000€ setup (10k pages incl.)<br/>0.05€/page au-delà</div>
             <a href="mailto:contact@oracle.dlzteam.com" class="btn-tier btn-tier-gold w-full mt-6">Contacter Sales</a>
           </div>
         </div>
@@ -128,48 +137,86 @@
       <!-- Custom -->
       <div class="col-4 b-card b-card-dark reveal" style="--delay:.25s">
         <div class="b-tag bg-white/10 text-white border-white/10 mb-4">Tier 4 — Custom</div>
-        <h3 class="b-title-white mb-2">On-Premise</h3>
-        <p class="b-desc-white mb-6">Installation sur vos serveurs, isolation totale, connecteurs API propriétaires et SLA garantis.</p>
+        <h3 class="b-title-white mb-2">On-Premise & SLA</h3>
+        <p class="b-desc-white mb-6 text-sm">Déploiement sur vos serveurs, connecteurs API propriétaires et Fine-tuning dédié.</p>
         <a href="mailto:contact@oracle.dlzteam.com" class="btn-tier btn-tier-outline !border-white/20 !text-white hover:!bg-white/10 w-full mt-auto">Sur devis</a>
       </div>
 
     </div>
 
-    <!-- ── MCP EXPLAINER ── -->
-    <div class="b-card b-card-subtle reveal mb-20">
-      <div class="flex items-center gap-4 mb-8">
-        <div class="b-icon b-icon-gold !mb-0">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
-        </div>
-        <h2 class="b-title text-2xl !mb-0">Agir avec le protocole MCP</h2>
+    <!-- ── CAS D'USAGE & ROI ── -->
+    <div class="mb-24">
+      <div class="text-center mb-12">
+        <div class="section-tag mx-auto w-fit">Impact Métier</div>
+        <h2 class="section-title">Comment Oracle rentre dans ses frais</h2>
       </div>
+      
       <div class="bento-grid">
-        <div class="col-4">
-          <h5 class="font-bold text-sm mb-2" style="color:var(--text)">Resources — La donnée</h5>
-          <p class="text-sm text-muted" style="color:var(--text-muted)">Oracle accède à vos règlements, catalogues et bases de données en temps réel pour une précision chirurgicale.</p>
+        <!-- Sophie Freelance -->
+        <div class="col-6 use-case-card reveal">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-400">S</div>
+            <div>
+              <div class="font-bold text-sm">Sophie, Consultante Marketing</div>
+              <div class="text-[10px] text-muted uppercase tracking-widest">Tier 0 — Starter</div>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 mb-4 italic">"Je perdais 2 prospects par mois faute de réponse rapide à 22h. Mon bot WhatsApp répond désormais à ma place avec mes tarifs et mes délais."</p>
+          <div class="roi-badge bg-green-50 text-green-700">ROI : 9 600€ récupérés / an</div>
         </div>
-        <div class="col-4">
-          <h5 class="font-bold text-sm mb-2" style="color:var(--text)">Tools — L'action</h5>
-          <p class="text-sm text-muted" style="color:var(--text-muted)">Oracle peut créer un ticket, envoyer un email ou générer un document complexe. Il passe du chat à l'agent actif.</p>
+
+        <!-- iFixit -->
+        <div class="col-6 use-case-card reveal" style="--delay:.1s">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center font-bold text-blue-400">i</div>
+            <div>
+              <div class="font-bold text-sm">iFixit Bruxelles, Atelier Tech</div>
+              <div class="text-[10px] text-muted uppercase tracking-widest">Tier 1 — Essential</div>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 mb-4 italic">"Le bot diagnostique la panne, génère le devis auto et crée le ticket Jira via MCP. On a gagné 40 min de messagerie par jour."</p>
+          <div class="roi-badge bg-blue-50 text-blue-700">ROI : +200€ CA / jour</div>
         </div>
-        <div class="col-4">
-          <h5 class="font-bold text-sm mb-2" style="color:var(--text)">Prompts — Le raisonnement</h5>
-          <p class="text-sm text-muted" style="color:var(--text-muted)">Des modèles de comportement adaptés à chaque métier (juridique, RH, IT) pour des réponses toujours pertinentes.</p>
+
+        <!-- ULiège -->
+        <div class="col-6 use-case-card reveal" style="--delay:.2s">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center font-bold text-purple-400">U</div>
+            <div>
+              <div class="font-bold text-sm">Université de Liège (ULiège)</div>
+              <div class="text-[10px] text-muted uppercase tracking-widest">Tier 2 — Sovereign</div>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 mb-4 italic">"30 heures de travail administratif économisées par jour en période d'inscription grâce à nos 3 bots isolés sur VPS dédié."</p>
+          <div class="roi-badge bg-purple-50 text-purple-700">ROI : 4 ETP libérés en Septembre</div>
+        </div>
+
+        <!-- Garrigues -->
+        <div class="col-6 use-case-card reveal" style="--delay:.3s">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center font-bold text-amber-400">G</div>
+            <div>
+              <div class="font-bold text-sm">Garrigues, Cabinet d'Avocats</div>
+              <div class="text-[10px] text-muted uppercase tracking-widest">Tier 3 — Ultra</div>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 mb-4 italic">"Retrouver une clause dans 50 000 documents en 8 secondes avec une garantie RGPD Art. 44 sur Amsterdam. La sécurité n'est pas négociable."</p>
+          <div class="roi-badge bg-amber-50 text-amber-700">ROI : Atteint en 3 jours</div>
         </div>
       </div>
     </div>
 
     <!-- ── TABLEAU COMPARATIF ── -->
-    <div class="b-card !p-0 overflow-hidden reveal">
+    <div class="b-card !p-0 overflow-hidden reveal mb-24">
       <div class="p-8 border-b border-gray-100 bg-white">
-        <h2 class="b-title text-xl">Tableau comparatif détaillé</h2>
-        <p class="text-xs text-muted">Comparez les puissances de calcul et les niveaux de service.</p>
+        <h2 class="b-title text-xl">Détail des coûts variables & maintenance</h2>
+        <p class="text-xs text-muted">Pour une transparence totale sur votre facturation.</p>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-xs sm:text-sm border-collapse">
           <thead>
             <tr>
-              <th class="text-left p-5 font-bold text-muted bg-white border-b border-gray-100">Fonctionnalité</th>
+              <th class="text-left p-5 font-bold text-muted bg-white border-b border-gray-100">Option</th>
               <th class="text-center p-5 font-black uppercase tracking-tighter bg-gray-50/50 border-b border-gray-100">Starter</th>
               <th class="text-center p-5 font-black uppercase tracking-tighter bg-blue-50/30 text-blue-600 border-b border-blue-100">Essential</th>
               <th class="text-center p-5 font-black uppercase tracking-tighter bg-purple-50/30 text-purple-600 border-b border-purple-100">Sovereign</th>
@@ -178,53 +225,32 @@
           </thead>
           <tbody class="divide-y divide-gray-50">
             <tr>
-              <td class="p-4 font-semibold bg-white">Abonnement / mois</td>
-              <td class="p-4 text-center bg-gray-50/20 font-bold">29 €</td>
-              <td class="p-4 text-center bg-blue-50/10 font-bold text-blue-700">79 €</td>
-              <td class="p-4 text-center bg-purple-50/10 font-bold text-purple-700">499 €</td>
-              <td class="p-4 text-center bg-amber-50/20 font-black text-amber-700">1 999 €</td>
-            </tr>
-            <tr>
-              <td class="p-4 font-semibold bg-white">Bots inclus</td>
-              <td class="p-4 text-center bg-gray-50/20">1</td>
-              <td class="p-4 text-center bg-blue-50/10 font-medium">1</td>
-              <td class="p-4 text-center bg-purple-50/10 font-medium">3</td>
+              <td class="p-4 font-semibold bg-white">Bot supplémentaire</td>
+              <td class="p-4 text-center bg-gray-50/20 text-gray-300">Non disp.</td>
+              <td class="p-4 text-center bg-blue-50/10">+ 15€ / mois</td>
+              <td class="p-4 text-center bg-purple-50/10">+ 15€ / mois</td>
               <td class="p-4 text-center bg-amber-50/20 font-bold">Illimités</td>
             </tr>
             <tr>
-              <td class="p-4 font-semibold bg-white">Documents max</td>
-              <td class="p-4 text-center bg-gray-50/20">20</td>
-              <td class="p-4 text-center bg-blue-50/10 font-medium">100</td>
-              <td class="p-4 text-center bg-purple-50/10 font-medium text-purple-700">Illimité</td>
-              <td class="p-4 text-center bg-amber-50/20 font-bold text-amber-700">Illimité</td>
+              <td class="p-4 font-semibold bg-white">Documents suppl.</td>
+              <td class="p-4 text-center bg-gray-50/20 text-gray-300">Non disp.</td>
+              <td class="p-4 text-center bg-blue-50/10">+ 5€ / 50 docs</td>
+              <td class="p-4 text-center bg-purple-50/10">0.10€ / page</td>
+              <td class="p-4 text-center bg-amber-50/20">0.05€ / page</td>
             </tr>
             <tr>
-              <td class="p-4 font-semibold bg-white">Protocole MCP</td>
-              <td class="p-4 text-center bg-gray-50/20 text-[10px] uppercase font-bold text-gray-400">Statique</td>
-              <td class="p-4 text-center bg-blue-50/10 text-[10px] uppercase font-bold text-blue-400">Statique</td>
-              <td class="p-4 text-center bg-purple-50/10 text-[10px] uppercase font-black text-purple-500">5 Dynamiques</td>
-              <td class="p-4 text-center bg-amber-50/20 text-[10px] uppercase font-black text-amber-600">Full Access</td>
+              <td class="p-4 font-semibold bg-white">Maintenance / h</td>
+              <td class="p-4 text-center bg-gray-50/20">Support email</td>
+              <td class="p-4 text-center bg-blue-50/10">Support ticket</td>
+              <td class="p-4 text-center bg-purple-50/10">2h incl. / 85€ h</td>
+              <td class="p-4 text-center bg-amber-50/20 font-bold">Inclus (SLA)</td>
             </tr>
             <tr>
-              <td class="p-4 font-semibold bg-white">LLM Judge</td>
-              <td class="p-4 text-center bg-gray-50/20 text-gray-300">—</td>
-              <td class="p-4 text-center bg-blue-50/10 text-blue-200">—</td>
-              <td class="p-4 text-center bg-purple-50/10 font-medium">Standard</td>
-              <td class="p-4 text-center bg-amber-50/20 font-bold">Multi-Agent</td>
-            </tr>
-            <tr>
-              <td class="p-4 font-semibold bg-white">Hébergement</td>
-              <td class="p-4 text-center bg-gray-50/20 text-xs">Cloud Mutualisé</td>
-              <td class="p-4 text-center bg-blue-50/10 text-xs">Cloud Mutualisé</td>
-              <td class="p-4 text-center bg-purple-50/10 text-xs font-bold">VPS Dédié EU</td>
-              <td class="p-4 text-center bg-amber-50/20 text-xs font-black">VPS High-Perf EU</td>
-            </tr>
-            <tr>
-              <td class="p-4 font-semibold bg-white">PII Masking</td>
-              <td class="p-4 text-center bg-gray-50/20 text-xs">Basique</td>
-              <td class="p-4 text-center bg-blue-50/10 text-xs">Standard</td>
-              <td class="p-4 text-center bg-purple-50/10 text-xs font-bold text-purple-700">Renforcé</td>
-              <td class="p-4 text-center bg-amber-50/20 text-xs font-black text-amber-700">Chirurgical NER</td>
+              <td class="p-4 font-semibold bg-white">Setup Fee</td>
+              <td class="p-4 text-center bg-gray-50/20 font-bold">49 €</td>
+              <td class="p-4 text-center bg-blue-50/10 font-bold">150 €</td>
+              <td class="p-4 text-center bg-purple-50/10 font-bold">1500 - 2500 €</td>
+              <td class="p-4 text-center bg-amber-50/20 font-black">5 000 €+</td>
             </tr>
           </tbody>
         </table>
