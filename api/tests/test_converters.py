@@ -31,16 +31,13 @@ class TestLoadCsvData(unittest.TestCase):
         try:
             result = load_csv_data(tmp_path)
 
-            # On s'attend à une liste de tuples (texte, metadata)
-            self.assertEqual(len(result), 2)
+            # 2 lignes < batch_size=20 → 1 seul chunk
+            self.assertEqual(len(result), 1)
 
-            # chunk 1
-            self.assertEqual(json.loads(result[0][0]), {"name": "Alice", "age": "30"})
-            self.assertEqual(result[0][1], {"source": file_name, "item_name": "Alice"})
-
-            # chunk 2
-            self.assertEqual(json.loads(result[1][0]), {"name": "Bob", "age": "25"})
-            self.assertEqual(result[1][1], {"source": file_name, "item_name": "Bob"})
+            # Le chunk contient les 2 lignes en JSON array
+            data = json.loads(result[0][0])
+            self.assertEqual(data, [{"name": "Alice", "age": "30"}, {"name": "Bob", "age": "25"}])
+            self.assertEqual(result[0][1], {"source": file_name})
         finally:
             os.remove(tmp_path)
 
