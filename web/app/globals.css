@@ -7,21 +7,21 @@
 :root {
   --font-cinzel: "Cinzel", serif;
 
-  --bg: #f7f6f3;        /* Blanc cassé type pierre claire, très reposant */
+  --bg: #f7f6f3; /* Blanc cassé type pierre claire, très reposant */
   --bg-subtle: #efeeea; /* Surfaces secondaires légèrement plus denses */
-  --bg-muted: #e5e3dc;  /* Éléments de fond discrets */
-  --border: #dad7cd;    /* Bordures naturelles et douces */
+  --bg-muted: #e5e3dc; /* Éléments de fond discrets */
+  --border: #dad7cd; /* Bordures naturelles et douces */
   --border-subtle: #efeeea;
 
-  --text: #1c1917;      /* Un noir très chaud (anthracite chaud) */
-  --text-muted: #57534e;  /* Texte secondaire (gris pierre) */
+  --text: #1c1917; /* Un noir très chaud (anthracite chaud) */
+  --text-muted: #57534e; /* Texte secondaire (gris pierre) */
   --text-subtle: #a8a29e; /* Texte discret */
 
-  --gold: #b68d40;      /* Un or un peu plus profond pour mieux contraster sur le clair */
+  --gold: #b68d40; /* Un or un peu plus profond pour mieux contraster sur le clair */
   --gold-light: #d6ad60;
   --gold-glow: rgba(182, 141, 64, 0.08);
 
-  --surface: #fcfbf9;   /* Cartes très claires mais pas blanc pur */
+  --surface: #fcfbf9; /* Cartes très claires mais pas blanc pur */
   --surface-alt: #f0eee9;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -50,15 +50,15 @@
 
 /* ── Dark mode (Neutre élégant / Charbon) ───────────────────────── */
 .dark {
-  --bg: #0d0d0d;        /* Fond très profond, presque noir mais plus doux */
+  --bg: #0d0d0d; /* Fond très profond, presque noir mais plus doux */
   --bg-subtle: #141414; /* Surfaces secondaires */
-  --bg-muted: #1a1a1a;  /* Éléments de fond moins importants */
+  --bg-muted: #1a1a1a; /* Éléments de fond moins importants */
 
-  --border: #262626;    /* Bordures subtiles */
+  --border: #262626; /* Bordures subtiles */
   --border-subtle: #1a1a1a;
 
-  --text: #e5e5e5;      /* Texte principal (blanc cassé pour réduire la fatigue) */
-  --text-muted: #a3a3a3;  /* Texte secondaire */
+  --text: #e5e5e5; /* Texte principal (blanc cassé pour réduire la fatigue) */
+  --text-muted: #a3a3a3; /* Texte secondaire */
   --text-subtle: #525252; /* Texte très discret */
 
   --gold: #c9a84c;

@@ -25,6 +25,12 @@ const BASE_NAV_LINKS = [
 const ALL_NAV_LINKS = [
   ...BASE_NAV_LINKS,
   { href: "/admin", label: "Admin", icon: Settings },
+  {
+    href: "http://localhost:8050",
+    label: "Monitoring",
+    icon: Activity,
+    external: true,
+  },
 ];
 
 export function Navbar() {
@@ -82,21 +88,38 @@ export function Navbar() {
 
         {/* Navigation centrale */}
         <nav className="hidden sm:flex items-center gap-1">
-          {navLinks.map(({ href, label, icon: Icon }) => {
+          {navLinks.map(({ href, label, icon: Icon, external }: any) => {
             const active = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={clsx(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all duration-150",
-                  active
-                    ? "text-gold bg-gold-glow font-medium"
-                    : "text-muted-fg hover:text-main hover:bg-subtle",
-                )}
-              >
+            const content = (
+              <>
                 <Icon size={14} strokeWidth={1.8} />
                 {label}
+              </>
+            );
+            const className = clsx(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all duration-150",
+              active
+                ? "text-gold bg-gold-glow font-medium"
+                : "text-muted-fg hover:text-main hover:bg-subtle",
+            );
+
+            if (external) {
+              return (
+                <a
+                  key={href}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={className}
+                >
+                  {content}
+                </a>
+              );
+            }
+
+            return (
+              <Link key={href} href={href} className={className}>
+                {content}
               </Link>
             );
           })}

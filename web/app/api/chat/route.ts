@@ -51,7 +51,11 @@ export async function POST(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       if (!backendResponse.body) {
-        controller.enqueue(enc.encode(`3:${JSON.stringify("Erreur: Corps de réponse backend vide")}\n`));
+        controller.enqueue(
+          enc.encode(
+            `3:${JSON.stringify("Erreur: Corps de réponse backend vide")}\n`,
+          ),
+        );
         controller.enqueue(enc.encode(`d:{"finishReason":"error"}\n`));
         controller.close();
         return;
@@ -83,16 +87,32 @@ export async function POST(req: NextRequest) {
               }
 
               if (event.type === "step") {
-                controller.enqueue(enc.encode(`2:${JSON.stringify([{ pipelineStep: event.step }])}\n`));
+                controller.enqueue(
+                  enc.encode(
+                    `2:${JSON.stringify([{ pipelineStep: event.step }])}\n`,
+                  ),
+                );
               } else if (event.type === "text") {
-                controller.enqueue(enc.encode(`0:${JSON.stringify(event.content)}\n`));
+                controller.enqueue(
+                  enc.encode(`0:${JSON.stringify(event.content)}\n`),
+                );
               } else if (event.type === "cot") {
                 const cotResults = event.results as unknown[];
-                controller.enqueue(enc.encode(`2:${JSON.stringify([{ cotResults }])}\n`));
+                controller.enqueue(
+                  enc.encode(`2:${JSON.stringify([{ cotResults }])}\n`),
+                );
               } else if (event.type === "done") {
-                controller.enqueue(enc.encode(`d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
+                controller.enqueue(
+                  enc.encode(
+                    `d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`,
+                  ),
+                );
               } else if (event.type === "error") {
-                controller.enqueue(enc.encode(`3:${JSON.stringify((event.message as string) || "Erreur serveur")}\n`));
+                controller.enqueue(
+                  enc.encode(
+                    `3:${JSON.stringify((event.message as string) || "Erreur serveur")}\n`,
+                  ),
+                );
                 controller.enqueue(enc.encode(`d:{"finishReason":"error"}\n`));
               }
             }
@@ -105,7 +125,11 @@ export async function POST(req: NextRequest) {
               try {
                 const event = JSON.parse(raw);
                 if (event.type === "done") {
-                  controller.enqueue(enc.encode(`d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
+                  controller.enqueue(
+                    enc.encode(
+                      `d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`,
+                    ),
+                  );
                 }
               } catch {}
             }
@@ -114,7 +138,9 @@ export async function POST(req: NextRequest) {
         }
       } catch (err) {
         console.error("Error in stream processing:", err);
-        controller.enqueue(enc.encode(`3:${JSON.stringify("Stream processing error")}\n`));
+        controller.enqueue(
+          enc.encode(`3:${JSON.stringify("Stream processing error")}\n`),
+        );
         controller.enqueue(enc.encode(`d:{"finishReason":"error"}\n`));
       } finally {
         controller.close();

@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, Hash, Calendar, RefreshCw, ChevronRight } from "lucide-react";
+import {
+  FileText,
+  Hash,
+  Calendar,
+  RefreshCw,
+  ChevronRight,
+} from "lucide-react";
 import { getSources } from "@/lib/api";
 import type { Source } from "@/lib/api";
 import { clsx } from "clsx";
@@ -10,7 +16,9 @@ export function SourcesGrid() {
   const [sources, setSources] = useState<Source[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set());
+  const [expandedSources, setExpandedSources] = useState<Set<string>>(
+    new Set(),
+  );
 
   const fetchSources = async () => {
     setLoading(true);
@@ -46,7 +54,9 @@ export function SourcesGrid() {
     return acc;
   }, {});
 
-  const sortedDates = Object.keys(groupedSources).sort((a, b) => b.localeCompare(a));
+  const sortedDates = Object.keys(groupedSources).sort((a, b) =>
+    b.localeCompare(a),
+  );
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -110,7 +120,8 @@ export function SourcesGrid() {
           <div className="space-y-3">
             {groupedSources[dateStr].map((s, i) => {
               const isExpanded = expandedSources.has(s.source);
-              const canExpand = s.global_context && s.global_context.length > 150;
+              const canExpand =
+                s.global_context && s.global_context.length > 150;
 
               return (
                 <div
@@ -118,8 +129,10 @@ export function SourcesGrid() {
                   onClick={() => canExpand && toggleExpand(s.source)}
                   className={clsx(
                     "group relative flex flex-col md:flex-row md:items-start gap-4 p-5 rounded-2xl border border-default bg-surface transition-all duration-300 animate-fade-up",
-                    canExpand ? "cursor-pointer hover:border-gold/30 hover:shadow-card hover:bg-subtle/30" : "cursor-default",
-                    isExpanded ? "border-gold/20 bg-subtle/20 shadow-sm" : ""
+                    canExpand
+                      ? "cursor-pointer hover:border-gold/30 hover:shadow-card hover:bg-subtle/30"
+                      : "cursor-default",
+                    isExpanded ? "border-gold/20 bg-subtle/20 shadow-sm" : "",
                   )}
                   style={{ animationDelay: `${i * 40}ms` }}
                 >
@@ -148,18 +161,29 @@ export function SourcesGrid() {
 
                     {/* Contexte Global */}
                     <div className="relative">
-                      <p className={clsx(
-                        "text-sm text-muted-fg leading-relaxed transition-all duration-300",
-                        !isExpanded && canExpand ? "line-clamp-2" : ""
-                      )}>
-                        {s.global_context && s.global_context !== "Aucun contexte global disponible." 
-                          ? s.global_context 
+                      <p
+                        className={clsx(
+                          "text-sm text-muted-fg leading-relaxed transition-all duration-300",
+                          !isExpanded && canExpand ? "line-clamp-2" : "",
+                        )}
+                      >
+                        {s.global_context &&
+                        s.global_context !== "Aucun contexte global disponible."
+                          ? s.global_context
                           : "Aucune description détaillée disponible pour cette archive."}
                       </p>
                       {canExpand && (
                         <div className="mt-2 text-[10px] font-semibold text-gold uppercase tracking-widest flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                          {isExpanded ? "Réduire" : "Cliquer pour voir tout le contexte"}
-                          <ChevronRight size={10} className={clsx("transition-transform duration-300", isExpanded ? "rotate-90" : "")} />
+                          {isExpanded
+                            ? "Réduire"
+                            : "Cliquer pour voir tout le contexte"}
+                          <ChevronRight
+                            size={10}
+                            className={clsx(
+                              "transition-transform duration-300",
+                              isExpanded ? "rotate-90" : "",
+                            )}
+                          />
                         </div>
                       )}
                     </div>
@@ -169,7 +193,8 @@ export function SourcesGrid() {
                   <div className="flex items-center justify-between md:flex-col md:items-end gap-2 shrink-0 border-t md:border-t-0 border-default pt-3 md:pt-1">
                     <span className="flex items-center gap-1 text-[10px] text-subtle-fg font-mono uppercase">
                       <Calendar size={10} />
-                      {s.ingested_at.split(" ")[1]} {s.ingested_at.split(" ")[2]}
+                      {s.ingested_at.split(" ")[1]}{" "}
+                      {s.ingested_at.split(" ")[2]}
                     </span>
                   </div>
                 </div>

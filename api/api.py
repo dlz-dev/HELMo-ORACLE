@@ -385,14 +385,57 @@ def health_full():
 
 @app.get("/metrics")
 def get_metrics():
-    """Retourne les stats en temps réel depuis le Redis Stream pour le dashboard de monitoring."""
+    """Retourne les stats réelles et le flux Redis pour le dashboard admin."""
+    # 1. Documents réels en DB (sources uniques)
+    db_docs = 0
+    db_available = False
+    if vm.is_db_available():
+        db_available = True
+        try:
+            with vm.conn.cursor() as cur:
+                cur.execute("SELECT COUNT(DISTINCT metadata->>'source') FROM documents")
+                db_docs = cur.fetchone()[0]
+        except Exception as e:
+            logger.error(f"Metrics SQL Error (docs): {e}")
+
+    # 2. Users réels (Supabase)
+    user_count = 0
+    if _ensure_log_conn():
+        try:
+            with _log_conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM profiles")
+                user_count = cur.fetchone()[0]
+        except Exception as e:
+            logger.error(f"Metrics SQL Error (users): {e}")
+            user_count = 1
+    else:
+        user_count = 1
+
     if _redis is None:
-        return {"available": False, "events": [], "stats": {}}
+        return {
+            "available": False, 
+            "events": [], 
+            "stats": {
+                "total_chunks_ingested": db_docs,
+                "total_users": user_count,
+                "db_ok": db_available
+            }
+        }
 
     try:
         raw = _redis.xrevrange(REDIS_STREAM, count=100)
     except Exception as e:
-        return {"available": False, "error": str(e), "events": [], "stats": {}}
+        logger.error(f"Metrics Redis Error: {e}")
+        return {
+            "available": False, 
+            "error": str(e), 
+            "events": [], 
+            "stats": {
+                "total_chunks_ingested": db_docs,
+                "total_users": user_count,
+                "db_ok": db_available
+            }
+        }
 
     events = []
     for entry_id, fields in raw:
@@ -403,7 +446,6 @@ def get_metrics():
             "type": fields.get("type"),
             "question": fields.get("question", ""),
             "provider": fields.get("provider", ""),
-            "model": fields.get("model", ""),
             "latency_ms": int(fields.get("latency_ms", 0)),
             "source": fields.get("source", "web"),
             "filename": fields.get("filename", ""),
@@ -416,23 +458,18 @@ def get_metrics():
 
     now = time.time()
     chat_events = [e for e in events if e["type"] == "chat"]
-    ingest_events = [e for e in events if e["type"].startswith("ingest_")]
     last_minute = [e for e in chat_events if now - e["ts"] < 60]
     last_hour = [e for e in chat_events if now - e["ts"] < 3600]
     latencies = [e["latency_ms"] for e in chat_events if e["latency_ms"] > 0]
-    total_chunks = sum(e["new_chunks"] for e in ingest_events if e["type"] == "ingest_complete")
-    accepted = sum(1 for e in ingest_events if e["type"] == "ingest_guardian" and e["status"] == "accepted")
-    rejected = sum(1 for e in ingest_events if e["type"] == "ingest_guardian" and e["status"] == "rejected")
 
     stats = {
         "total_queries": len(chat_events),
         "queries_last_minute": len(last_minute),
         "queries_last_hour": len(last_hour),
         "avg_latency_ms": round(sum(latencies) / len(latencies)) if latencies else 0,
-        "db_ok": vm.is_db_available(),
-        "total_chunks_ingested": total_chunks,
-        "files_accepted": accepted,
-        "files_rejected": rejected,
+        "db_ok": db_available,
+        "total_chunks_ingested": db_docs,
+        "total_users": user_count,
     }
 
     return {"available": True, "events": events, "stats": stats}

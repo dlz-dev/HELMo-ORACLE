@@ -20,6 +20,7 @@ import {
   Database,
   Cpu,
   User,
+  Users,
   Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -37,8 +38,10 @@ import { HealthSection } from "./sections/HealthSection";
 import { IngestSection } from "./sections/IngestSection";
 import { ProfileSection } from "./sections/ProfileSection";
 
+import { DashboardSection } from "./sections/DashboardSection";
+
 const NAV = [
-  { id: "overview", label: "Tableau de bord", icon: LayoutDashboard },
+  { id: "overview", label: "Dashboard", icon: LayoutDashboard },
   { id: "ingest", label: "Ingestion", icon: Upload },
   { id: "config", label: "Configuration", icon: Settings2 },
   { id: "logs", label: "Journaux", icon: FileText },
@@ -56,6 +59,7 @@ export function AdminPanel() {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [userCount, setUserCount] = useState<number>(0);
 
   // ── Navigation ────────────────────────────────────────────────────
   const [tab, setTab] = useState<Tab>("overview");
@@ -338,264 +342,43 @@ export function AdminPanel() {
       {/* ── Main content ───────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="flex items-center justify-between px-6 py-3 border-b border-[var(--border)] bg-[var(--surface)] shrink-0">
-          <div>
-            <h1 className="text-sm font-medium text-[var(--text)]">
-              {NAV.find((n) => n.id === tab)?.label}
-            </h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <StatusBadge />
-            <div className="flex items-center gap-1.5 text-xs text-emerald-400">
-              <Unlock size={11} />
-              <span className="hidden sm:block">Session active</span>
+        <header className="border-b border-[var(--border)] bg-[var(--surface)] shrink-0">
+          <div className="max-w-6xl mx-auto px-8 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h1 className="text-sm font-semibold text-[var(--text)] uppercase tracking-wider">
+                {NAV.find((n) => n.id === tab)?.label}
+              </h1>
+              <div className="h-4 w-px bg-[var(--border)] hidden sm:block" />
+              <div className="hidden sm:flex items-center gap-1.5 text-[var(--text-muted)]">
+                <Users size={13} />
+                <span className="text-xs font-medium">
+                  {userCount || "—"} inscrits
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <StatusBadge />
+              <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium bg-emerald-500/5 px-2 py-1 rounded-md border border-emerald-500/10">
+                <Unlock size={11} />
+                <span className="hidden sm:block uppercase tracking-tight text-[10px]">
+                  Session active
+                </span>
+              </div>
             </div>
           </div>
         </header>
 
         {/* Scrollable content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {/* ── OVERVIEW ─────────────────────────────────────────── */}
+        <main className="flex-1 overflow-y-auto p-8">
+          {/* ── DASHBOARD (OVERVIEW) ─────────────────────────────────── */}
           {tab === "overview" && (
-            <div className="space-y-6 max-w-5xl mx-auto">
-              {/* Stats cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Santé système */}
-                <Card className="border-[var(--border)] bg-[var(--surface)]">
-                  <CardContent className="pt-5 pb-4 px-5">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-xs text-[var(--text-subtle)] uppercase tracking-wider mb-1">
-                          Santé système
-                        </p>
-                        {healthState === "running" ? (
-                          <p className="text-sm text-[var(--text-muted)] animate-pulse">
-                            Vérification…
-                          </p>
-                        ) : healthData ? (
-                          <div className="space-y-1">
-                            {overallStatus === "ok" && (
-                              <p className="text-sm font-medium text-emerald-400">
-                                Opérationnel
-                              </p>
-                            )}
-                            {overallStatus === "degraded" && (
-                              <p className="text-sm font-medium text-amber-400">
-                                Dégradé
-                              </p>
-                            )}
-                            {overallStatus === "error" && (
-                              <p className="text-sm font-medium text-red-400">
-                                Erreur détectée
-                              </p>
-                            )}
-                            <p className="text-[10px] text-[var(--text-subtle)]">
-                              {Object.keys(healthData.checks || {}).length}{" "}
-                              services vérifiés
-                            </p>
-                          </div>
-                        ) : (
-                          <p className="text-sm text-[var(--text-muted)]">
-                            Non vérifié
-                          </p>
-                        )}
-                      </div>
-                      <div
-                        className={cn(
-                          "p-2 rounded-lg",
-                          overallStatus === "ok"
-                            ? "bg-emerald-500/10"
-                            : overallStatus === "degraded"
-                              ? "bg-amber-500/10"
-                              : "bg-[var(--bg-subtle)]",
-                        )}
-                      >
-                        {overallStatus === "ok" ? (
-                          <CheckCircle2
-                            size={18}
-                            className="text-emerald-400"
-                          />
-                        ) : overallStatus === "degraded" ? (
-                          <AlertTriangle size={18} className="text-amber-400" />
-                        ) : (
-                          <Activity
-                            size={18}
-                            className="text-[var(--text-muted)]"
-                          />
-                        )}
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        handleHealthCheck();
-                        setTab("health");
-                      }}
-                      className="mt-3 h-7 text-xs w-full border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]"
-                    >
-                      Vérifier
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Provider actif */}
-                <Card className="border-[var(--border)] bg-[var(--surface)]">
-                  <CardContent className="pt-5 pb-4 px-5">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-xs text-[var(--text-subtle)] uppercase tracking-wider mb-1">
-                          Provider actif
-                        </p>
-                        <p className="text-sm font-medium text-[var(--text)] capitalize">
-                          {provider}
-                        </p>
-                        <p className="text-[10px] text-[var(--text-subtle)] truncate max-w-[140px] mt-0.5">
-                          {model}
-                        </p>
-                      </div>
-                      <div className="p-2 rounded-lg bg-[var(--gold-glow)]">
-                        <Cpu size={18} className="text-[var(--gold)]" />
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setTab("config")}
-                      className="mt-3 h-7 text-xs w-full border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]"
-                    >
-                      Configurer
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Base de données */}
-                <Card className="border-[var(--border)] bg-[var(--surface)]">
-                  <CardContent className="pt-5 pb-4 px-5">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-xs text-[var(--text-subtle)] uppercase tracking-wider mb-1">
-                          Base vectorielle
-                        </p>
-                        {healthData?.checks?.database?.documents !==
-                        undefined ? (
-                          <>
-                            <p className="text-sm font-medium text-[var(--text)]">
-                              {healthData.checks.database.documents.toLocaleString(
-                                "fr",
-                              )}{" "}
-                              fichiers
-                            </p>
-                            <p className="text-[10px] text-[var(--text-subtle)] mt-0.5">
-                              {healthData.checks.database.latency_ms}ms latence
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-sm text-[var(--text-muted)]">—</p>
-                        )}
-                      </div>
-                      <div className="p-2 rounded-lg bg-[var(--bg-subtle)]">
-                        <Database
-                          size={18}
-                          className="text-[var(--text-muted)]"
-                        />
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setTab("ingest")}
-                      className="mt-3 h-7 text-xs w-full border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]"
-                    >
-                      Ingestion
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Quick actions */}
-              <Card className="border-[var(--border)] bg-[var(--surface)]">
-                <CardHeader className="pb-3 pt-4 px-5">
-                  <CardTitle className="text-sm text-[var(--text)]">
-                    Accès rapide
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="px-5 pb-5">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {NAV.filter((n) => n.id !== "overview").map(
-                      ({ id, label, icon: Icon }) => (
-                        <button
-                          key={id}
-                          onClick={() => setTab(id)}
-                          className="flex flex-col items-center gap-2 p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-subtle)] hover:border-[var(--gold)]/30 hover:bg-[var(--gold-glow)] transition-all duration-150"
-                        >
-                          <Icon
-                            size={20}
-                            className="text-[var(--text-muted)]"
-                          />
-                          <span className="text-xs text-[var(--text-muted)]">
-                            {label}
-                          </span>
-                        </button>
-                      ),
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Services detail */}
-              {healthData && (
-                <Card className="border-[var(--border)] bg-[var(--surface)]">
-                  <CardHeader className="pb-3 pt-4 px-5">
-                    <CardTitle className="text-sm text-[var(--text)]">
-                      Services
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-5 pb-5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {Object.entries(healthData.checks || {}).map(
-                        ([key, val]: [string, any]) => (
-                          <div
-                            key={key}
-                            className={cn(
-                              "flex items-center justify-between px-3 py-2.5 rounded-lg text-xs border",
-                              val.status === "ok"
-                                ? "bg-emerald-500/8 border-emerald-500/20 text-emerald-300"
-                                : val.status === "error"
-                                  ? "bg-red-500/8 border-red-500/20 text-red-300"
-                                  : "bg-[var(--bg-subtle)] border-[var(--border)] text-[var(--text-muted)]",
-                            )}
-                          >
-                            <div className="flex items-center gap-2">
-                              {val.status === "ok" && (
-                                <CheckCircle2 size={12} />
-                              )}
-                              {val.status === "error" && <XCircle size={12} />}
-                              {val.status === "not_configured" && (
-                                <div className="w-3 h-3 rounded-full border border-current opacity-40" />
-                              )}
-                              <span className="font-medium capitalize">
-                                {key}
-                              </span>
-                            </div>
-                            <span className="opacity-70">
-                              {val.latency_ms
-                                ? `${val.latency_ms}ms`
-                                : val.documents !== undefined
-                                  ? `${val.documents} fichiers`
-                                  : val.status === "not_configured"
-                                    ? "Non configuré"
-                                    : val.error
-                                      ? val.error.slice(0, 30)
-                                      : ""}
-                            </span>
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+            <div className="max-w-6xl mx-auto">
+              <DashboardSection
+                onMetricsUpdate={(stats: any) =>
+                  setUserCount(stats.total_users)
+                }
+              />
             </div>
           )}
 

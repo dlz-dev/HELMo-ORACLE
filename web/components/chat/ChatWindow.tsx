@@ -318,7 +318,7 @@ export function ChatWindow({
             </div>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto px-4 py-6 space-y-3">
+          <div className="max-w-3xl mx-auto px-4 py-6 space-y-3 pb-32">
             {messages.map((msg, i) => (
               <ChatMessage
                 key={msg.id || i}
@@ -328,20 +328,17 @@ export function ChatWindow({
                 isLast={i === messages.length - 1}
                 isLoading={isLoading && i === messages.length - 1}
                 cotResults={
-                  msg.role === "assistant" &&
-                  i === messages.length - 1
+                  msg.role === "assistant" && i === messages.length - 1
                     ? cotResults
                     : undefined
                 }
                 pipelineSteps={
-                  msg.role === "assistant" &&
-                  i === messages.length - 1
+                  msg.role === "assistant" && i === messages.length - 1
                     ? completedSteps
                     : undefined
                 }
                 currentPipelineStep={
-                  msg.role === "assistant" &&
-                  i === messages.length - 1
+                  msg.role === "assistant" && i === messages.length - 1
                     ? currentPipelineStep
                     : undefined
                 }
@@ -363,32 +360,41 @@ export function ChatWindow({
             <div ref={bottomRef} />
           </div>
         )}
-      </div>
 
-      {isGuest &&
-        (limitReached ||
-          messages.filter((m) => m.role === "user").length >= 5) && (
-          <div className="text-center text-sm py-2 px-4 bg-[var(--gold-glow)] border-t border-[var(--gold)]/20 text-[var(--gold)]">
-            Limite de 5 messages atteinte. Connectez-vous pour continuer.
+        {/* Floating Input & Guest Warning Area */}
+        {!isEmpty && (
+          <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
+            {/* Gradient pour fondre les messages sous l'input */}
+            <div className="h-24 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/90 to-transparent" />
+
+            <div className="bg-[var(--bg)] px-4 pb-6 pointer-events-auto">
+              <div className="max-w-3xl mx-auto space-y-3">
+                {isGuest &&
+                  (limitReached ||
+                    messages.filter((m) => m.role === "user").length >= 5) && (
+                    <div className="text-center text-[10px] uppercase tracking-widest py-2 px-4 bg-[var(--gold-glow)] border border-[var(--gold)]/20 rounded-lg text-[var(--gold)] animate-fade-up">
+                      Limite de 5 messages atteinte. Connectez-vous pour
+                      continuer.
+                    </div>
+                  )}
+
+                <div className="relative drop-shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
+                  <ChatInput
+                    value={input}
+                    onChange={handleInputChange}
+                    onSubmit={handleSubmit}
+                    isLoading={
+                      isLoading ||
+                      (isGuest &&
+                        messages.filter((m) => m.role === "user").length >= 5)
+                    }
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         )}
-
-      {!isEmpty && (
-        <div className="border-t border-default bg-surface/50 backdrop-blur-sm">
-          <div className="max-w-3xl mx-auto px-4 py-3">
-            <ChatInput
-              value={input}
-              onChange={handleInputChange}
-              onSubmit={handleSubmit}
-              isLoading={
-                isLoading ||
-                (isGuest &&
-                  messages.filter((m) => m.role === "user").length >= 5)
-              }
-            />
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

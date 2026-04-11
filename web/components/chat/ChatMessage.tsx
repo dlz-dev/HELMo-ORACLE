@@ -162,15 +162,17 @@ export function ChatMessage({
           <div className="mt-1 px-1 w-full">
             <ChainOfThought>
               <ChainOfThoughtHeader className="text-xs text-[var(--text-subtle)] hover:text-[var(--text-muted)]">
-                {isLoading && !content 
-                  ? "Oracle en réflexion..." 
+                {isLoading && !content
+                  ? "Oracle en réflexion..."
                   : `${pipelineSteps.length} étape${pipelineSteps.length > 1 ? "s" : ""} exécutée${pipelineSteps.length > 1 ? "s" : ""}`}
               </ChainOfThoughtHeader>
               <ChainOfThoughtContent>
                 {PIPELINE_STEP_CONFIG.map((s, i) => {
-                  const currentIdx = PIPELINE_STEP_CONFIG.findIndex(step => step.id === currentPipelineStep);
+                  const currentIdx = PIPELINE_STEP_CONFIG.findIndex(
+                    (step) => step.id === currentPipelineStep,
+                  );
                   let status: "complete" | "active" | "pending" = "pending";
-                  
+
                   if (pipelineSteps.includes(s.id)) {
                     status = "complete";
                   } else if (s.id === currentPipelineStep) {
