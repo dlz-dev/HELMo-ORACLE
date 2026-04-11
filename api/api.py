@@ -747,8 +747,6 @@ def _run_ingestion(file_paths: list):
         # 2. Conversion
         file_statuses[name] = "converting"
         ext = fp.suffix.lower()
-        _unst_cfg = config.get("llm", {}).get("unstructured", {})
-        _unst_available = bool(_unst_cfg.get("api_key"))
 
         if ext == ".csv":
             chunks = convert_csv.load_csv_data(str(fp))
@@ -758,10 +756,6 @@ def _run_ingestion(file_paths: list):
             chunks = convert_text.process_text_file(str(fp))
         elif ext == ".json":
             chunks = convert_json.parse_json(str(fp))
-        elif ext == ".pdf" and _unst_available:
-            chunks = process_with_unstructured(str(fp))
-        elif ext == ".pdf":
-            chunks = convert_pdf.process_pdf_file(str(fp))
         else:
             chunks = process_with_unstructured(str(fp))
 

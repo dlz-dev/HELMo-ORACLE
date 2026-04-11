@@ -128,20 +128,12 @@ def seed_database() -> None:
 
         total_accepted += 1
 
-        # ── Étape 1 : Extraction ──────────────────────────────────────────────
-        # On extrait d'abord pour que generate_document_context puisse utiliser
-        # le texte réel, y compris pour les formats binaires (Unstructured).
+        # ─ Étape 1 :Conversion ─────────────────────────────────────────────
         extension = file_path.suffix.lower()
         extracted_chunks: List[Tuple[str, Dict[str, Any]]] = []
-
         convert_csv, convert_markdown, convert_text, convert_json, convert_pdf, convert_unstructured = _import_converters()
 
-        # Unstructured.io handles .md, .pdf and .docx natively with superior
-        # layout understanding. Use it when an API key is configured; fall
-        # back to the LlamaIndex converters otherwise.
         _unst_cfg = config.get("llm", {}).get("unstructured", {})
-        _unst_available = bool(_unst_cfg.get("api_key"))
-        _UNSTRUCTURED_EXTS = {".md", ".pdf", ".docx"}
 
         if extension == ".csv":
             extracted_chunks = convert_csv.load_csv_data(str(file_path))
@@ -149,13 +141,8 @@ def seed_database() -> None:
             extracted_chunks = convert_text.process_text_file(str(file_path))
         elif extension == ".json":
             extracted_chunks = convert_json.parse_json(str(file_path))
-        elif extension in _UNSTRUCTURED_EXTS and _unst_available:
-            print(f"  🔄 Unstructured.io → {extension} ...")
-            extracted_chunks = convert_unstructured.process_with_unstructured(str(file_path))
         elif extension == ".md":
             extracted_chunks = convert_markdown.parse_markdown(str(file_path))
-        elif extension == ".pdf":
-            extracted_chunks = convert_pdf.process_pdf_file(str(file_path))
         else:
             logger.info("INGEST | Complex format detected, calling Unstructured.io for %s", file_path.name)
             extracted_chunks = convert_unstructured.process_with_unstructured(str(file_path))
