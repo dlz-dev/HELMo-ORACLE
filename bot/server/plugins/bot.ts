@@ -22,17 +22,20 @@ export default defineNitroPlugin(async () => {
   const discordAdapter = (bot as any).getAdapter('discord');
   if (discordAdapter?.startGatewayListener) {
     const keepGatewayAlive = async () => {
+      let delay = 5000;
+      const MAX_DELAY = 5 * 60 * 1000; // 5 minutes max
       while (true) {
         try {
           console.log('[Gateway] Démarrage...');
+          delay = 5000; // reset si la session a bien démarré
           const fakeEvent = { waitUntil: (p: Promise<any>) => p.catch((e: unknown) => console.error('[Gateway]', e)) };
           await discordAdapter.startGatewayListener(fakeEvent);
-          console.log('[Gateway] Session terminée, reconnexion dans 2s...');
+          console.log(`[Gateway] Session terminée, reconnexion dans ${delay / 1000}s...`);
         } catch (e) {
-          console.error('[Gateway] Erreur, reconnexion dans 5s...', e);
-          await new Promise(resolve => setTimeout(resolve, 5000));
+          console.error(`[Gateway] Erreur, reconnexion dans ${delay / 1000}s...`, e);
         }
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay = Math.min(delay * 2, MAX_DELAY); // backoff exponentiel
       }
     };
     keepGatewayAlive();
