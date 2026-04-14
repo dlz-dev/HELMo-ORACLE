@@ -1,0 +1,45 @@
+📂 Dossier : api/ (Points d'entrée & Orchestration)
+
+  ┌─────────────────────────────┬────────────────┬──────────────────────────────────────────────────────────────────────────────────────────────────────┬──────────┬──────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Ligne/Fonction              │ Pilier         │ Problème détecté                                                                                     │ Sévérité │ Suggestion (1 phrase max)                                                                │
+  ├─────────────────────────────┼────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+  │ _run_ingestion              │ ⚙️ Maintenable │ Logique métier d'ingestion massive définie en fonction imbriquée dans api.py.                        │ Haute    │ Extraire cette logique dans un service IngestionService dédié.                           │
+  │ api.py / watcher.py         │ ⚙️ Maintenable │ Duplication stricte du pipeline d'ingestion (validation, conversion, vectorisation) à deux endroits. │ Haute    │ Centraliser le pipeline d'ingestion pour garantir la cohérence des traitements.          │
+  │ TransportSecurityMiddleware │ 👀 Review      │ Bypass de sécurité : _validate_host = lambda self, host: True désactive la protection DNS rebinding. │ Moyenne  │ Restreindre la validation d'hôte aux domaines autorisés via une liste blanche.           │
+  │ _ensure_log_conn            │ 👀 Review      │ Utilisation d'une variable globale _log_conn potentiellement non thread-safe sous charge.            │ Moyenne  │ Utiliser un pool de connexions (psycopg_pool) pour gérer les accès concurrents.          │
+  │ Routes SSE                  │ 🧪 Testé       │ Absence de gestion explicite des timeouts ou de déconnexion précoce du client sur le stream.         │ Basse    │ Implémenter un mécanisme de "keep-alive" et de nettoyage des ressources sur déconnexion. │
+  └─────────────────────────────┴────────────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────┴──────────┴──────────────────────────────────────────────────────────────────────────────────────────┘
+
+  📂 Dossier : api/core/pipeline/ (Flux d'ingestion & PII)
+
+  ┌──────────────────────┬────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────┬──────────┬────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Ligne/Fonction       │ Pilier         │ Problème détecté                                                                               │ Sévérité │ Suggestion (1 phrase max)                                                                  │
+  ├──────────────────────┼────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ingestion.py         │ ⚙️ Maintenable │ Imports circulaires résolus par des import locaux dans chaque fonction.                        │ Haute    │ Refactoriser les dépendances pour utiliser une injection de dépendances propre.            │
+  │ LateChunkingEmbedder │ 👀 Review      │ "Poor man's late chunking" : concaténation manuelle de texte au lieu d'un pooling de tokens.   │ Moyenne  │ Utiliser une implémentation de pooling native si le modèle d'embedding le supporte.        │
+  │ PIIManager           │ 👀 Review      │ spacy.download automatique au runtime si le modèle manque : risque de blocage/timeout API.     │ Haute    │ Inclure les modèles Spacy dans l'image Docker ou le script de build initial.               │
+  ┌─────────────────┬────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────┬──────────┬───────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Ligne/Fonction  │ Pilier         │ Problème détecté                                                                                       │ Sévérité │ Suggestion (1 phrase max)                                                                 │
+  ├─────────────────┼────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────┼───────────────────────────────────────────────────────────────────────────────────────────┤
+  │ guardian.py     │ 🧪 Testé       │ "Silent Failure" sur erreur API : le fichier est rejeté par défaut sans distinguer l'erreur technique. │ Moyenne  │ Lever une exception spécifique pour permettre une nouvelle tentative en cas d'erreur API. │
+  │ judge.py        │ 👀 Review      │ Parsing JSON fragile : repose sur des strip() de balises Markdown sans validation robuste.             │ Moyenne  │ Utiliser une bibliothèque comme instructor ou des OutputParsers de LangChain.             │
+  │ tools_oracle.py │ ⚙️ Maintenable │ Seuils de confiance (0.025, 0.010) arbitraires et liés à un ancien modèle d'embedding.                 │ Moyenne  │ Calibrer dynamiquement les seuils ou les rendre configurables par modèle utilisé.         │
+  └─────────────────┴────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────┴──────────┴───────────────────────────────────────────────────────────────────────────────────────────┘
+  📂 Dossier : api/core/database/ (Stockage & Recherche)
+
+  ┌─────────────────────┬────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────┬──────────┬─────────────────────────────────────────────────────────────────────────────────┐
+  │ Ligne/Fonction      │ Pilier         │ Problème détecté                                                                               │ Sévérité │ Suggestion (1 phrase max)                                                       │
+  ├─────────────────────┼────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────┼──────────┼─────────────────────────────────────────────────────────────────────────────────┤
+  │ add_documents_batch │ 👀 Review      │ Inefficacité SQL : Insertion ligne par ligne dans une boucle au lieu d'un executemany ou COPY. │ Haute    │ Utiliser cur.executemany ou la commande COPY de PostgreSQL pour les batches.    │
+  │ list_sources        │ 👀 Review      │ Performance : COUNT(*) et GROUP BY sur un champ JSONB non indexé (metadata->>'source').        │ Haute    │ Créer un index GIN sur le metadata ou un index fonctionnel sur le champ source. │
+  │ VectorManager       │ ⚙️ Maintenable │ Gestion manuelle des reconnexions et état de santé de la base.                                 │ Moyenne  │ Déléguer la gestion des connexions à un pooler robuste (psycopg_pool).          │
+  └─────────────────────┴────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────┴──────────┴─────────────────────────────────────────────────────────────────────────────────┘
+  📂 Dossier : api/providers/ & api/converters/ (Abstractions)
+
+  ┌───────────────────────┬────────────────┬────────────────────────────────────────────────────────────────────────────────┬──────────┬─────────────────────────────────────────────────────────────────────────┐
+  │ Ligne/Fonction        │ Pilier         │ Problème détecté                                                               │ Sévérité │ Suggestion (1 phrase max)                                               │
+  ├───────────────────────┼────────────────┼────────────────────────────────────────────────────────────────────────────────┼──────────┼─────────────────────────────────────────────────────────────────────────┤
+  │ providers/__init__.py │ ⚙️ Maintenable │ Mapping des clés d'API en dur dans le code (env_map).                          │ Basse    │ Centraliser la configuration des providers dans le fichier config.yaml. │
+  │ error_handler.py      │ 📚 Documenté   │ Messages d'erreur codés en dur en anglais, limitant l'internationalisation.    │ Basse    │ Déporter les messages utilisateur dans un fichier de ressources (I18n). │
+  │ convert_markdown.py   │ ⚙️ Maintenable │ Paramètres de chunking passés par défaut au lieu d'utiliser la config globale. │ Basse    │ Harmoniser les paramètres de chunking via l'objet config centralisé.    │
+  └───────────────────────┴────────────────┴────────────────────────────────────────────────────────────────────────────────┴──────────┴─────────────────────────────────────────────────────────────────────────┘

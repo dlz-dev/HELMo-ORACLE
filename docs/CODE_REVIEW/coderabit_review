@@ -1,0 +1,37 @@
+Ligne/Fonction,Pilier,Problème détecté,Sévérité,Suggestion (1 phrase max)
+web/tsconfig.tsbuildinfo (L1),⚙️ Code Maintenable,Fichier de cache du compilateur inclus dans le repo Git.,Faible,Supprimer le fichier et l'ajouter au .gitignore.
+rapport_audit.md (L1-3),👀 Code Review (Sécurité),"Fuite d'informations personnelles (nom d'utilisateur ""arnau"") dans un log.",Moyenne,Anonymiser le chemin ou retirer le fichier du versionnage.
+api/tests/test_imports.py (L1-73),⚙️ Code Maintenable,Les fins de ligne CRLF cassent le shebang sous Unix.,Haute,Convertir les fins de ligne en LF via dos2unix ou .gitattributes.
+bot/package.json (L16-19),⚙️ Code Maintenable,"Dépendances fixées sur la version ""latest"", causant des builds instables.",Haute,"Remplacer ""latest"" par des versions exactes (ex: ^1.0.0)."
+api/routers/feedback.py (L35-41),👀 Code Review (Sécurité),"Stockage des commentaires bruts en base, risquant de contenir des PII.",Moyenne,Hacher ou expurger les commentaires avant leur insertion en BDD.
+docs/FR/decision.md (L1-120),📚 Code Documenté,Format CRLF générant du bruit inutile dans les diffs Git.,Faible,Normaliser en LF via .gitattributes.
+dashboard/Dockerfile (L5),⚙️ Code Maintenable,Dépendances Pip installées sans versions épinglées.,Haute,Définir un requirements.txt avec des versions figées.
+api/routers/health.py (L84-89),🧪 Code Testé,Incompatibilité de nommage du paramètre timeout entre les modèles.,Moyenne,Normaliser la vérification dynamique du paramètre selon le fournisseur.
+web/.env.local.example (L1-24),⚙️ Code Maintenable,"Fichier .env en CRLF, source de bugs sous Linux/Unix.",Faible,Reconvertir et forcer le LF.
+api/providers/__init__.py (L23-35),⚙️ Code Maintenable,Accès au dictionnaire PROVIDERS sans vérification de la clé.,Moyenne,Ajouter une validation préalable levant une ValueError.
+api/routers/sessions.py (L36-39),🧪 Code Testé,Endpoint supprimant une session sans vérifier son existence.,Moyenne,Renvoyer une erreur 404 si la session est introuvable.
+api/core/pipeline/preprocess.py (L28-43),⚙️ Code Maintenable,Appel .lower() sans protection sur des entrées potentiellement None.,Moyenne,Ajouter une validation de type de l'entrée.
+.github/workflows/ci.yml (L35-39),👀 Code Review (Sécurité),Injection de secrets exposés dans les PR venant de forks.,Critique,Utiliser pull_request_target ou désactiver ces tests sur les forks.
+bot/server/plugins/bot.ts (L28),⚙️ Code Maintenable,Typage manuel sale via l'objet fakeEvent.,Moyenne,Définir l'interface GatewayEvent correcte.
+api/core/pipeline/preprocess.py (L45-55),⚙️ Code Maintenable,Plante totale possible si le service d'embedding externe échoue.,Haute,Envelopper l'appel à l'API dans un try/except robuste.
+web/.env.local.example (L22-24),👀 Code Review (Sécurité),Clé secrète de test ressemblant à une vraie valeur cryptographique.,Haute,Remplacer par un libellé textuel vide ou neutre.
+api/routers/health.py (L27-29),🧪 Code Testé,Renvoie un statut 200 OK même quand l'analyse des sous-services échoue.,Haute,Dériver le statut global sur base de l'état réel des composants.
+docs/marketing_page/docs.html (L7-24),👀 Code Review (Sécurité),Dépendances externes appelées sans hachage Subresource Integrity (SRI).,Moyenne,Ajouter les tags integrity et crossorigin.
+api/core/agent/tools_oracle.py (L16-19),⚙️ Code Maintenable,Seuils de confiance codés en dur.,Moyenne,Adapter dynamiquement les seuils au modèle d'embedding chargé.
+api/core/agent/tools_oracle.py (L49-50),⚙️ Code Maintenable,Modification non désirée de variables de l'appelant via clear().,Moyenne,Assigner une nouvelle liste locale pour éviter l'effet de bord.
+api/config/prompt_guardian.txt (L23-26),👀 Code Review (Sécurité),Risque majeur d'injection de prompt via la variable {sample_text}.,Critique,Renforcer les instructions système interdisant l'outrepassement des règles par l'utilisateur.
+api/core/utils/logger.py (L75-78),⚙️ Code Maintenable,conn.rollback() non encapsulé pouvant masquer l'erreur SQL d'origine.,Moyenne,Protéger le fallback via son propre try/except.
+api/converters/convert_pdf.py (L8-20),🧪 Code Testé,Les paramètres chunk_size et overlap ne sont pas validés (risque d'erreur).,Moyenne,Sécuriser la fonction en ajoutant des validations de valeurs.
+dashboard/assets/style.css (L12),⚙️ Code Maintenable,Pas de breakpoints mobiles créant une interface inutilisable sur smartphone.,Haute,Implémenter les requêtes @media pour la responsivité.
+api/converters/convert_pdf.py (L21-22),⚙️ Code Maintenable,Absence de gestion d'erreur au chargement du PDF.,Moyenne,Logger l'erreur et retourner un résultat propre au lieu de crasher.
+api/core/pipeline/preprocess.py (L18-26),👀 Code Review (Perf),Le client Ollama n'a pas de timeout HTTP défini.,Haute,Paramétrer request_timeout pour éviter que l'API ne freeze.
+web/.env.local.example (L16),👀 Code Review (Sécurité),Mot de passe admin public (préfixe NEXT_PUBLIC_) et valeur par défaut faible.,Critique,Retirer le préfixe public pour exiger une authentification stricte côté serveur.
+api/routers/ingest.py (L174-176),⚙️ Code Maintenable,Condition de course identifiée sur la vérification de l'état du serveur.,Haute,Placer un verrou d'exclusion mutuelle threading.Lock.
+api/routers/ingest.py (L44-45),⚙️ Code Maintenable,Mises à jour non synchronisées d'un dictionnaire par des processus asynchrones.,Moyenne,Renvoyer les résultats et assembler l'objet sur le thread principal.
+api/routers/chat.py (L233-235),👀 Code Review (Sécurité),Le renvoi de l'exception str(e) expose le serveur aux fuites de données.,Moyenne,"Capter le log en interne et renvoyer une simple ""Erreur Serveur"" standard au client."
+api/.env.example (L21-22),👀 Code Review (Sécurité),Identifiants BDD permissifs laissés par défaut.,Haute,Imposer un mot de passe explicite obligatoire pour l'initialisation Docker.
+api/routers/ingest.py (L120),⚙️ Code Maintenable,Risque d'écrasement silencieux d'anciens fichiers lors de la quarantaine.,Moyenne,Ajouter un UUID au nom du fichier de destination.
+api/converters/convert_text.py (L21-22),⚙️ Code Maintenable,"Corruption silencieuse de données UTF-8 mal formées (errors=""replace"").",Haute,Gérer l'exception au moment du décodage avec le flag strict.
+bot/server/plugins/bot.ts (L24-39),⚙️ Code Maintenable,Boucle non contrôlée bloquant une interruption sécurisée du service.,Moyenne,Écouter les signaux SIGINT/SIGTERM pour couper la boucle.
+api/config/schema_docker.sql (L111-133),⚙️ Code Maintenable,L'utilisation de auth.uid() est nativement incompatible avec la distribution Postgres standard.,Critique,Retirer les RLS Supabase de cette version Docker.
+api/routers/logs.py (L18-19),👀 Code Review (Sécurité),Les paramètres de pagination ne possèdent ni limites ni filtres stricts (risque DoS).,Moyenne,Appliquer des bornes strictes (Min/Max) via le module Pydantic Query.
