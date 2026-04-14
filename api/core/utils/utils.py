@@ -29,23 +29,32 @@ QUARANTINE_DIR = DATA_DIR / "quarantine"
 
 STORAGE_DIR = BASE_DIR / "storage" / "sessions"
 PIPELINE_DIR = CURRENT_DIR
-PROMPT_PATH         =  BASE_DIR / "config" / "prompt.txt"
-PROMPT_CONTEXT_PATH =  BASE_DIR / "config" / "prompt_context.txt"
-PROMPT_GUARDIAN_PATH = BASE_DIR / "config" / "prompt_guardian.txt"
-PROMPT_SUMMARY_PATH =  BASE_DIR / "config" / "prompt_summary.txt"
-PROMPT_JUDGE_PATH =    BASE_DIR / "config" / "prompt_judge.txt"
 
-# Ensure the base directory is in the system path for module imports
+PROMPT_PATH = BASE_DIR / "config" / "prompt.txt"
+PROMPT_CONTEXT_PATH = BASE_DIR / "config" / "prompt_context.txt"
+PROMPT_GUARDIAN_PATH = BASE_DIR / "config" / "prompt_guardian.txt"
+PROMPT_SUMMARY_PATH = BASE_DIR / "config" / "prompt_summary.txt"
+PROMPT_JUDGE_PATH = BASE_DIR / "config" / "prompt_judge.txt"
+
+# Inject BASE_DIR into sys.path to allow absolute imports from the project root
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
+# Pre-compile regex patterns for performance in text formatting
+_FORMAT_PREFIX_PATTERN = re.compile(r"^(Analyse|Analysis|Context)\s*:?", flags=re.IGNORECASE | re.MULTILINE)
+_FORMAT_NEWLINE_PATTERN = re.compile(r"\n{3,}")
+
+
 def _load_prompt_file(path: Path, env_var: str) -> str:
+    """Loads prompt text from a file, falling back to an environment variable."""
     if path.exists():
         with open(path, "r", encoding="utf-8") as f:
             return f.read()
+
     prompt = os.environ.get(env_var, "")
     if not prompt:
-        raise RuntimeError(f"Prompt introuvable : créez {path.name} ou définissez {env_var}.")
+        raise RuntimeError(f"Prompt not found: create {path.name} or set {env_var}.")
+
     return prompt
 
 
@@ -63,21 +72,22 @@ def load_guardian_prompt() -> str:
 def load_summary_prompt() -> str:
     return _load_prompt_file(PROMPT_SUMMARY_PATH, "SUMMARY_PROMPT")
 
+
 @lru_cache(maxsize=1)
 def load_judge_prompt() -> str:
     return _load_prompt_file(PROMPT_JUDGE_PATH, "JUDGE_PROMPT")
 
-_CONTEXT_PROMPT  = load_context_prompt()
+
+# Cache the loaded prompts at module level to avoid redundant I/O
+_CONTEXT_PROMPT = load_context_prompt()
 _GUARDIAN_PROMPT = load_guardian_prompt()
-_SUMMARY_PROMPT  = load_summary_prompt()
+_SUMMARY_PROMPT = load_summary_prompt()
 _JUDGE_PROMPT = load_judge_prompt()
+
 
 @lru_cache(maxsize=1)
 def load_config() -> Dict[str, Any]:
     """Builds the configuration dictionary from environment variables.
-
-    Replaces the former config.yaml approach. All values have the same
-    defaults as the example YAML so existing code is unaffected.
 
     Returns:
         Dict[str, Any]: The configuration dictionary.
@@ -96,8 +106,10 @@ def load_config() -> Dict[str, Any]:
             "gemini": {"api_key": os.environ.get("GOOGLE_API_KEY", "")},
             "unstructured": {
                 "api_key": os.environ.get("UNSTRUCTURED_API_KEY", ""),
-                "server_url": os.environ.get("UNSTRUCTURED_SERVER_URL",
-                                             "https://api.unstructuredapp.io/general/v0/general"),
+                "server_url": os.environ.get(
+                    "UNSTRUCTURED_SERVER_URL",
+                    "https://api.unstructuredapp.io/general/v0/general"
+                ),
             },
         },
         "guardian": {
@@ -126,22 +138,17 @@ def load_config() -> Dict[str, Any]:
 @lru_cache(maxsize=1)
 def load_base_prompt() -> str:
     """Loads the base system prompt.
-
-    Priority:
-      1. prompt.txt file (if it exists — kept for convenience)
-      2. SYSTEM_PROMPT environment variable
-
     Returns:
         str: The raw string content of the system prompt.
     """
     if PROMPT_PATH.exists():
         with open(PROMPT_PATH, "r", encoding="utf-8") as f:
             return f.read()
+
     prompt = os.environ.get("SYSTEM_PROMPT", "")
     if not prompt:
-        raise RuntimeError(
-            "No system prompt found. Create config/prompt.txt or set SYSTEM_PROMPT env var."
-        )
+        raise RuntimeError("No system prompt found. Create config/prompt.txt or set SYSTEM_PROMPT env var.")
+
     return prompt
 
 
@@ -165,15 +172,14 @@ def format_response(text: str) -> str:
     Returns:
         str: The cleaned and formatted text.
     """
-    text = re.sub(r"^(Analyse|Analysis|Context)\s*:?", "", text, flags=re.IGNORECASE | re.MULTILINE)
-    text = text.strip()
-    text = re.sub(r"\n{3,}", "\n\n", text)
-    return text
+    text = _FORMAT_PREFIX_PATTERN.sub("", text).strip()
+    return _FORMAT_NEWLINE_PATTERN.sub("\n\n", text)
 
 
-# Search constants — read once at import time
+# Pre-extract search configuration constants at import time
 _cfg = load_config()
 _SEARCH_CFG = _cfg.get("search", {})
+
 K_SEMANTIC = _SEARCH_CFG.get("k_semantic", 10)
 K_BM25 = _SEARCH_CFG.get("k_bm25", 10)
 K_FINAL = _SEARCH_CFG.get("k_final", 5)
