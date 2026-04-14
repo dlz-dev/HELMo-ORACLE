@@ -11,8 +11,8 @@ logger = get_logger(__name__)
 
 def get_llm_for_guardian() -> Callable[..., Any]:
     """
-    Import différé pour éviter les dépendances circulaires
-    lors du chargement du module.
+    Delayed import to avoid circular dependencies
+    when loading the module.
     """
     from providers import get_llm
     return get_llm
@@ -20,14 +20,14 @@ def get_llm_for_guardian() -> Callable[..., Any]:
 
 def is_valid_lore_file(file_path: str) -> tuple[bool, str]:
     """
-    Valide le contenu d'un fichier via le LLM configuré dans la section [guardian].
-    Extrait un échantillon (max 1500 caractères) pour limiter le coût et la taille du prompt.
+    Validates the content of a file via the LLM configured in the [guardian] section.
+    Extracts a sample (max 1500 characters) to limit cost and prompt size.
 
     Args:
-        file_path: Chemin absolu ou relatif du fichier.
+        file_path: Absolute or relative path to the file.
 
     Returns:
-        Un tuple (Verdicte booléen, Explication du modèle ou message d'erreur).
+        A tuple (Boolean verdict, Model explanation or error message).
     """
     fname: str = os.path.basename(file_path)
     extension: str = os.path.splitext(fname)[1].lower()
@@ -47,13 +47,13 @@ def is_valid_lore_file(file_path: str) -> tuple[bool, str]:
 
             sample_text = sample_text[:1500]
 
-            # Rejet de sécurité pour les PDF scannés ou images (non océrisés)
+            # Security rejection for scanned PDFs or images (no OCR)
             if not sample_text.strip():
-                logger.warning(f"[{fname}] PDF vide ou composé uniquement d'images → REJECTED")
-                return False, "PDF illisible (aucun texte extrait)."
+                logger.warning(f"[{fname}] Empty PDF or composed only of images → REJECTED")
+                return False, "Unreadable PDF (no text extracted)."
 
         else:
-            # Fallback sur latin-1 si l'utf-8 échoue pour les fichiers texte/code anciens
+            # Fallback to latin-1 if utf-8 fails for legacy text/code files
             try:
                 with open(file_path, "r", encoding="utf-8") as f:
                     sample_text = f.read(1500)
@@ -62,8 +62,8 @@ def is_valid_lore_file(file_path: str) -> tuple[bool, str]:
                     sample_text = f.read(1500)
 
     except Exception as e:
-        logger.error(f"[{fname}] Erreur de lecture physique du fichier → REJECTED", exc_info=True)
-        return False, f"Fichier illisible: {e}"
+        logger.error(f"[{fname}] Physical file reading error → REJECTED", exc_info=True)
+        return False, f"Unreadable file: {e}"
 
     try:
         config: dict[str, Any] = load_config()
@@ -82,19 +82,20 @@ def is_valid_lore_file(file_path: str) -> tuple[bool, str]:
     prompt: str = _GUARDIAN_PROMPT.format(sample_text=sample_text)
 
     try:
+        # Request evaluation from the LLM
         response: Any = llm.invoke(prompt)
         answer: str = response.content.strip()
         lines: list[str] = answer.splitlines()
 
         verdict_str: str = lines[0].strip().upper()
-        verdict: bool = verdict_str.startswith("OUI")
+        verdict: bool = verdict_str.startswith("OUI")  # Keeps 'OUI' logic as per prompt expectations
 
-        explication: str = lines[1].strip() if len(lines) > 1 else "Aucune explication fournie."
+        explication: str = lines[1].strip() if len(lines) > 1 else "No explanation provided."
 
         status: str = "ACCEPTED" if verdict else "REJECTED"
         logger.info(f"Guardian [{fname}] via {provider_key}/{model} → {status}")
 
         return verdict, explication
     except Exception:
-        logger.error(f"[{fname}] Erreur API lors de la validation → REJECTED", exc_info=True)
-        return False, "Erreur API"
+        logger.error(f"[{fname}] API error during validation → REJECTED", exc_info=True)
+        return False, "API Error"

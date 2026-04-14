@@ -17,15 +17,15 @@ def _run_judge_sync(
         config: dict[str, Any]
 ) -> None:
     """
-    Exécute le LLM Judge de manière synchrone pour évaluer la qualité d'une réponse RAG
-    (fidélité, couverture, etc.) et consigne le résultat en base de données.
+    Executes the LLM Judge synchronously to evaluate the quality of a RAG response
+    (faithfulness, coverage, etc.) and logs the result to the database.
 
-    L'échec de cette fonction est silencieux afin de ne pas interrompre l'expérience utilisateur.
+    Failure of this function is silent to ensure it does not interrupt the user experience.
     """
     try:
-        context_str: str = "\n\n".join([f"[{c.get('source', 'Inconnu')}] {c.get('content', '')}" for c in cot_storage])
+        context_str: str = "\n\n".join([f"[{c.get('source', 'Unknown')}] {c.get('content', '')}" for c in cot_storage])
         if not context_str:
-            context_str = "Aucun contexte fourni."
+            context_str = "No context provided."
 
         prompt_template = load_judge_prompt()
         prompt_text: str = prompt_template.format(
@@ -39,7 +39,7 @@ def _run_judge_sync(
         judge_model: str = judge_cfg.get("model", "llama-3.3-70b-versatile")
         judge_temperature: float = float(judge_cfg.get("temperature", 0.0))
 
-        # Surcharge sécurisée de la température pour garantir un output déterministe (souvent requis pour du JSON strict)
+        # Secure temperature override to ensure deterministic output (often required for strict JSON)
         judge_config: dict[str, Any] = {
             **config,
             "llm": {**config.get("llm", {}), "temperature": judge_temperature}
@@ -49,9 +49,9 @@ def _run_judge_sync(
         result = llm.invoke([HumanMessage(content=prompt_text)])
         raw_json: str = result.content.strip()
 
-        # Nettoyage robuste des balises markdown (```json ou ```)
+        # Robust cleaning of markdown tags (```json or ```)
         if raw_json.startswith("```"):
-            raw_json = raw_json.split("\n", 1)[-1]  # Supprime la première ligne définissant le block
+            raw_json = raw_json.split("\n", 1)[-1]  # Remove the first line defining the block
             if raw_json.endswith("```"):
                 raw_json = raw_json[:-3].strip()
 
@@ -59,11 +59,11 @@ def _run_judge_sync(
 
         required_keys: set[str] = {"context_relevance", "faithfulness", "answer_relevance", "context_coverage"}
         if not required_keys.issubset(evaluation.keys()):
-            raise ValueError(f"JSON du Judge incomplet — clés manquantes : {required_keys - evaluation.keys()}")
+            raise ValueError(f"Incomplete Judge JSON — missing keys: {required_keys - evaluation.keys()}")
 
         for key in required_keys:
             if not isinstance(evaluation[key], int) or not (1 <= evaluation[key] <= 5):
-                raise ValueError(f"Score invalide pour '{key}': {evaluation[key]}")
+                raise ValueError(f"Invalid score for '{key}': {evaluation[key]}")
 
         log_to_db_sync(
             level="INFO",
@@ -80,4 +80,4 @@ def _run_judge_sync(
 
     except Exception as e:
         from core.utils.logger import logger
-        logger.error(f"Erreur lors de l'exécution du LLM Judge : {e}", exc_info=True)
+        logger.error(f"Error during LLM Judge execution: {e}", exc_info=True)
