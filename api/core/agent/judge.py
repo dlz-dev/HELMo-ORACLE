@@ -1,61 +1,70 @@
 import json
+from typing import Any
+
 from langchain_core.messages import HumanMessage
-from core.utils.utils import load_judge_prompt
+
 from core.utils.logger import log_to_db_sync
+from core.utils.utils import load_judge_prompt
 from providers import get_llm
 
 
-def _run_judge_sync(query: str, response: str, cot_storage: list, user_id: str, session_id: str, config: dict):
-    """Exécute le LLM Judge de manière synchrone et loggue le résultat."""
+def _run_judge_sync(
+        query: str,
+        response: str,
+        cot_storage: list[dict[str, Any]],
+        user_id: str,
+        session_id: str,
+        config: dict[str, Any]
+) -> None:
+    """
+    Exécute le LLM Judge de manière synchrone pour évaluer la qualité d'une réponse RAG
+    (fidélité, couverture, etc.) et consigne le résultat en base de données.
+
+    L'échec de cette fonction est silencieux afin de ne pas interrompre l'expérience utilisateur.
+    """
     try:
-        # Formater le contexte (concaténer les extraits RRF)
-        context_str = "\n\n".join([f"[{c['source']}] {c['content']}" for c in cot_storage])
+        context_str: str = "\n\n".join([f"[{c.get('source', 'Inconnu')}] {c.get('content', '')}" for c in cot_storage])
         if not context_str:
             context_str = "Aucun contexte fourni."
 
-        # Préparer le prompt
         prompt_template = load_judge_prompt()
-        prompt_text = prompt_template.format(
+        prompt_text: str = prompt_template.format(
             query=query,
             context=context_str,
             response=response
         )
 
-        # Lire la configuration du judge
-        judge_cfg = config.get("judge", {})
-        judge_provider = judge_cfg.get("provider", "groq")
-        judge_model = judge_cfg.get("model", "llama-3.3-70b-versatile")
-        judge_temperature = float(judge_cfg.get("temperature", 0.0))
+        judge_cfg: dict[str, Any] = config.get("judge", {})
+        judge_provider: str = judge_cfg.get("provider", "groq")
+        judge_model: str = judge_cfg.get("model", "llama-3.3-70b-versatile")
+        judge_temperature: float = float(judge_cfg.get("temperature", 0.0))
 
-        # Surcharge de la configuration avec la température du judge
-        judge_config = {**config, "llm": {**config.get("llm", {}), "temperature": judge_temperature}}
+        # Surcharge sécurisée de la température pour garantir un output déterministe (souvent requis pour du JSON strict)
+        judge_config: dict[str, Any] = {
+            **config,
+            "llm": {**config.get("llm", {}), "temperature": judge_temperature}
+        }
         llm = get_llm(provider_key=judge_provider, model=judge_model, config=judge_config)
 
-        # Invoquer le LLM
         result = llm.invoke([HumanMessage(content=prompt_text)])
+        raw_json: str = result.content.strip()
 
-        # Nettoyer et parser le JSON
-        raw_json = result.content.strip()
-        if raw_json.startswith("```json"):
-            raw_json = raw_json[7:].strip()
-            if raw_json.endswith("```"):
-                raw_json = raw_json[:-3].strip()
-        elif raw_json.startswith("```"):
-            raw_json = raw_json[3:].strip()
+        # Nettoyage robuste des balises markdown (```json ou ```)
+        if raw_json.startswith("```"):
+            raw_json = raw_json.split("\n", 1)[-1]  # Supprime la première ligne définissant le block
             if raw_json.endswith("```"):
                 raw_json = raw_json[:-3].strip()
 
-        evaluation = json.loads(raw_json)
+        evaluation: dict[str, int] = json.loads(raw_json)
 
-        # Valider la structure attendue
-        required_keys = {"context_relevance", "faithfulness", "answer_relevance", "context_coverage"}
+        required_keys: set[str] = {"context_relevance", "faithfulness", "answer_relevance", "context_coverage"}
         if not required_keys.issubset(evaluation.keys()):
             raise ValueError(f"JSON du Judge incomplet — clés manquantes : {required_keys - evaluation.keys()}")
+
         for key in required_keys:
             if not isinstance(evaluation[key], int) or not (1 <= evaluation[key] <= 5):
                 raise ValueError(f"Score invalide pour '{key}': {evaluation[key]}")
 
-        # Logguer dans la base de données
         log_to_db_sync(
             level="INFO",
             source="LLM_JUDGE",
@@ -70,6 +79,5 @@ def _run_judge_sync(query: str, response: str, cot_storage: list, user_id: str, 
         )
 
     except Exception as e:
-        # On ne crashe pas l'application si le juge échoue
         from core.utils.logger import logger
         logger.error(f"Erreur lors de l'exécution du LLM Judge : {e}", exc_info=True)

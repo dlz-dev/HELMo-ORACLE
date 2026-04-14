@@ -115,7 +115,7 @@ def seed_database() -> None:
         logger.info("INGEST | Processing: %s", file_path.name)
 
         try:
-            valid = is_valid_lore_file(str(file_path), api_key)
+            valid = is_valid_lore_file(str(file_path))
         except RuntimeError as e:
             logger.error("INGEST | Guardian unavailable: %s", e)
             return

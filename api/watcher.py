@@ -64,7 +64,7 @@ class LoreWatcherHandler(FileSystemEventHandler):
         print(f"[AI] Guardian evaluating {file_name}...")
 
         # String conversion for legacy compatibility with is_valid_lore_file
-        if not is_valid_lore_file(str(file_path), self.llm):
+        if not is_valid_lore_file(str(file_path)):
             print(f"[AI] REJECTED: {file_name}. Moving to quarantine.")
             shutil.move(str(file_path), str(QUARANTINE_DIR / file_name))
             return

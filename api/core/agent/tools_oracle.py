@@ -1,36 +1,31 @@
-"""
-LangGraph tool — searches the knowledge base and exposes raw results
-with RRF confidence scores for Chain-of-Thought (CoT) display in the UI.
+from typing import Callable, Any
 
-Results are stored in the cot_storage list passed to get_search_tool(), or
-in the optional cot_storage list (API mode).
-"""
-
-from typing import Callable, Any, Optional
-
-from core.database.vector_manager import VectorManager
 from langchain_core.tools import tool
 
-StepCallback = Optional[Callable[[str], None]]
+from core.database.vector_manager import VectorManager
+
+StepCallback = Callable[[str], None] | None
 
 # RRF score thresholds for confidence classification
-# Empirical values for the paraphrase-multilingual-MiniLM-L12-v2 model
+# Empirical values specific to the paraphrase-multilingual-MiniLM-L12-v2 model
 CONFIDENCE_THRESHOLD_HIGH: float = 0.025
 CONFIDENCE_THRESHOLD_MEDIUM: float = 0.010
 
 
-def get_search_tool(vm: VectorManager, k_final: int = 5, cot_storage: Optional[list] = None, step_callback: StepCallback = None) -> Callable:
+def get_search_tool(
+        vm: VectorManager,
+        k_final: int = 5,
+        cot_storage: list[dict[str, Any]] | None = None,
+        step_callback: StepCallback = None
+) -> Callable[[str], str]:
     """
     Factory function returning a LangGraph tool bound to the shared VectorManager.
 
     Args:
-        vm (VectorManager): Shared VectorManager singleton instance.
-        k_final (int): Number of results to retrieve (controlled via UI).
-        cot_storage (Optional[list]): If provided, CoT results are stored here (API mode).
-            If None, CoT results are discarded.
-
-    Returns:
-        Callable: The initialized LangGraph tool.
+        vm: Shared VectorManager singleton instance.
+        k_final: Number of results to retrieve.
+        cot_storage: Mutable list to store CoT metadata for the UI (API mode).
+        step_callback: Optional callback to track the retrieval stages.
     """
 
     @tool
@@ -39,28 +34,28 @@ def get_search_tool(vm: VectorManager, k_final: int = 5, cot_storage: Optional[l
         Searches the Oracle's complete database for relevant information.
         Uses hybrid search (semantic cosine + BM25 keywords) fused with
         Reciprocal Rank Fusion (RRF) for maximum recall.
-
-        Args:
-            query (str): The user's search query.
-
-        Returns:
-            str: Formatted XML string containing the retrieved excerpts.
         """
         if cot_storage is not None:
             cot_storage.clear()
 
-        # Sanitisation : tronque et nettoie la query avant injection dans le pipeline RAG
+        # Tronque la requête à 500 caractères pour prévenir les dépassements de contexte d'embedding
         query = query.strip()[:500]
         if not query:
             return "<archives_sacrees>\nEmpty query.\n</archives_sacrees>"
 
         if step_callback:
             step_callback("embedding")
-        query_vector = vm.embeddings_model.embed_query(query)
+
+        query_vector: list[float] = vm.embeddings_model.embed_query(query)
 
         if step_callback:
             step_callback("retrieval")
-        results = vm.search_hybrid(query=query, query_vector=query_vector, k_final=k_final)
+
+        results: list[tuple[str, float, dict[str, Any]]] = vm.search_hybrid(
+            query=query,
+            query_vector=query_vector,
+            k_final=k_final
+        )
 
         if step_callback:
             step_callback("reranking")
@@ -72,11 +67,10 @@ def get_search_tool(vm: VectorManager, k_final: int = 5, cot_storage: Optional[l
         context_lines: list[str] = []
 
         for content, rrf_score, metadata in results:
-            source = metadata.get("source", "Unknown Archive")
+            source: str = metadata.get("source", "Unknown Archive")
 
-            # Determine confidence level
             if rrf_score >= CONFIDENCE_THRESHOLD_HIGH:
-                confidence = "high"
+                confidence: str = "high"
             elif rrf_score >= CONFIDENCE_THRESHOLD_MEDIUM:
                 confidence = "medium"
             else:
@@ -93,7 +87,6 @@ def get_search_tool(vm: VectorManager, k_final: int = 5, cot_storage: Optional[l
         if cot_storage is not None:
             cot_storage.extend(cot_entries)
 
-        # Use standard Python string joining instead of chr(10)
         return f"<archives_sacrees>\n{'\n'.join(context_lines)}\n</archives_sacrees>"
 
     return search_knowledge_base

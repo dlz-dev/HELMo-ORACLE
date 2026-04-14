@@ -1,51 +1,44 @@
 import os
-from typing import Optional
+from typing import Callable, Any
 
 import pypdf
-from core.utils.utils import load_config, _GUARDIAN_PROMPT
+
 from core.utils.logger import get_logger
+from core.utils.utils import load_config, _GUARDIAN_PROMPT
 
 logger = get_logger(__name__)
 
 
-# Import delayed to avoid circular dependency
-def get_llm_for_guardian():
+def get_llm_for_guardian() -> Callable[..., Any]:
+    """
+    Import différé pour éviter les dépendances circulaires
+    lors du chargement du module.
+    """
     from providers import get_llm
     return get_llm
 
 
-def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> tuple[bool, str]:
+def is_valid_lore_file(file_path: str) -> tuple[bool, str]:
     """
-    Validates a file using the LLM configured in config.yaml under [guardian].
-
-    The `api_key` parameter is maintained for backward compatibility with
-    legacy ingestion scripts but is no longer used directly; the key is
-    read from the configuration via `get_llm()`.
+    Valide le contenu d'un fichier via le LLM configuré dans la section [guardian].
+    Extrait un échantillon (max 1500 caractères) pour limiter le coût et la taille du prompt.
 
     Args:
-        file_path (str): The absolute or relative path to the file.
-        api_key (Optional[str]): Legacy parameter, currently unused.
+        file_path: Chemin absolu ou relatif du fichier.
 
     Returns:
-        bool: True if the file is accepted by the Guardian or is a known
-              binary format, False otherwise.
-
-    Raises:
-        RuntimeError: If the Guardian LLM configuration is invalid or unreachable.
+        Un tuple (Verdicte booléen, Explication du modèle ou message d'erreur).
     """
-    fname = os.path.basename(file_path)
-    extension = os.path.splitext(fname)[1].lower()
+    fname: str = os.path.basename(file_path)
+    extension: str = os.path.splitext(fname)[1].lower()
+    sample_text: str = ""
 
-    sample_text = ""
-
-    # Text reading for PDFs
     try:
         if extension == ".pdf":
             reader = pypdf.PdfReader(file_path)
 
-            # We read page by page until we reach 1,500 characters
             for page in reader.pages:
-                extracted = page.extract_text()
+                extracted: str | None = page.extract_text()
                 if extracted:
                     sample_text += extracted + "\n"
 
@@ -54,13 +47,13 @@ def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> tuple[b
 
             sample_text = sample_text[:1500]
 
-            # Security: scanning images without text
+            # Rejet de sécurité pour les PDF scannés ou images (non océrisés)
             if not sample_text.strip():
                 logger.warning(f"[{fname}] PDF vide ou composé uniquement d'images → REJECTED")
                 return False, "PDF illisible (aucun texte extrait)."
 
         else:
-            # Attempt to read a sample of the file to evaluate its content
+            # Fallback sur latin-1 si l'utf-8 échoue pour les fichiers texte/code anciens
             try:
                 with open(file_path, "r", encoding="utf-8") as f:
                     sample_text = f.read(1500)
@@ -72,38 +65,36 @@ def is_valid_lore_file(file_path: str, api_key: Optional[str] = None) -> tuple[b
         logger.error(f"[{fname}] Erreur de lecture physique du fichier → REJECTED", exc_info=True)
         return False, f"Fichier illisible: {e}"
 
-    # Load configuration and initialize the LLM
     try:
-        config = load_config()
-        guardian_cfg = config.get("guardian", {})
-        provider_key = guardian_cfg.get("provider", "groq")
-        model = guardian_cfg.get("model", "llama-3.1-8b-instant")
-        get_llm = get_llm_for_guardian()
-        llm = get_llm(provider_key=provider_key, model=model, config=config)
+        config: dict[str, Any] = load_config()
+        guardian_cfg: dict[str, Any] = config.get("guardian", {})
+        provider_key: str = guardian_cfg.get("provider", "groq")
+        model: str = guardian_cfg.get("model", "llama-3.1-8b-instant")
+
+        get_llm: Callable[..., Any] = get_llm_for_guardian()
+        llm: Any = get_llm(provider_key=provider_key, model=model, config=config)
     except Exception as e:
         raise RuntimeError(
             f"🚫 Guardian unavailable ({provider_key}/{model}): {e}\n"
             f"   Ingestion halted — no files will be added without validation."
         ) from e
 
-    # Query the LLM for validation
-    prompt = _GUARDIAN_PROMPT.format(sample_text=sample_text)
+    prompt: str = _GUARDIAN_PROMPT.format(sample_text=sample_text)
 
     try:
-        response = llm.invoke(prompt)
-        answer = response.content.strip()
-        lines = answer.splitlines()
+        response: Any = llm.invoke(prompt)
+        answer: str = response.content.strip()
+        lines: list[str] = answer.splitlines()
 
-        # Note: We keep "OUI" since _GUARDIAN_PROMPT instructs the LLM in French
-        verdict_str = lines[0].strip().upper()
-        verdict = verdict_str.startswith("OUI")
+        verdict_str: str = lines[0].strip().upper()
+        verdict: bool = verdict_str.startswith("OUI")
 
-        explication = lines[1].strip() if len(lines) > 1 else "Aucune explication fournie."
+        explication: str = lines[1].strip() if len(lines) > 1 else "Aucune explication fournie."
 
-        status = "ACCEPTED" if verdict else "REJECTED"
+        status: str = "ACCEPTED" if verdict else "REJECTED"
         logger.info(f"Guardian [{fname}] via {provider_key}/{model} → {status}")
 
         return verdict, explication
     except Exception:
-        logger.error(f"[{fname}] API error during validation → REJECTED", exc_info=True)
+        logger.error(f"[{fname}] Erreur API lors de la validation → REJECTED", exc_info=True)
         return False, "Erreur API"
