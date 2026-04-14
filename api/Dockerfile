@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
 # Installer les dépendances Python en premier (cache Docker)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --force-reinstall --no-deps python-multipart==0.0.12
+RUN pip install python-multipart==0.0.12
 
 # Télécharger le modèle spaCy français
 RUN python -m spacy download fr_core_news_sm

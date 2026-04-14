@@ -162,20 +162,20 @@ class VectorManager:
         else:
             vectors = [self.embeddings_model.embed_query(t) for t in texts]
 
-        inserted = 0
         ingested_at = datetime.now(timezone.utc)
+        params = [
+            (text, vector, json.dumps(metadata or {}), ingested_at, hashlib.sha256(text.encode()).hexdigest())
+            for (text, metadata), vector in zip(chunks, vectors)
+        ]
 
         with self.conn.cursor() as cur:
-            for (text, metadata), vector in zip(chunks, vectors):
-                metadata = metadata or {}
-                chunk_hash = hashlib.sha256(text.encode()).hexdigest()
-                cur.execute(
-                    """INSERT INTO documents (content, vecteur, metadata, ingested_at, chunk_hash)
-                       VALUES (%s, %s, %s, %s, %s)
-                       ON CONFLICT (chunk_hash) WHERE (chunk_hash IS NOT NULL) DO NOTHING""",
-                    (text, vector, json.dumps(metadata), ingested_at, chunk_hash),
-                )
-                inserted += cur.rowcount
+            cur.executemany(
+                """INSERT INTO documents (content, vecteur, metadata, ingested_at, chunk_hash)
+                   VALUES (%s, %s, %s, %s, %s)
+                   ON CONFLICT (chunk_hash) WHERE (chunk_hash IS NOT NULL) DO NOTHING""",
+                params,
+            )
+            inserted = cur.rowcount  # total rows actually inserted (conflicts counted as 0)
 
         return inserted
 
