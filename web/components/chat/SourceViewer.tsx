@@ -24,7 +24,10 @@ export function SourceViewer({ filename, passage, onClose }: Props) {
 
   useEffect(() => {
     if (content && highlightRef.current) {
-      highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      highlightRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
     }
   }, [content]);
 
@@ -45,20 +48,37 @@ export function SourceViewer({ filename, passage, onClose }: Props) {
   };
 
   const renderContent = () => {
-    if (error) return <p className="text-xs text-red-400 text-center py-8">Fichier introuvable sur le serveur.</p>;
-    if (!content) return <p className="text-xs text-[var(--text-subtle)] text-center py-8">Chargement...</p>;
+    if (error)
+      return (
+        <p className="text-xs text-red-400 text-center py-8">
+          Fichier introuvable sur le serveur.
+        </p>
+      );
+    if (!content)
+      return (
+        <p className="text-xs text-[var(--text-subtle)] text-center py-8">
+          Chargement...
+        </p>
+      );
 
     const idx = findPassage(content);
 
     if (idx === -1) {
-      return <pre className="text-xs text-[var(--text)] whitespace-pre-wrap font-mono leading-relaxed">{content}</pre>;
+      return (
+        <pre className="text-xs text-[var(--text)] whitespace-pre-wrap font-mono leading-relaxed">
+          {content}
+        </pre>
+      );
     }
 
     const highlightEnd = idx + passage.trim().length;
     return (
       <pre className="text-xs text-[var(--text)] whitespace-pre-wrap font-mono leading-relaxed">
         {content.slice(0, idx)}
-        <span ref={highlightRef} className="bg-amber-400/50 text-amber-900 dark:text-amber-100 rounded px-0.5">
+        <span
+          ref={highlightRef}
+          className="bg-amber-400/50 text-amber-900 dark:text-amber-100 rounded px-0.5"
+        >
           {content.slice(idx, highlightEnd)}
         </span>
         {content.slice(highlightEnd)}
@@ -71,8 +91,15 @@ export function SourceViewer({ filename, passage, onClose }: Props) {
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative z-10 w-[80vw] max-w-4xl h-[80vh] flex flex-col rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl">
         <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
-          <span className="text-sm text-[var(--gold)] font-mono truncate max-w-[90%]">{filename}</span>
-          <button onClick={onClose} className="text-[var(--text-subtle)] hover:text-[var(--text)] text-lg leading-none">✕</button>
+          <span className="text-sm text-[var(--gold)] font-mono truncate max-w-[90%]">
+            {filename}
+          </span>
+          <button
+            onClick={onClose}
+            className="text-[var(--text-subtle)] hover:text-[var(--text)] text-lg leading-none"
+          >
+            ✕
+          </button>
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto p-4">
           {renderContent()}

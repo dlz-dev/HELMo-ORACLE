@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ filename: string }> }
+  { params }: { params: Promise<{ filename: string }> },
 ) {
   const backendUrl = process.env.BACKEND_API_URL || "http://127.0.0.1:8000";
   const { filename: raw } = await params;
@@ -14,7 +14,10 @@ export async function GET(
     });
 
     if (!res.ok) {
-      return NextResponse.json({ error: "Fichier introuvable" }, { status: res.status });
+      return NextResponse.json(
+        { error: "Fichier introuvable" },
+        { status: res.status },
+      );
     }
 
     const text = await res.text();
