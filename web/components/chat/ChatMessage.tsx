@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { clsx } from "clsx";
+import { SourceViewer } from "./SourceViewer";
 import { User, Sparkles, Copy, Check } from "lucide-react";
 import { Streamdown } from "streamdown";
 import "streamdown/styles.css";
@@ -78,6 +79,9 @@ export function ChatMessage({
 }: Props) {
   const isUser = role === "user";
   const [copied, setCopied] = useState(false);
+  const [viewer, setViewer] = useState<{ filename: string; passage: string } | null>(null);
+
+  const VIEWABLE_EXTENSIONS = [".txt", ".md", ".csv", ".json", ".pdf"];
 
   function handleCopy() {
     navigator.clipboard.writeText(content);
@@ -88,6 +92,7 @@ export function ChatMessage({
   const showSteps = !isUser && pipelineSteps && pipelineSteps.length > 0;
 
   return (
+    <>
     <div
       className={clsx(
         "group flex gap-3 animate-fade-up",
@@ -197,7 +202,7 @@ export function ChatMessage({
 
         {/* Sources — assistant only, après la réponse */}
         {!isUser && !isLoading && cotResults && cotResults.length > 0 && (
-          <div className="mt-1 px-1">
+          <div className="mt-1 px-1 w-full max-w-full">
             <Sources>
               <SourcesTrigger count={cotResults.length} />
               <SourcesContent>
@@ -206,10 +211,10 @@ export function ChatMessage({
                   return (
                     <div
                       key={i}
-                      className="rounded-lg border border-[var(--border)] bg-[var(--bg-subtle)] p-2.5 space-y-1.5"
+                      className="rounded-lg border border-[var(--border)] bg-[var(--bg-subtle)] p-2.5 space-y-1.5 overflow-hidden"
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] font-medium text-[var(--text)] truncate">
+                      <div className="flex items-center justify-between gap-2 min-w-0">
+                        <span className="text-[11px] font-medium text-[var(--text)] truncate min-w-0">
                           {r.source}
                         </span>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -224,9 +229,17 @@ export function ChatMessage({
                           </span>
                         </div>
                       </div>
-                      <p className="text-[11px] text-[var(--text-muted)] leading-relaxed line-clamp-3">
+                      <p className="text-[11px] text-[var(--text-muted)] leading-relaxed line-clamp-3 break-all overflow-hidden w-full">
                         {r.content}
                       </p>
+                      {VIEWABLE_EXTENSIONS.includes(r.source.slice(r.source.lastIndexOf(".")).toLowerCase()) && (
+                        <button
+                          onClick={() => setViewer({ filename: r.source, passage: r.content })}
+                          className="text-[10px] text-[var(--gold)] hover:underline"
+                        >
+                          Voir dans le document →
+                        </button>
+                      )}
                     </div>
                   );
                 })}
@@ -256,5 +269,15 @@ export function ChatMessage({
         )}
       </div>
     </div>
+
+    {viewer && (
+      <SourceViewer
+        filename={viewer.filename}
+        passage={viewer.passage}
+        onClose={() => setViewer(null)}
+      />
+    )}
+    </>
   );
 }
+

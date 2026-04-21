@@ -38,3 +38,4 @@ bot/node_modules/
 bot/.nuxt/
 bot/.output/
 docs/DEPLOY_BOT.md
+stress_test.py

@@ -62,3 +62,12 @@ export async function getSources(): Promise<Source[]> {
   const data = await res.json();
   return data.sources ?? [];
 }
+
+/**
+ * Récupère le contenu brut d'un fichier source.
+ */
+export async function getSourceContent(filename: string): Promise<string> {
+  const res = await fetch(`/api/sources/content/${encodeURIComponent(filename)}`);
+  if (!res.ok) throw new Error("Fichier introuvable");
+  return res.text();
+}

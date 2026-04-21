@@ -688,6 +688,26 @@ def list_archives():
     return {"sources": vm.list_sources()}
 
 
+@app.get("/sources/content/{filename}")
+def get_source_content(filename: str):
+    from core.utils.utils import ARCHIVE_DIR
+    from fastapi import HTTPException
+    from fastapi.responses import PlainTextResponse
+    safe = Path(filename).name  # empêche path traversal
+    path = ARCHIVE_DIR / safe
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Fichier introuvable")
+    ext = path.suffix.lower()
+    if ext not in {".txt", ".md", ".csv", ".json", ".pdf"}:
+        raise HTTPException(status_code=400, detail="Format non supporté pour la lecture")
+    if ext == ".pdf":
+        import pypdf
+        reader = pypdf.PdfReader(str(path))
+        text = "\n".join(page.extract_text() or "" for page in reader.pages)
+        return PlainTextResponse(text)
+    return PlainTextResponse(path.read_text(encoding="utf-8", errors="replace"))
+
+
 # --- Ingestion ---
 _ingest_status = {"running": False, "last_status": "idle", "last_message": "", "files": {}}
 _ingest_cancel = _threading.Event()
