@@ -101,7 +101,6 @@ def seed_database() -> None:
 
     logger.info("INGEST | Connecting to vector database...")
     db_manager = VectorManager()
-    api_key = load_api_key()
 
     logger.info("INGEST | Reading files from: %s", input_folder)
 

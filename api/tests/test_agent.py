@@ -80,7 +80,7 @@ class TestGuardian(unittest.TestCase):
     def test_pdf_auto_accept(self, mock_splitext):
         """Vérifie que les PDF sont acceptés par défaut."""
         mock_splitext.return_value = ('mon_fichier', '.pdf')
-        self.assertTrue(is_valid_lore_file("test.pdf"))
+        self.assertTrue(is_valid_lore_file("test.pdf")[0])
         mock_splitext.assert_any_call("test.pdf")
 
     @patch('core.agent.guardian.load_config')
