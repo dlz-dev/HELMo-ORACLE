@@ -85,6 +85,9 @@ export function ChatWindow({
   }, [sessionId]);
 
   const [limitReached, setLimitReached] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [feedbackSent, setFeedbackSent] = useState(false);
   const [currentPipelineStep, setCurrentPipelineStep] = useState<string | null>(
     null,
   );
@@ -402,10 +405,59 @@ export function ChatWindow({
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                 Merci d&apos;avoir testé{" "}
                 <strong className="text-[var(--text)]">HELMo Oracle</strong> !
-                Votre avis nous intéresse — partagez vos impressions sur votre
-                expérience.
+                Votre avis nous intéresse.
               </p>
             </div>
+
+            {feedbackSent ? (
+              <p className="text-sm text-emerald-400">
+                Merci pour votre retour !
+              </p>
+            ) : (
+              <div className="w-full space-y-3">
+                <div className="flex justify-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => setFeedbackRating(star)}
+                      className={`text-2xl transition-transform hover:scale-110 ${
+                        star <= feedbackRating
+                          ? "text-[var(--gold)]"
+                          : "text-[var(--border)]"
+                      }`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={feedbackComment}
+                  onChange={(e) => setFeedbackComment(e.target.value)}
+                  placeholder="Partagez vos impressions (optionnel)..."
+                  rows={3}
+                  className="w-full text-sm rounded-lg border border-[var(--border)] bg-[var(--bg-subtle)] text-[var(--text)] placeholder:text-[var(--text-subtle)] px-3 py-2 resize-none focus:outline-none focus:border-[var(--gold)]/50"
+                />
+                <button
+                  disabled={feedbackRating === 0}
+                  onClick={async () => {
+                    await fetch("/api/feedback", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        session_id: sessionId,
+                        rating: feedbackRating,
+                        comment: feedbackComment || null,
+                      }),
+                    });
+                    setFeedbackSent(true);
+                  }}
+                  className="w-full py-2 rounded-lg text-sm font-medium bg-[var(--gold-glow)] border border-[var(--gold)]/30 text-[var(--gold)] hover:border-[var(--gold)]/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Envoyer mon avis
+                </button>
+              </div>
+            )}
+
             <div className="w-full border-t border-[var(--border)] pt-4 space-y-2">
               <p className="text-[11px] uppercase tracking-widest text-[var(--text-subtle)]">
                 Pour débloquer l&apos;accès ou nous contacter
