@@ -135,8 +135,8 @@ def _is_admin(user_id: str | None) -> bool:
     if not _supabase or not user_id or not _is_valid_uuid(user_id):
         return False
     try:
-        res = _supabase.table("profiles").select("role").eq("id", user_id).single().execute()
-        return bool(res.data and res.data.get("role") == "admin")
+        res = _supabase.table("profiles").select("role").eq("id", user_id).execute()
+        return bool(res.data and len(res.data) > 0 and res.data[0].get("role") == "admin")
     except Exception:
         return False
 

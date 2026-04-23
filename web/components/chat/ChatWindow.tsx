@@ -444,12 +444,14 @@ export function ChatWindow({
                 <button
                   disabled={feedbackRating === 0}
                   onClick={async () => {
-                    await supabase.from("feedback").insert({
+                    const { data: authData } = await supabase.auth.getUser();
+                    const { error } = await supabase.from("feedback").insert({
                       session_id: sessionId,
+                      user_id: authData?.user?.id ?? null,
                       rating: feedbackRating,
                       comment: feedbackComment || null,
                     });
-                    setFeedbackSent(true);
+                    if (!error) setFeedbackSent(true);
                   }}
                   className="w-full py-2 rounded-lg text-sm font-medium bg-[var(--gold-glow)] border border-[var(--gold)]/30 text-[var(--gold)] hover:border-[var(--gold)]/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
