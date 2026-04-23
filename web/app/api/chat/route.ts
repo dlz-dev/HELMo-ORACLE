@@ -37,9 +37,12 @@ export async function POST(req: NextRequest) {
 
   if (!backendResponse.ok || !backendResponse.body) {
     const error = await backendResponse.text();
-    return new Response(JSON.stringify({ error }), {
-      status: backendResponse.status,
-    });
+    return new Response(
+      JSON.stringify({ error: `${backendResponse.status}: ${error}` }),
+      {
+        status: backendResponse.status,
+      },
+    );
   }
 
   // Capture le session_id depuis les headers du backend
