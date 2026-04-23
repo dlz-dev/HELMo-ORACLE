@@ -541,11 +541,19 @@ async def chat(req: ChatRequest):
     else:
         session = request_sm.new_session(provider=req.provider, model=req.model or "")
 
-    # Limite démo : 4 messages max pour tous sauf admins
+    # Limite démo : 4 messages max pour tous sauf admins (compteur global par user_id)
     if not _is_admin(req.user_id):
-        user_msgs = [m for m in session.get("messages", []) if m["role"] == "user"]
-        if len(user_msgs) >= 4:
-            raise HTTPException(status_code=429, detail="Limite de 4 messages atteinte.")
+        _limit_key = f"msg_count:{req.user_id}" if (req.user_id and _is_valid_uuid(req.user_id)) else None
+        if _limit_key and _redis:
+            _msg_count = int(_redis.get(_limit_key) or 0)
+            if _msg_count >= 4:
+                raise HTTPException(status_code=429, detail="Limite de 4 messages atteinte.")
+            _redis.incr(_limit_key)
+        else:
+            # Fallback sans Redis ou sans user_id : compte dans la session courante
+            user_msgs = [m for m in session.get("messages", []) if m["role"] == "user"]
+            if len(user_msgs) >= 4:
+                raise HTTPException(status_code=429, detail="Limite de 4 messages atteinte.")
 
     model = req.model or config.get("llm", {}).get("default_model", "")
     masked_message = pii.mask_text(req.message)
