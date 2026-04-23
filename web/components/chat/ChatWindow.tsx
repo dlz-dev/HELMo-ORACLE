@@ -180,253 +180,263 @@ export function ChatWindow({
 
   return (
     <>
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto">
-        {isEmpty ? (
-          <div className="relative flex flex-col items-center justify-center h-full px-6 py-8 overflow-hidden animate-fade-in">
-            {/* Gradient background */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background:
-                  "radial-gradient(ellipse 80% 60% at 50% 10%, rgba(201,168,76,0.18) 0%, rgba(201,168,76,0.05) 45%, transparent 70%)",
-              }}
-            />
-
-            {/* Orb */}
-            <div
-              className="relative mb-10 orb-float animate-fade-up"
-              style={{ width: 200, height: 200, animationDelay: "0ms" }}
-            >
-              {/* Ambient halo — large soft glow behind everything */}
+      <div className="flex flex-col h-full">
+        <div className="flex-1 overflow-y-auto">
+          {isEmpty ? (
+            <div className="relative flex flex-col items-center justify-center h-full px-6 py-8 overflow-hidden animate-fade-in">
+              {/* Gradient background */}
               <div
-                className="absolute rounded-full orb-pulse"
+                className="absolute inset-0 pointer-events-none"
                 style={{
-                  inset: "-55%",
                   background:
-                    "radial-gradient(circle, rgba(201,168,76,0.28) 0%, rgba(201,168,76,0.06) 50%, transparent 70%)",
-                  filter: "blur(24px)",
-                  pointerEvents: "none",
+                    "radial-gradient(ellipse 80% 60% at 50% 10%, rgba(201,168,76,0.18) 0%, rgba(201,168,76,0.05) 45%, transparent 70%)",
                 }}
               />
 
-              {/* Ring 1 — gold */}
+              {/* Orb */}
               <div
-                className="absolute rounded-full orb-ring-1"
-                style={{
-                  inset: 0,
-                  border: "1px solid rgba(201,168,76,0.35)",
-                }}
-              />
-              {/* Ring 2 — subtler gold, reverse */}
-              <div
-                className="absolute rounded-full orb-ring-2"
-                style={{
-                  inset: 20,
-                  border: "1px solid rgba(201,168,76,0.18)",
-                }}
-              />
-
-              {/* Core sphere */}
-              <div
-                className="absolute rounded-full"
-                style={{
-                  inset: 30,
-                  background:
-                    "radial-gradient(circle at 33% 28%, rgba(255,248,180,0.92) 0%, rgba(225,180,55,0.75) 18%, rgba(201,168,76,0.5) 42%, rgba(160,110,20,0.2) 68%, transparent 100%)",
-                  boxShadow:
-                    "0 0 45px rgba(201,168,76,0.6), 0 0 90px rgba(201,168,76,0.28), 0 0 150px rgba(201,168,76,0.1)",
-                  border: "1px solid rgba(201,168,76,0.3)",
-                }}
+                className="relative mb-10 orb-float animate-fade-up"
+                style={{ width: 200, height: 200, animationDelay: "0ms" }}
               >
-                {/* Specular highlight */}
+                {/* Ambient halo — large soft glow behind everything */}
                 <div
+                  className="absolute rounded-full orb-pulse"
                   style={{
-                    position: "absolute",
-                    top: "14%",
-                    left: "16%",
-                    width: "30%",
-                    height: "20%",
-                    borderRadius: "50%",
+                    inset: "-55%",
                     background:
-                      "radial-gradient(ellipse, rgba(255,255,255,0.7) 0%, transparent 100%)",
-                    filter: "blur(4px)",
+                      "radial-gradient(circle, rgba(201,168,76,0.28) 0%, rgba(201,168,76,0.06) 50%, transparent 70%)",
+                    filter: "blur(24px)",
+                    pointerEvents: "none",
                   }}
                 />
-              </div>
-            </div>
 
-            {/* Title + description */}
-            <div
-              className="relative text-center mb-8 space-y-2 animate-fade-up"
-              style={{ animationDelay: "60ms" }}
-            >
-              <h2 className="font-cinzel text-3xl font-semibold text-[var(--text)] tracking-wide">
-                Bonjour{firstName ? ` ${firstName}` : ""}&nbsp;!
-              </h2>
-              <p className="text-sm text-[var(--text-muted)]">
-                Pose ta question sur Dofus, je consulte les archives
-              </p>
-            </div>
+                {/* Ring 1 — gold */}
+                <div
+                  className="absolute rounded-full orb-ring-1"
+                  style={{
+                    inset: 0,
+                    border: "1px solid rgba(201,168,76,0.35)",
+                  }}
+                />
+                {/* Ring 2 — subtler gold, reverse */}
+                <div
+                  className="absolute rounded-full orb-ring-2"
+                  style={{
+                    inset: 20,
+                    border: "1px solid rgba(201,168,76,0.18)",
+                  }}
+                />
 
-            {/* Floating input */}
-            <div
-              className="relative w-full max-w-2xl animate-fade-up"
-              style={{
-                animationDelay: "120ms",
-                filter:
-                  "drop-shadow(0 8px 32px rgba(201,168,76,0.12)) drop-shadow(0 2px 8px rgba(0,0,0,0.12))",
-              }}
-            >
-              <ChatInput
-                value={input}
-                onChange={handleInputChange}
-                onSubmit={handleSubmit}
-                isLoading={isLoading}
-              />
-            </div>
-
-            {/* Suggestions */}
-            <div
-              className="relative w-full max-w-2xl mt-4 animate-fade-up"
-              style={{
-                animationDelay: "180ms",
-                paddingLeft: "12px",
-                paddingRight: "12px",
-              }}
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-subtle)] mb-2 px-1">
-                Suggestions
-              </p>
-              <ul className="space-y-0.5">
-                {STARTER_PROMPTS.map((prompt) => (
-                  <li key={prompt}>
-                    <button
-                      onClick={() => append({ role: "user", content: prompt })}
-                      className="group w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg
-                                 text-sm text-[var(--text-muted)] hover:text-[var(--text)]
-                                 hover:bg-[var(--gold-glow)] transition-all duration-150"
-                    >
-                      <ChevronRight
-                        size={12}
-                        className="flex-shrink-0 text-[var(--gold)] opacity-40 group-hover:opacity-100 transition-opacity"
-                      />
-                      {prompt}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        ) : (
-          <div className="max-w-3xl mx-auto px-4 py-6 space-y-3 pb-32">
-            {messages.map((msg, i) => (
-              <ChatMessage
-                key={msg.id || i}
-                role={msg.role as "user" | "assistant"}
-                content={msg.content}
-                index={i}
-                isLast={i === messages.length - 1}
-                isLoading={isLoading && i === messages.length - 1}
-                cotResults={
-                  msg.role === "assistant" && i === messages.length - 1
-                    ? cotResults
-                    : undefined
-                }
-                pipelineSteps={
-                  msg.role === "assistant" && i === messages.length - 1
-                    ? completedSteps
-                    : undefined
-                }
-                currentPipelineStep={
-                  msg.role === "assistant" && i === messages.length - 1
-                    ? currentPipelineStep
-                    : undefined
-                }
-              />
-            ))}
-            {/* Pipeline steps — visible tant que l'assistant n'a pas commencé à répondre */}
-            {isLoading && messages[messages.length - 1]?.role === "user" && (
-              <ChatMessage
-                key="thinking"
-                role="assistant"
-                content=""
-                index={messages.length}
-                isLast={true}
-                isLoading={true}
-                pipelineSteps={completedSteps}
-                currentPipelineStep={currentPipelineStep}
-              />
-            )}
-            <div ref={bottomRef} />
-          </div>
-        )}
-
-        {/* Floating Input & Guest Warning Area */}
-        {!isEmpty && (
-          <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
-            {/* Gradient pour fondre les messages sous l'input */}
-            <div className="h-24 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/90 to-transparent" />
-
-            <div className="bg-[var(--bg)] px-4 pb-6 pointer-events-auto">
-              <div className="max-w-3xl mx-auto space-y-3">
-                <div className="relative drop-shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
-                  <ChatInput
-                    value={input}
-                    onChange={handleInputChange}
-                    onSubmit={handleSubmit}
-                    isLoading={isLoading || limitReached}
+                {/* Core sphere */}
+                <div
+                  className="absolute rounded-full"
+                  style={{
+                    inset: 30,
+                    background:
+                      "radial-gradient(circle at 33% 28%, rgba(255,248,180,0.92) 0%, rgba(225,180,55,0.75) 18%, rgba(201,168,76,0.5) 42%, rgba(160,110,20,0.2) 68%, transparent 100%)",
+                    boxShadow:
+                      "0 0 45px rgba(201,168,76,0.6), 0 0 90px rgba(201,168,76,0.28), 0 0 150px rgba(201,168,76,0.1)",
+                    border: "1px solid rgba(201,168,76,0.3)",
+                  }}
+                >
+                  {/* Specular highlight */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "14%",
+                      left: "16%",
+                      width: "30%",
+                      height: "20%",
+                      borderRadius: "50%",
+                      background:
+                        "radial-gradient(ellipse, rgba(255,255,255,0.7) 0%, transparent 100%)",
+                      filter: "blur(4px)",
+                    }}
                   />
                 </div>
               </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
 
-    {/* Modal limite démo */}
-    {limitReached && (
-      <div className="fixed inset-0 z-[200] flex items-center justify-center">
-        <div className="absolute inset-0 bg-black/60" />
-        <div className="relative z-10 w-[90vw] max-w-md rounded-2xl border border-[var(--gold)]/30 bg-[var(--surface)] shadow-2xl p-8 flex flex-col items-center gap-5 text-center animate-fade-up">
-          <div className="w-10 h-10 rounded-full bg-[var(--gold-glow)] border border-[var(--gold)]/20 flex items-center justify-center">
-            <span className="text-[var(--gold)] text-lg">✦</span>
-          </div>
-          <div className="space-y-2">
-            <h2 className="font-cinzel text-[var(--gold)] tracking-widest uppercase text-sm">
-              Limite de la démo atteinte
-            </h2>
-            <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-              Merci d&apos;avoir testé <strong className="text-[var(--text)]">HELMo Oracle</strong> !
-              Votre avis nous intéresse — partagez vos impressions sur votre expérience.
-            </p>
-          </div>
-          <div className="w-full border-t border-[var(--border)] pt-4 space-y-2">
-            <p className="text-[11px] uppercase tracking-widest text-[var(--text-subtle)]">
-              Pour débloquer l&apos;accès ou nous contacter
-            </p>
-            <div className="flex justify-center gap-4">
-              {[
-                { name: "Tim", url: "https://www.linkedin.com/in/tdelhez/" },
-                { name: "Arnaud", url: "https://www.linkedin.com/in/arnaudleroyit/" },
-                { name: "Maxime", url: "https://www.linkedin.com/in/maxime-bourguignon-6275253b6/" },
-              ].map(({ name, url }) => (
-                <a
-                  key={name}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[11px] text-[var(--gold)] hover:underline font-medium"
-                >
-                  {name}
-                </a>
+              {/* Title + description */}
+              <div
+                className="relative text-center mb-8 space-y-2 animate-fade-up"
+                style={{ animationDelay: "60ms" }}
+              >
+                <h2 className="font-cinzel text-3xl font-semibold text-[var(--text)] tracking-wide">
+                  Bonjour{firstName ? ` ${firstName}` : ""}&nbsp;!
+                </h2>
+                <p className="text-sm text-[var(--text-muted)]">
+                  Pose ta question sur Dofus, je consulte les archives
+                </p>
+              </div>
+
+              {/* Floating input */}
+              <div
+                className="relative w-full max-w-2xl animate-fade-up"
+                style={{
+                  animationDelay: "120ms",
+                  filter:
+                    "drop-shadow(0 8px 32px rgba(201,168,76,0.12)) drop-shadow(0 2px 8px rgba(0,0,0,0.12))",
+                }}
+              >
+                <ChatInput
+                  value={input}
+                  onChange={handleInputChange}
+                  onSubmit={handleSubmit}
+                  isLoading={isLoading}
+                />
+              </div>
+
+              {/* Suggestions */}
+              <div
+                className="relative w-full max-w-2xl mt-4 animate-fade-up"
+                style={{
+                  animationDelay: "180ms",
+                  paddingLeft: "12px",
+                  paddingRight: "12px",
+                }}
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-subtle)] mb-2 px-1">
+                  Suggestions
+                </p>
+                <ul className="space-y-0.5">
+                  {STARTER_PROMPTS.map((prompt) => (
+                    <li key={prompt}>
+                      <button
+                        onClick={() =>
+                          append({ role: "user", content: prompt })
+                        }
+                        className="group w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg
+                                 text-sm text-[var(--text-muted)] hover:text-[var(--text)]
+                                 hover:bg-[var(--gold-glow)] transition-all duration-150"
+                      >
+                        <ChevronRight
+                          size={12}
+                          className="flex-shrink-0 text-[var(--gold)] opacity-40 group-hover:opacity-100 transition-opacity"
+                        />
+                        {prompt}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ) : (
+            <div className="max-w-3xl mx-auto px-4 py-6 space-y-3 pb-32">
+              {messages.map((msg, i) => (
+                <ChatMessage
+                  key={msg.id || i}
+                  role={msg.role as "user" | "assistant"}
+                  content={msg.content}
+                  index={i}
+                  isLast={i === messages.length - 1}
+                  isLoading={isLoading && i === messages.length - 1}
+                  cotResults={
+                    msg.role === "assistant" && i === messages.length - 1
+                      ? cotResults
+                      : undefined
+                  }
+                  pipelineSteps={
+                    msg.role === "assistant" && i === messages.length - 1
+                      ? completedSteps
+                      : undefined
+                  }
+                  currentPipelineStep={
+                    msg.role === "assistant" && i === messages.length - 1
+                      ? currentPipelineStep
+                      : undefined
+                  }
+                />
               ))}
+              {/* Pipeline steps — visible tant que l'assistant n'a pas commencé à répondre */}
+              {isLoading && messages[messages.length - 1]?.role === "user" && (
+                <ChatMessage
+                  key="thinking"
+                  role="assistant"
+                  content=""
+                  index={messages.length}
+                  isLast={true}
+                  isLoading={true}
+                  pipelineSteps={completedSteps}
+                  currentPipelineStep={currentPipelineStep}
+                />
+              )}
+              <div ref={bottomRef} />
+            </div>
+          )}
+
+          {/* Floating Input & Guest Warning Area */}
+          {!isEmpty && (
+            <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none">
+              {/* Gradient pour fondre les messages sous l'input */}
+              <div className="h-24 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/90 to-transparent" />
+
+              <div className="bg-[var(--bg)] px-4 pb-6 pointer-events-auto">
+                <div className="max-w-3xl mx-auto space-y-3">
+                  <div className="relative drop-shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
+                    <ChatInput
+                      value={input}
+                      onChange={handleInputChange}
+                      onSubmit={handleSubmit}
+                      isLoading={isLoading || limitReached}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Modal limite démo */}
+      {limitReached && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="relative z-10 w-[90vw] max-w-md rounded-2xl border border-[var(--gold)]/30 bg-[var(--surface)] shadow-2xl p-8 flex flex-col items-center gap-5 text-center animate-fade-up">
+            <div className="w-10 h-10 rounded-full bg-[var(--gold-glow)] border border-[var(--gold)]/20 flex items-center justify-center">
+              <span className="text-[var(--gold)] text-lg">✦</span>
+            </div>
+            <div className="space-y-2">
+              <h2 className="font-cinzel text-[var(--gold)] tracking-widest uppercase text-sm">
+                Limite de la démo atteinte
+              </h2>
+              <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                Merci d&apos;avoir testé{" "}
+                <strong className="text-[var(--text)]">HELMo Oracle</strong> !
+                Votre avis nous intéresse — partagez vos impressions sur votre
+                expérience.
+              </p>
+            </div>
+            <div className="w-full border-t border-[var(--border)] pt-4 space-y-2">
+              <p className="text-[11px] uppercase tracking-widest text-[var(--text-subtle)]">
+                Pour débloquer l&apos;accès ou nous contacter
+              </p>
+              <div className="flex justify-center gap-4">
+                {[
+                  { name: "Tim", url: "https://www.linkedin.com/in/tdelhez/" },
+                  {
+                    name: "Arnaud",
+                    url: "https://www.linkedin.com/in/arnaudleroyit/",
+                  },
+                  {
+                    name: "Maxime",
+                    url: "https://www.linkedin.com/in/maxime-bourguignon-6275253b6/",
+                  },
+                ].map(({ name, url }) => (
+                  <a
+                    key={name}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] text-[var(--gold)] hover:underline font-medium"
+                  >
+                    {name}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
     </>
   );
 }
