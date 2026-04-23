@@ -3,6 +3,7 @@
 import { useChat } from "ai/react";
 import { useEffect, useRef, useState } from "react";
 import React from "react";
+import { supabase } from "@/lib/supabase";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import {
@@ -67,16 +68,19 @@ export function ChatWindow({
   const prevMsgCountRef = useRef(0);
 
   // Lit la config depuis localStorage (sauvegardée depuis l'admin)
+  // Si pas de valeur → on n'envoie rien, le backend utilise ses propres defaults
   const getOracleConfig = () => {
     if (typeof window === "undefined") return {};
-    return {
-      provider: localStorage.getItem("oracle_provider") || "groq",
-      model: localStorage.getItem("oracle_model") || "llama-3.3-70b-versatile",
-      temperature: parseFloat(
-        localStorage.getItem("oracle_temperature") || "0",
-      ),
-      k_final: parseInt(localStorage.getItem("oracle_k_final") || "5"),
-    };
+    const cfg: Record<string, string | number> = {};
+    const provider = localStorage.getItem("oracle_provider");
+    const model = localStorage.getItem("oracle_model");
+    const temperature = localStorage.getItem("oracle_temperature");
+    const k_final = localStorage.getItem("oracle_k_final");
+    if (provider) cfg.provider = provider;
+    if (model) cfg.model = model;
+    if (temperature) cfg.temperature = parseFloat(temperature);
+    if (k_final) cfg.k_final = parseInt(k_final);
+    return cfg;
   };
 
   const currentSessionRef = React.useRef<string | null>(sessionId);
@@ -440,14 +444,10 @@ export function ChatWindow({
                 <button
                   disabled={feedbackRating === 0}
                   onClick={async () => {
-                    await fetch("/api/feedback", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        session_id: sessionId,
-                        rating: feedbackRating,
-                        comment: feedbackComment || null,
-                      }),
+                    await supabase.from("feedback").insert({
+                      session_id: sessionId,
+                      rating: feedbackRating,
+                      comment: feedbackComment || null,
                     });
                     setFeedbackSent(true);
                   }}
