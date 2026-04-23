@@ -179,6 +179,7 @@ export function ChatWindow({
   const isEmpty = messages.length === 0;
 
   return (
+    <>
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto">
         {isEmpty ? (
@@ -369,25 +370,12 @@ export function ChatWindow({
 
             <div className="bg-[var(--bg)] px-4 pb-6 pointer-events-auto">
               <div className="max-w-3xl mx-auto space-y-3">
-                {isGuest &&
-                  (limitReached ||
-                    messages.filter((m) => m.role === "user").length >= 5) && (
-                    <div className="text-center text-[10px] uppercase tracking-widest py-2 px-4 bg-[var(--gold-glow)] border border-[var(--gold)]/20 rounded-lg text-[var(--gold)] animate-fade-up">
-                      Limite de 5 messages atteinte. Connectez-vous pour
-                      continuer.
-                    </div>
-                  )}
-
                 <div className="relative drop-shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
                   <ChatInput
                     value={input}
                     onChange={handleInputChange}
                     onSubmit={handleSubmit}
-                    isLoading={
-                      isLoading ||
-                      (isGuest &&
-                        messages.filter((m) => m.role === "user").length >= 5)
-                    }
+                    isLoading={isLoading || limitReached}
                   />
                 </div>
               </div>
@@ -396,5 +384,49 @@ export function ChatWindow({
         )}
       </div>
     </div>
+
+    {/* Modal limite démo */}
+    {limitReached && (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/60" />
+        <div className="relative z-10 w-[90vw] max-w-md rounded-2xl border border-[var(--gold)]/30 bg-[var(--surface)] shadow-2xl p-8 flex flex-col items-center gap-5 text-center animate-fade-up">
+          <div className="w-10 h-10 rounded-full bg-[var(--gold-glow)] border border-[var(--gold)]/20 flex items-center justify-center">
+            <span className="text-[var(--gold)] text-lg">✦</span>
+          </div>
+          <div className="space-y-2">
+            <h2 className="font-cinzel text-[var(--gold)] tracking-widest uppercase text-sm">
+              Limite de la démo atteinte
+            </h2>
+            <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+              Merci d&apos;avoir testé <strong className="text-[var(--text)]">HELMo Oracle</strong> !
+              Votre avis nous intéresse — partagez vos impressions sur votre expérience.
+            </p>
+          </div>
+          <div className="w-full border-t border-[var(--border)] pt-4 space-y-2">
+            <p className="text-[11px] uppercase tracking-widest text-[var(--text-subtle)]">
+              Pour débloquer l&apos;accès ou nous contacter
+            </p>
+            <div className="flex justify-center gap-4">
+              {[
+                { name: "Tim", url: "https://www.linkedin.com/in/tdelhez/" },
+                { name: "Arnaud", url: "https://www.linkedin.com/in/arnaudleroyit/" },
+                { name: "Maxime", url: "https://www.linkedin.com/in/maxime-bourguignon-6275253b6/" },
+              ].map(({ name, url }) => (
+                <a
+                  key={name}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-[var(--gold)] hover:underline font-medium"
+                >
+                  {name}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

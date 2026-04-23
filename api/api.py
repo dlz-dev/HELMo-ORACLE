@@ -131,6 +131,15 @@ if _SUPABASE_URL and _SUPABASE_KEY:
     except Exception as _e:
         logger.error(f"Impossible d'initialiser le client Supabase : {_e}")
 
+def _is_admin(user_id: str | None) -> bool:
+    if not _supabase or not user_id or not _is_valid_uuid(user_id):
+        return False
+    try:
+        res = _supabase.table("profiles").select("role").eq("id", user_id).single().execute()
+        return bool(res.data and res.data.get("role") == "admin")
+    except Exception:
+        return False
+
 # --- Redis Stream (monitoring dashboard) ---
 _redis = None
 try:
@@ -532,11 +541,11 @@ async def chat(req: ChatRequest):
     else:
         session = request_sm.new_session(provider=req.provider, model=req.model or "")
 
-    # Limite invités : 5 messages max par session
-    if not req.user_id or not _is_valid_uuid(req.user_id):
-        guest_msgs = [m for m in session.get("messages", []) if m["role"] == "user"]
-        if len(guest_msgs) >= 5:
-            raise HTTPException(status_code=429, detail="Limite de 5 messages atteinte. Connectez-vous pour continuer.")
+    # Limite démo : 4 messages max pour tous sauf admins
+    if not _is_admin(req.user_id):
+        user_msgs = [m for m in session.get("messages", []) if m["role"] == "user"]
+        if len(user_msgs) >= 4:
+            raise HTTPException(status_code=429, detail="Limite de 4 messages atteinte.")
 
     model = req.model or config.get("llm", {}).get("default_model", "")
     masked_message = pii.mask_text(req.message)
