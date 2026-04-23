@@ -16,6 +16,7 @@ const ROLES = [
   { value: "etudiant", label: "Étudiant" },
   { value: "professeur", label: "Professeur" },
   { value: "entreprise", label: "Entreprise" },
+  { value: "autre", label: "Autre" },
 ];
 
 export default function LoginPage() {
@@ -95,6 +96,18 @@ export default function LoginPage() {
     }
   }
 
+  function validatePassword(pwd: string): string | null {
+    if (pwd.length < 8)
+      return "Le mot de passe doit contenir au moins 8 caractères.";
+    if (!/[A-Z]/.test(pwd))
+      return "Le mot de passe doit contenir au moins une majuscule.";
+    if (!/[0-9]/.test(pwd))
+      return "Le mot de passe doit contenir au moins un chiffre.";
+    if (!/[^A-Za-z0-9]/.test(pwd))
+      return "Le mot de passe doit contenir au moins un caractère spécial.";
+    return null;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -109,6 +122,12 @@ export default function LoginPage() {
       if (error) setError(error.message);
       else window.location.href = "/";
     } else {
+      const pwdError = validatePassword(password);
+      if (pwdError) {
+        setError(pwdError);
+        setLoading(false);
+        return;
+      }
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) setError(error.message);
       else if (data.user) {
